@@ -5,6 +5,7 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
+from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -4873,16 +4874,7 @@ def issue_certificates(request):
             'total_students': len(students_data),
         })
 
-    import os
-    has_bg = False
-    if setting and setting.background_image:
-        try:
-            has_bg = os.path.exists(setting.background_image.path)
-        except:
-            has_bg = False
-    if not has_bg and setting and setting.background_image:
-        fallback = os.path.join(settings.STATIC_ROOT or os.path.join(settings.BASE_DIR, 'static'), 'sertifikat.png')
-        has_bg = os.path.exists(fallback)
+    has_bg = setting and setting.background_image and setting.background_image.name
 
     return render(request, 'groups/issue_certificates.html', {
         'groups_data': groups_data,
