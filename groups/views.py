@@ -4900,17 +4900,21 @@ def bulk_generate_certificates_api(request):
     try:
         data = json.loads(request.body)
         group_name = data.get('group_name')
+        group_id = data.get('group_id')
 
         setting = CertificateSetting.objects.filter(is_active=True).first()
         if not setting or not setting.background_image:
             return JsonResponse({'success': False, 'message': 'Sertifikat sozlamalari to\'liq emas. Fon rasmini yuklang!'})
 
-        from django.db.models import Max
-
         best_results = {}
         qs = QuizResult.objects.all()
-        if group_name:
-            qs = qs.filter(group_name_saved=group_name)
+        if group_id:
+            group = Group.objects.filter(id=group_id).first()
+            if group:
+                qs = qs.filter(group_name_saved__iexact=group.name)
+                group_name = group.name
+        elif group_name:
+            qs = qs.filter(group_name_saved__iexact=group_name)
 
         for r in qs:
             sname = r.student_name_saved or (r.student.full_name if r.student else None)

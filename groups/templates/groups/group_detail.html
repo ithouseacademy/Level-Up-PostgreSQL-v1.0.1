@@ -131,14 +131,14 @@
                             <i class="fas fa-arrow-right text-blue-400 text-sm group-hover:translate-x-1 transition"></i>
                         </a>
 
-                        <a href="{% url 'issue_certificates' %}?group_id={{ group.id }}" 
-                           class="flex items-center justify-between p-3 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition group">
+                        <button onclick="issueGroupCertificates({{ group.id }})" 
+                           class="w-full flex items-center justify-between p-3 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition group text-left">
                             <div class="flex items-center">
                                 <i class="fas fa-scroll text-yellow-600 w-5"></i>
-                                <span class="ml-3 text-sm font-medium text-yellow-700">Sertifikat chiqarish</span>
+                                <span class="ml-3 text-sm font-medium text-yellow-700">Sertifikat berish</span>
                             </div>
                             <i class="fas fa-arrow-right text-yellow-400 text-sm group-hover:translate-x-1 transition"></i>
-                        </a>
+                        </button>
                     </div>
                 </div>
 
@@ -363,6 +363,54 @@
         </div>
     </div>
 </div>
+
+<div id="certNotification" class="hidden fixed top-5 right-5 z-50 px-4 py-3 rounded-lg shadow-lg text-white"></div>
+
+<script>
+const csrftoken = '{{ csrf_token }}';
+
+function showCertNotification(message, type) {
+    const el = document.getElementById('certNotification');
+    el.className = 'hidden fixed top-5 right-5 z-50 px-4 py-3 rounded-lg shadow-lg text-white ' + (type === 'success' ? 'bg-green-500' : type === 'warning' ? 'bg-yellow-500' : 'bg-red-500');
+    el.textContent = message;
+    el.classList.remove('hidden');
+    setTimeout(() => el.classList.add('hidden'), 5000);
+}
+
+function issueGroupCertificates(groupId) {
+    if (!confirm('Guruhdagi barcha talabalarga sertifikat berishni tasdiqlaysizmi?')) return;
+
+    const btn = event.target.closest('button');
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Chiqarilmoqda...';
+    btn.disabled = true;
+
+    fetch('{% url "bulk_generate_certificates_api" %}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+        body: JSON.stringify({ group_id: groupId })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            var msg = data.count + ' ta sertifikat yaratildi!';
+            if (data.errors && data.errors.length > 0) {
+                msg += ' | Xatolar: ' + data.errors.join('; ');
+            }
+            showCertNotification(msg, data.count > 0 ? 'success' : 'warning');
+        } else {
+            showCertNotification('Xatolik: ' + data.message, 'error');
+        }
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+    })
+    .catch(err => {
+        showCertNotification('Xatolik: ' + err, 'error');
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+    });
+}
+</script>
 
 <style>
     .hover\:translate-x-1:hover {
