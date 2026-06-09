@@ -4661,34 +4661,25 @@ def generate_student_certificate(result):
         student_name = result.student.full_name
     group_name = result.group_name_saved
 
+    if not student_name or not group_name:
+        return None
+
     teacher_name = None
     level = None
-    group_obj = None
     if result.quiz_session and result.quiz_session.group_id:
-        group_obj = result.quiz_session.group
-    else:
-        group_obj = Group.objects.filter(name=group_name).first()
-
-    if group_obj:
         try:
-            config = group_obj.exam_config
+            config = result.quiz_session.group.exam_config
             if not config.certificate_enabled:
                 return None
-            teacher_name = config.certificate_teacher or group_obj.teacher
+            teacher_name = config.certificate_teacher or result.quiz_session.group.teacher
             level = config.certificate_level
         except:
-            teacher_name = group_obj.teacher if group_obj.teacher else None
-
-    if not student_name:
-        return None
-    if not group_name:
-        return None
+            pass
 
     import os
     bg_path = setting.background_image.path
     if not os.path.exists(bg_path):
-        static_dir = os.path.join(settings.BASE_DIR, 'static')
-        fallback = os.path.join(static_dir, 'sertifikat.png')
+        fallback = os.path.join(settings.BASE_DIR, 'static', 'sertifikat.png')
         if os.path.exists(fallback):
             bg_path = fallback
         else:
@@ -4798,67 +4789,6 @@ def sertivkat_view(request):
 
 
 
-
-
-@login_required
-@user_passes_test(is_admin_user)
-@require_http_methods(["POST"])
-def bulk_generate_certificates_api(request):
-    try:
-        data = json.loads(request.body)
-        group_name = data.get('group_name')
-        group_id = data.get('group_id')
-
-        setting = CertificateSetting.objects.filter(is_active=True).first()
-        if not setting or not setting.background_image:
-            return JsonResponse({'success': False, 'message': 'Sertifikat sozlamalari to\'liq emas. Fon rasmini yuklang!'})
-
-        best_results = {}
-        qs = QuizResult.objects.all()
-        if group_id:
-            group = Group.objects.filter(id=group_id).first()
-            if group:
-                qs = qs.filter(group_name_saved__iexact=group.name)
-                group_name = group.name
-        elif group_name:
-            qs = qs.filter(group_name_saved__iexact=group_name)
-
-        for r in qs:
-            sname = r.student_name_saved or (r.student.full_name if r.student else None)
-            if not sname:
-                continue
-            if sname not in best_results or r.score > best_results[sname].score:
-                best_results[sname] = r
-
-        generated = []
-        errors = []
-        for sname, r in best_results.items():
-            if r.score < setting.threshold_percentage:
-                errors.append(f"{sname} (ball yetarli emas: {r.score}% < {setting.threshold_percentage}%)")
-                continue
-            existing = Certificate.objects.filter(
-                student_name__iexact=sname, group_name__iexact=group_name
-            ).first() if group_name else Certificate.objects.filter(student_name__iexact=sname).first()
-            if existing:
-                errors.append(f"{sname} (sertifikat mavjud)")
-                continue
-
-            cert = generate_student_certificate(r)
-            if cert:
-                generated.append({'student_name': sname, 'cert_id': cert.id})
-            else:
-                errors.append(f"{sname} (sertifikat yaratilmadi — sozlamalarni tekshiring)")
-
-        return JsonResponse({
-            'success': True,
-            'generated': generated,
-            'errors': errors,
-            'count': len(generated),
-        })
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return JsonResponse({'success': False, 'message': str(e)})
 
 
 @staff_member_required
