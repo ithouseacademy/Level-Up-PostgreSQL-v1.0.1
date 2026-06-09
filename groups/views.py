@@ -4458,6 +4458,11 @@ def admin_writing_grade_api(request, result_id, question_id):
         result.answers[qid_str] = ans_data
         result.save()
 
+        try:
+            generate_student_certificate(result)
+        except Exception as cert_err:
+            print(f"Certificate generation error: {cert_err}")
+
         group = result.quiz_session.group
         if group and result.student:
             AssessmentScore.objects.update_or_create(
@@ -5212,6 +5217,11 @@ def speaking_save_score_api(request):
         result.score = round((total_score / total_possible) * 100, 1) if total_possible > 0 else 0
         result.total_questions = total_possible
         result.save()
+
+        try:
+            generate_student_certificate(result)
+        except Exception as cert_err:
+            print(f"Certificate generation error: {cert_err}")
 
         AssessmentScore.objects.update_or_create(
             student=student,
