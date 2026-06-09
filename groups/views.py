@@ -4783,6 +4783,142 @@ def sertivkat_view(request):
     return render(request, 'groups/sertivkat.html', context)
 
 
+@login_required
+@user_passes_test(is_admin_user)
+def issue_certificates(request):
+    setting = CertificateSetting.objects.filter(is_active=True).first()
+    threshold = setting.threshold_percentage if setting else 50
+
+    existing_group_names = set(Group.objects.values_list('name', flat=True))
+    all_results = QuizResult.objects.all().order_by('-submitted_at')
+
+    group_results_map = {}
+    for r in all_results:
+        gname = None
+        if r.quiz_session and r.quiz_session.group:
+            gname = r.quiz_session.group.name
+        elif r.group_name_saved:
+            gname = r.group_name_saved
+        else:
+            gname = "Noma'lum guruh"
+        if gname not in group_results_map:
+            group_results_map[gname] = {'group_name': gname, 'is_deleted': gname not in existing_group_names, 'results': []}
+        group_results_map[gname]['results'].append(r)
+
+    groups_data = []
+    for gname, gdata in group_results_map.items():
+        group = Group.objects.filter(name=gname).first()
+        exam_config = GroupExamConfig.objects.filter(group=group).first() if group else None
+
+        def get_grade(score_val):
+            if exam_config and exam_config.grading_enabled:
+                if score_val < exam_config.low_threshold:
+                    return 'red', exam_config.label_low
+                elif score_val >= exam_config.high_threshold:
+                    return 'green', exam_config.label_high
+                else:
+                    return 'yellow', exam_config.label_medium
+            else:
+                if score_val >= 70:
+                    return 'green', 'Yuqori'
+                elif score_val >= 50:
+                    return 'yellow', "O'rta"
+                else:
+                    return 'red', 'Past'
+
+        students_data = {}
+        for r in gdata['results']:
+            student_key = r.student_id or r.student_name_saved
+            student_name = r.student_name_saved or (r.student.full_name if r.student else 'Noma\'lum')
+            if student_key not in students_data:
+                students_data[student_key] = {
+                    'student_name': student_name, 'student_id': r.student_id,
+                    'attempts': [], 'best_score': 0, 'total_attempts': 0,
+                    'has_certificate': False, 'eligible': False,
+                }
+            students_data[student_key]['attempts'].append(r)
+            students_data[student_key]['total_attempts'] += 1
+            score_val = float(r.score)
+            if score_val > students_data[student_key]['best_score']:
+                students_data[student_key]['best_score'] = score_val
+
+        for sdata in students_data.values():
+            grade_class, grade_label = get_grade(sdata['best_score'])
+            sdata['grade_class'] = grade_class
+            sdata['grade'] = grade_label
+            sdata['eligible'] = sdata['best_score'] >= threshold
+            existing = Certificate.objects.filter(student_name__iexact=sdata['student_name'], group_name__iexact=gname).first()
+            sdata['has_certificate'] = existing is not None
+
+        groups_data.append({
+            'group_name': gname, 'is_deleted': gdata['is_deleted'],
+            'students': list(students_data.values()),
+            'total_students': len(students_data),
+        })
+
+    return render(request, 'groups/issue_certificates.html', {
+        'groups_data': groups_data,
+        'total_groups': len(groups_data),
+        'threshold': threshold,
+        'has_background': setting and setting.background_image,
+    })
+
+
+@login_required
+@user_passes_test(is_admin_user)
+@require_http_methods(["POST"])
+def bulk_generate_certificates_api(request):
+    try:
+        data = json.loads(request.body)
+        group_name = data.get('group_name')
+
+        setting = CertificateSetting.objects.filter(is_active=True).first()
+        if not setting or not setting.background_image:
+            return JsonResponse({'success': False, 'message': 'Sertifikat sozlamalari to\'liq emas. Fon rasmini yuklang!'})
+
+        from django.db.models import Max
+
+        best_results = {}
+        qs = QuizResult.objects.all()
+        if group_name:
+            qs = qs.filter(group_name_saved=group_name)
+
+        for r in qs:
+            sname = r.student_name_saved or (r.student.full_name if r.student else None)
+            if not sname:
+                continue
+            if sname not in best_results or r.score > best_results[sname].score:
+                best_results[sname] = r
+
+        generated = []
+        errors = []
+        for sname, r in best_results.items():
+            if r.score < setting.threshold_percentage:
+                continue
+            existing = Certificate.objects.filter(
+                student_name__iexact=sname, group_name__iexact=group_name
+            ).first() if group_name else Certificate.objects.filter(student_name__iexact=sname).first()
+            if existing:
+                continue
+
+            cert = generate_student_certificate(r)
+            if cert:
+                generated.append({'student_name': sname, 'cert_id': cert.id})
+            else:
+                errors.append(sname)
+
+        return JsonResponse({
+            'success': True,
+            'generated': generated,
+            'errors': errors,
+            'count': len(generated),
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'message': str(e)})
+
+
 @staff_member_required
 def admin_question_edit(request, pk):
     """Savolni tahrirlash - barcha savol turlari uchun"""

@@ -1,0 +1,212 @@
+{% extends 'groups/base.html' %}
+{% load static %}
+{% block title %}Sertifikatlarni chiqarish{% endblock %}
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="mb-8">
+            <a href="{% url 'admin_panel' %}" class="text-gray-500 hover:text-gray-700 text-sm inline-flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Admin panelga qaytish
+            </a>
+            <h1 class="text-2xl font-bold text-gray-900 mt-4">Sertifikatlarni chiqarish</h1>
+            <p class="text-gray-500 text-sm mt-1">
+                Sertifikat olish bali: <strong>{{ threshold }}%</strong>
+                {% if not has_background %}
+                <span class="text-red-500 ml-2">⚠ Fon rasmi yuklanmagan!</span>
+                {% endif %}
+            </p>
+        </div>
+
+        <div id="notification" class="hidden fixed top-5 right-5 z-50 px-4 py-3 rounded-lg shadow-lg text-white"></div>
+
+        {% if not has_background %}
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+            <p class="text-yellow-700 text-sm">
+                <i class="fas fa-exclamation-triangle mr-1"></i>
+                Sertifikat fon rasmi yuklanmagan. 
+                <a href="{% url 'certificate_settings' %}" class="underline font-medium">Sozlamalar sahifasida</a> fon rasmini yuklang.
+            </p>
+        </div>
+        {% endif %}
+
+        {% if groups_data %}
+        <div class="space-y-8">
+            {% for gd in groups_data %}
+            <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm group-card" data-group="{{ gd.group_name }}">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">
+                            <i class="fas fa-users text-gray-500 mr-2"></i>
+                            {{ gd.group_name }}
+                            {% if gd.is_deleted %}
+                            <span class="ml-2 text-xs bg-gray-300 text-gray-600 px-1.5 py-0.5 rounded">O'chirilgan</span>
+                            {% endif %}
+                        </h3>
+                        <p class="text-sm text-gray-500">{{ gd.total_students }} ta student</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-gray-500" id="eligibleCount{{ forloop.counter }}">0 ta sertifikat</span>
+                        <button onclick="generateGroupCertificates('{{ gd.group_name|escapejs }}', {{ forloop.counter }})" 
+                                class="bg-gray-900 hover:bg-gray-800 text-white text-sm px-4 py-2 rounded-lg transition flex items-center gap-1"
+                                {% if not has_background %}disabled{% endif %}>
+                            <i class="fas fa-certificate text-xs"></i>
+                            <span>Sertifikatlarni chiqarish</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="border-b border-gray-100">
+                            <tr class="text-left text-xs text-gray-500 uppercase tracking-wider">
+                                <th class="px-6 py-3 font-medium">#</th>
+                                <th class="px-6 py-3 font-medium">Student</th>
+                                <th class="px-6 py-3 font-medium">Urinishlar</th>
+                                <th class="px-6 py-3 font-medium">Eng yaxshi ball</th>
+                                <th class="px-6 py-3 font-medium">Holat</th>
+                                <th class="px-6 py-3 font-medium">Sertifikat</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            {% for s in gd.students %}
+                            <tr class="hover:bg-gray-50 transition-colors student-row {% if s.eligible and not s.has_certificate %}bg-green-50{% endif %}" 
+                                data-eligible="{{ s.eligible|lower }}" data-name="{{ s.student_name|lower }}">
+                                <td class="px-6 py-3 text-sm text-gray-500">{{ forloop.counter }}</td>
+                                <td class="px-6 py-3">
+                                    <div class="font-medium text-gray-900">{{ s.student_name }}</div>
+                                </td>
+                                <td class="px-6 py-3">
+                                    <span class="text-sm text-gray-600">{{ s.total_attempts }} marta</span>
+                                </td>
+                                <td class="px-6 py-3">
+                                    <span class="text-lg font-semibold {% if s.best_score >= threshold %}text-green-600{% else %}text-red-500{% endif %}">
+                                        {{ s.best_score|floatformat:1 }}%
+                                    </span>
+                                </td>
+                                <td class="px-6 py-3">
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium 
+                                        {% if s.grade_class == 'green' %}bg-green-100 text-green-700
+                                        {% elif s.grade_class == 'yellow' %}bg-yellow-100 text-yellow-700
+                                        {% else %}bg-red-100 text-red-700{% endif %}">
+                                        {{ s.grade }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-3">
+                                    {% if s.has_certificate %}
+                                    <span class="text-green-600 text-sm"><i class="fas fa-check-circle"></i> Mavjud</span>
+                                    {% elif s.eligible %}
+                                    <span class="text-blue-600 text-sm"><i class="fas fa-hourglass-half"></i> Tayyor</span>
+                                    {% else %}
+                                    <span class="text-gray-400 text-sm"><i class="fas fa-times-circle"></i> Yetarli emas</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="px-6 py-12 text-center">
+                                    <p class="text-gray-400 text-sm">Bu guruhda natijalar yo'q</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-20">
+            <div class="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <i class="fas fa-certificate text-gray-300 text-2xl"></i>
+            </div>
+            <h2 class="text-xl font-light text-gray-400">Natijalar yo'q</h2>
+            <p class="text-sm text-gray-300 mt-2">Hali hech qanday test natijasi mavjud emas.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+const csrftoken = '{{ csrf_token }}';
+
+function showNotification(message, type) {
+    const el = document.getElementById('notification');
+    el.className = `fixed top-5 right-5 z-50 px-4 py-3 rounded-lg shadow-lg text-white ${type === 'success' ? 'bg-green-500' : type === 'warning' ? 'bg-yellow-500' : 'bg-red-500'}`;
+    el.textContent = message;
+    el.classList.remove('hidden');
+    setTimeout(() => {
+        el.classList.add('hidden');
+    }, 4000);
+}
+
+function updateEligibleCounts() {
+    document.querySelectorAll('.group-card').forEach((card, idx) => {
+        const rows = card.querySelectorAll('.student-row');
+        let count = 0;
+        rows.forEach(row => {
+            if (row.dataset.eligible === 'true') {
+                const certCell = row.querySelector('td:last-child');
+                if (certCell && !certCell.textContent.includes('Mavjud')) {
+                    count++;
+                }
+            }
+        });
+        const counter = document.getElementById('eligibleCount' + (idx + 1));
+        if (counter) counter.textContent = count + ' ta sertifikat';
+    });
+}
+
+function generateGroupCertificates(groupName, idx) {
+    const rows = document.querySelectorAll(`.group-card[data-group="${groupName}"] .student-row`);
+    let count = 0;
+    rows.forEach(row => {
+        if (row.dataset.eligible === 'true') {
+            const certCell = row.querySelector('td:last-child');
+            if (certCell && certCell.textContent.includes('Tayyor')) {
+                count++;
+            }
+        }
+    });
+
+    if (count === 0) {
+        showNotification('Sertifikat olishga tayyor talabalar yo\'q', 'warning');
+        return;
+    }
+
+    if (!confirm(`${count} ta talabaga sertifikat chiqarishni tasdiqlaysizmi?`)) {
+        return;
+    }
+
+    const btn = event.target.closest('button');
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Chiqarilmoqda...';
+    btn.disabled = true;
+
+    fetch('{% url "bulk_generate_certificates_api" %}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+        body: JSON.stringify({ group_name: groupName })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(`${data.count} ta sertifikat yaratildi!`, 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showNotification('Xatolik: ' + data.message, 'error');
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        }
+    })
+    .catch(err => {
+        showNotification('Xatolik: ' + err, 'error');
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+    });
+}
+
+document.addEventListener('DOMContentLoaded', updateEligibleCounts);
+</script>
+{% endblock %}
