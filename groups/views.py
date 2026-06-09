@@ -4683,7 +4683,14 @@ def generate_student_certificate(result):
     if not group_name:
         return None
 
+    import os
     bg_path = setting.background_image.path
+    if not os.path.exists(bg_path):
+        fallback = os.path.join(settings.STATIC_ROOT or os.path.join(settings.BASE_DIR, 'static'), 'sertifikat.png')
+        if os.path.exists(fallback):
+            bg_path = fallback
+        else:
+            return None
 
     file_content = save_certificate_pdf(student_name, group_name, teacher_name, level, result.score, bg_path)
     if file_content is None:
@@ -4866,11 +4873,22 @@ def issue_certificates(request):
             'total_students': len(students_data),
         })
 
+    import os
+    has_bg = False
+    if setting and setting.background_image:
+        try:
+            has_bg = os.path.exists(setting.background_image.path)
+        except:
+            has_bg = False
+    if not has_bg and setting and setting.background_image:
+        fallback = os.path.join(settings.STATIC_ROOT or os.path.join(settings.BASE_DIR, 'static'), 'sertifikat.png')
+        has_bg = os.path.exists(fallback)
+
     return render(request, 'groups/issue_certificates.html', {
         'groups_data': groups_data,
         'total_groups': len(groups_data),
         'threshold': threshold,
-        'has_background': setting and setting.background_image,
+        'has_background': has_bg,
     })
 
 
