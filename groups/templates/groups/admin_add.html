@@ -1,0 +1,234 @@
+<!-- groups/templates/groups/admin_add.html -->
+{% extends 'groups/base.html' %}
+
+{% block title %}Yangi Admin Qo'shish{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <i class="fas fa-user-shield text-yellow-600 text-xl mr-3"></i>
+                    <span class="font-semibold text-gray-900">Yangi Admin Qo'shish</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-600">
+                        <i class="fas fa-user mr-1"></i> {{ user.get_full_name|default:user.username }}
+                    </span>
+                    <!-- admin_panel.html dagi navbar yoki menyuga qo'shing -->
+<a href="{% url 'admin_list' %}" class="text-sm text-gray-600 hover:text-gray-800">
+    <i class="fas fa-user-shield mr-1"></i> Adminlar
+</a>
+                    <a href="{% url 'admin_list' %}" class="text-sm text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-arrow-left mr-1"></i> Orqaga
+                    </a>
+                    <a href="{% url 'logout' %}" class="text-sm text-red-500 hover:text-red-700">
+                        <i class="fas fa-sign-out-alt mr-1"></i> Chiqish
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Asosiy forma -->
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-yellow-50 to-white">
+                <div class="flex items-center">
+                    <i class="fas fa-plus-circle text-yellow-600 text-xl mr-3"></i>
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900">Admin Ma'lumotlarini Kiriting</h3>
+                        <p class="text-sm text-gray-500 mt-1">Yangi admin uchun ism, familiya, username va parol kiriting</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <form method="POST" action="{% url 'admin_add' %}">
+                    {% csrf_token %}
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Ism -->
+                        <div>
+                            <label for="first_name" class="block text-sm font-medium text-gray-700 mb-2">
+                                Ism <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-user text-gray-400 text-sm"></i>
+                                </div>
+                                <input type="text" 
+                                       name="first_name" 
+                                       id="first_name" 
+                                       required
+                                       class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                                       placeholder="Masalan: Alijon">
+                            </div>
+                        </div>
+                        
+                        <!-- Familiya -->
+                        <div>
+                            <label for="last_name" class="block text-sm font-medium text-gray-700 mb-2">
+                                Familiya <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-user text-gray-400 text-sm"></i>
+                                </div>
+                                <input type="text" 
+                                       name="last_name" 
+                                       id="last_name" 
+                                       required
+                                       class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                                       placeholder="Masalan: Karimov">
+                            </div>
+                        </div>
+                        
+                        <!-- Username (Login) -->
+                        <div>
+                            <label for="username" class="block text-sm font-medium text-gray-700 mb-2">
+                                Username (Login) <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-sign-in-alt text-gray-400 text-sm"></i>
+                                </div>
+                                <input type="text" 
+                                       name="username" 
+                                       id="username" 
+                                       required
+                                       class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                                       placeholder="Masalan: admin_alijon">
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Tizimga kirish uchun foydalaniladi, unikal bo'lishi kerak</p>
+                        </div>
+                        
+                        <!-- Email (ixtiyoriy) -->
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                                Email <span class="text-gray-400 text-xs">(ixtiyoriy)</span>
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-envelope text-gray-400 text-sm"></i>
+                                </div>
+                                <input type="email" 
+                                       name="email" 
+                                       id="email" 
+                                       class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                                       placeholder="admin@example.com">
+                            </div>
+                        </div>
+                        
+                        <!-- Parol -->
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                                Parol <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-lock text-gray-400 text-sm"></i>
+                                </div>
+                                <input type="password" 
+                                       name="password" 
+                                       id="password" 
+                                       required
+                                       class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                                       placeholder="********">
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Kamida 4 ta belgidan iborat bo'lishi kerak</p>
+                        </div>
+                        
+                        <!-- Parolni tasdiqlash -->
+                        <div>
+                            <label for="password_confirm" class="block text-sm font-medium text-gray-700 mb-2">
+                                Parolni tasdiqlang <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-lock text-gray-400 text-sm"></i>
+                                </div>
+                                <input type="password" 
+                                       name="password_confirm" 
+                                       id="password_confirm" 
+                                       required
+                                       class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                                       placeholder="********">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Superuser opsiyasi -->
+                    <div class="mt-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                <input type="checkbox" 
+                                       name="is_superuser" 
+                                       id="is_superuser"
+                                       class="rounded border-gray-300 text-yellow-600 focus:ring-yellow-500">
+                            </div>
+                            <div class="ml-3">
+                                <label for="is_superuser" class="text-sm font-medium text-gray-900">
+                                    <i class="fas fa-crown mr-1 text-yellow-600"></i> Superuser qilish
+                                </label>
+                                <p class="text-xs text-gray-500">Superuser barcha huquqlarga ega (admin qo'shish, o'chirish va boshqa barcha amallar)</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tugmalar -->
+                    <div class="mt-6 flex gap-3">
+                        <button type="submit" class="flex-1 bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg transition font-medium">
+                            <i class="fas fa-save mr-2"></i> Admin Qo'shish
+                        </button>
+                        <a href="{% url 'admin_panel' %}" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition text-center font-medium">
+                            <i class="fas fa-times mr-2"></i> Bekor qilish
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Qo'shimcha ma'lumot kartasi -->
+        <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-blue-50 rounded-lg border border-blue-200 p-4">
+                <div class="flex">
+                    <i class="fas fa-info-circle text-blue-600 text-lg mr-3"></i>
+                    <div>
+                        <h4 class="text-sm font-medium text-blue-900">Admin huquqlari</h4>
+                        <ul class="text-xs text-blue-700 mt-2 space-y-1">
+                            <li><i class="fas fa-check-circle mr-1"></i> Guruh qo'shish, tahrirlash, o'chirish</li>
+                            <li><i class="fas fa-check-circle mr-1"></i> Talaba qo'shish, tahrirlash, o'chirish</li>
+                            <li><i class="fas fa-check-circle mr-1"></i> Barcha ma'lumotlarni ko'rish</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-green-50 rounded-lg border border-green-200 p-4">
+                <div class="flex">
+                    <i class="fas fa-star text-green-600 text-lg mr-3"></i>
+                    <div>
+                        <h4 class="text-sm font-medium text-green-900">Superuser huquqlari</h4>
+                        <ul class="text-xs text-green-700 mt-2 space-y-1">
+                            <li><i class="fas fa-check-circle mr-1"></i> Admin qo'shish va o'chirish</li>
+                            <li><i class="fas fa-check-circle mr-1"></i> Barcha admin huquqlari</li>
+                            <li><i class="fas fa-check-circle mr-1"></i> To'liq tizim boshqaruvi</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Eslatma -->
+        <div class="mt-4 text-center">
+            <p class="text-xs text-gray-400">
+                <i class="fas fa-shield-alt mr-1"></i> 
+                Faqat superuserlar yangi admin qo'sha oladi
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,142 @@
+{% extends 'groups/base.html' %}
+
+{% block title %}Sayt haqida{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center px-4 py-12">
+    <div class="max-w-4xl w-full">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-gray-900 rounded-2xl mb-4 shadow-sm">
+                <i class="fas fa-graduation-cap text-white text-2xl"></i>
+            </div>
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-3">IT House Academy</h1>
+            <p class="text-lg text-gray-500">Level up platformasi haqida</p>
+        </div>
+
+        <!-- Content Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Imkoniyatlar -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-laptop-code text-blue-600"></i>
+                    </div>
+                    <h2 class="text-lg font-semibold text-gray-900">Onlayn test tizimi</h2>
+                </div>
+                <p class="text-gray-600 text-sm leading-relaxed">
+                    15 xil turdagi savollar: test, moslashtirish, matn asosida savollar, gap tuzish, 
+                    bo'sh joy to'ldirish va boshqalar. Har bir savol turi o'quvchilarning bilimini 
+                    to'liq baholash uchun mo'ljallangan.
+                </p>
+            </div>
+
+            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-users-cog text-green-600"></i>
+                    </div>
+                    <h2 class="text-lg font-semibold text-gray-900">Guruhlar boshqaruvi</h2>
+                </div>
+                <p class="text-gray-600 text-sm leading-relaxed">
+                    O'quv guruhlarini yaratish, talabalarni qo'shish va ularni kategoriyalar bo'yicha 
+                    tartibga solish. Har bir guruh uchun alohida imtihon sozlamalari.
+                </p>
+            </div>
+
+            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-chart-bar text-purple-600"></i>
+                    </div>
+                    <h2 class="text-lg font-semibold text-gray-900">Natijalar va statistika</h2>
+                </div>
+                <p class="text-gray-600 text-sm leading-relaxed">
+                    Batafsil natijalar, foiz ko'rsatkichlari, guruh bo'yicha statistika. 
+                    CSV va Excel formatida eksport qilish imkoniyati.
+                </p>
+            </div>
+
+            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-file-alt text-orange-600"></i>
+                    </div>
+                    <h2 class="text-lg font-semibold text-gray-900">Sertifikat berish</h2>
+                </div>
+                <p class="text-gray-600 text-sm leading-relaxed">
+                    Imtihon natijalariga ko'ra avtomatik sertifikat generatsiyasi. 
+                    Shaxsiylashtirilgan sertifikatlar bilan o'quvchilarni rag'batlantirish.
+                </p>
+            </div>
+
+            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-microphone-alt text-red-600"></i>
+                    </div>
+                    <h2 class="text-lg font-semibold text-gray-900">Og'zaki va yozma baholash</h2>
+                </div>
+                <p class="text-gray-600 text-sm leading-relaxed">
+                    Speaking va Writing topshiriqlarini o'qituvchi tomonidan baholash tizimi. 
+                    Har bir talabaga alohida baho qo'yish imkoniyati.
+                </p>
+            </div>
+
+            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-mobile-alt text-teal-600"></i>
+                    </div>
+                    <h2 class="text-lg font-semibold text-gray-900">Mobil qurilmalar nazorati</h2>
+                </div>
+                <p class="text-gray-600 text-sm leading-relaxed">
+                    Imtihon vaqtida qurilmalarni kuzatish, imtihonni boshqarish, 
+                    vaqt cheklovlari va avtomatik to'xtatish tizimi.
+                </p>
+            </div>
+
+            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-headphones text-indigo-600"></i>
+                    </div>
+                    <h2 class="text-lg font-semibold text-gray-900">Audio tizim</h2>
+                </div>
+                <p class="text-gray-600 text-sm leading-relaxed">
+                    Kategoriyalar uchun audio fayllar yuklash, tinglash sonini cheklash 
+                    va har bir talabaning audio tinglash statistikasini yuritish.
+                </p>
+            </div>
+
+            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-chalkboard-teacher text-pink-600"></i>
+                    </div>
+                    <h2 class="text-lg font-semibold text-gray-900">O'qituvchi paneli</h2>
+                </div>
+                <p class="text-gray-600 text-sm leading-relaxed">
+                    O'qituvchilar o'z guruhlarini kuzatish, baholash va natijalarni 
+                    ko'rish imkoniyatiga ega. Alohida o'qituvchi hisoblari.
+                </p>
+            </div>
+        </div>
+
+        <!-- Back Button -->
+        <div class="text-center mt-10">
+            <a href="{% url 'home' %}" class="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition duration-200">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Bosh sahifaga qaytish
+            </a>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-12 pt-6 border-t border-gray-200 text-center">
+            <p class="text-xs text-gray-400">
+                © 2026 IT House Academy Level up . Barcha huquqlar himoyalangan.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

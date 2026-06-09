@@ -1,0 +1,50 @@
+{% extends 'groups/base.html' %}
+
+{% block title %}O'qituvchi paneli{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-5xl mx-auto px-4">
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-light text-gray-900 tracking-tight">O'qituvchi paneli</h1>
+                    <p class="text-gray-500 text-sm mt-1 font-light">{{ teacher.user.get_full_name|default:teacher.user.username }}</p>
+                </div>
+                <a href="{% url 'logout' %}" class="text-sm text-gray-400 hover:text-gray-600 transition">
+                    <i class="fas fa-sign-out-alt mr-1"></i> Chiqish
+                </a>
+            </div>
+        </div>
+
+        {% if groups %}
+        <div class="grid gap-4">
+            {% for g in groups %}
+            <a href="{% url 'teacher_group_view' g.id %}" class="block bg-white border border-gray-200 hover:border-gray-300 hover:shadow-sm transition p-5">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-users text-gray-500"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-medium text-gray-900">{{ g.name }}</h3>
+                            <p class="text-xs text-gray-400">{{ g.students.count }} ta o'quvchi</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-20">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-chalkboard-teacher text-gray-300 text-2xl"></i>
+            </div>
+            <h2 class="text-xl font-light text-gray-400">Guruhlar yo'q</h2>
+            <p class="text-sm text-gray-300 mt-2">Siz hali hech qanday guruhga biriktirilmagansiz.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

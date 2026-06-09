@@ -1,0 +1,107 @@
+{% extends 'groups/base.html' %}
+{% block title %}Writing baholash - {{ group.name }}{% endblock %}
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-6xl mx-auto px-4">
+        <div class="bg-white rounded-none border border-gray-200 shadow-sm">
+            <div class="px-6 py-4 border-b border-gray-200 bg-white flex items-center justify-between">
+                <div>
+                    <h1 class="text-xl font-bold text-gray-800">✍️ Yozma ishlarni baholash</h1>
+                    <p class="text-sm text-gray-400 mt-1">{{ group.name }}</p>
+                </div>
+                <a href="{% url 'quiz_results' group.id %}" class="text-sm text-gray-500 hover:text-gray-800 border border-gray-300 px-4 py-2 rounded">← Natijalarga qaytish</a>
+            </div>
+
+            <div class="p-6">
+                {% if writing_entries %}
+                    <div class="space-y-6">
+                    {% for entry in writing_entries %}
+                        <div class="border border-gray-200 rounded-lg p-5 {% if entry.graded %}bg-green-50 border-green-200{% else %}bg-amber-50 border-amber-200{% endif %}">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <span class="text-sm font-medium text-gray-700">{{ entry.student_name }}</span>
+                                    <span class="text-xs text-gray-400 ml-3">{{ entry.submitted_at|date:"d.m.Y H:i" }}</span>
+                                </div>
+                                <div class="text-right">
+                                    {% if entry.graded %}
+                                        <span class="text-sm font-semibold text-green-700">✅ Baholangan: {{ entry.earned_points }}/{{ entry.max_points }}</span>
+                                    {% else %}
+                                        <span class="text-sm font-semibold text-amber-700">⏳ Baholanmagan</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Mavzu</p>
+                                <p class="text-sm font-medium text-gray-800 bg-white border border-gray-100 rounded p-3">{{ entry.topic }}</p>
+                            </div>
+
+                            <div class="mb-4">
+                                <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Student javobi</p>
+                                <div class="bg-white border border-gray-100 rounded p-3 text-sm text-gray-700 whitespace-pre-wrap">{{ entry.answer|default:"(Javob berilmagan)" }}</div>
+                            </div>
+
+                            {% if not entry.graded %}
+                            <div class="flex items-center gap-3 pt-3 border-t border-amber-200">
+                                <label class="text-sm text-gray-600">Ball:</label>
+                                <input type="number" class="grade-input w-20 border border-gray-300 rounded px-3 py-1.5 text-sm text-center" value="0" min="0" max="{{ entry.max_points }}" data-result-id="{{ entry.result_id }}" data-question-id="{{ entry.question_id }}" data-max="{{ entry.max_points }}">
+                                <span class="text-xs text-gray-400">/ {{ entry.max_points }}</span>
+                                <button class="grade-btn bg-black hover:bg-gray-800 text-white px-4 py-1.5 rounded text-sm transition" data-result-id="{{ entry.result_id }}" data-question-id="{{ entry.question_id }}">Saqlash</button>
+                            </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-16">
+                        <p class="text-gray-400 text-lg">✍️ Hech qanday yozma ish topilmadi</p>
+                        <p class="text-xs text-gray-300 mt-2">Studentlar writing savollariga javob berganda bu yerda ko'rinadi</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.querySelectorAll('.grade-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const resultId = this.dataset.resultId;
+        const questionId = this.dataset.questionId;
+        const input = this.parentElement.querySelector('.grade-input');
+        const earned = parseFloat(input.value) || 0;
+        const maxPts = parseFloat(input.dataset.max) || 0;
+        if (earned < 0 || earned > maxPts) {
+            alert(`Ball 0 dan ${maxPts} gacha bo'lishi kerak`);
+            return;
+        }
+        this.disabled = true;
+        this.textContent = 'Saqlanmoqda...';
+
+        fetch(`/writing/grade/${resultId}/${questionId}/`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+            body: JSON.stringify({earned_points: earned})
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const card = this.closest('[class*="border"]');
+                card.classList.remove('bg-amber-50', 'border-amber-200');
+                card.classList.add('bg-green-50', 'border-green-200');
+                this.parentElement.innerHTML = `<span class="text-sm font-semibold text-green-700">✅ Baholangan: ${earned}/${maxPts}</span>`;
+            } else {
+                alert('Xatolik: ' + data.message);
+                this.disabled = false;
+                this.textContent = 'Saqlash';
+            }
+        })
+        .catch(err => {
+            alert('Xatolik: ' + err);
+            this.disabled = false;
+            this.textContent = 'Saqlash';
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,70 @@
+<!-- templates/groups/question_add.html -->
+{% extends 'groups/base.html' %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-3xl mx-auto">
+        <a href="{% url 'admin_question_list' %}" class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4 transition">
+            <i class="fas fa-arrow-left mr-1"></i> Orqaga
+        </a>
+        <h1 class="text-2xl font-bold mb-6">Yangi savol qo'shish</h1>
+        
+        <form method="post" class="bg-white rounded-lg shadow p-6">
+            {% csrf_token %}
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Kategoriya</label>
+                {{ form.category }}
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Savol turi</label>
+                {{ form.question_type }}
+            </div>
+            
+            <div id="fillBlankFields" class="question-type-fields">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">Savol matni (___ bo'sh joy)</label>
+                    {{ form.question_text }}
+                    <p class="text-xs text-gray-500 mt-1">Masalan: I ___ to school every day.</p>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">To'g'ri javob</label>
+                    {{ form.correct_answer }}
+                </div>
+            </div>
+            
+            <div id="sentenceArrangementFields" class="question-type-fields" style="display: none;">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">Chalkashtirilgan so'zlar</label>
+                    {{ form.scrambled_words }}
+                    <p class="text-xs text-gray-500 mt-1">"/" bilan ajrating. Masalan: he / go / school / I / to</p>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">To'g'ri gap</label>
+                    {{ form.correct_sentence }}
+                    <p class="text-xs text-gray-500 mt-1">Masalan: I go to school</p>
+                </div>
+            </div>
+            
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg">Saqlash</button>
+        </form>
+    </div>
+</div>
+
+<script>
+// Savol turiga qarab maydonlarni ko'rsatish/yashirish
+document.querySelector('[name="question_type"]').addEventListener('change', function() {
+    const value = this.value;
+    
+    document.getElementById('fillBlankFields').style.display = 'none';
+    document.getElementById('sentenceArrangementFields').style.display = 'none';
+    
+    if (value === 'fill_blank') {
+        document.getElementById('fillBlankFields').style.display = 'block';
+    } else if (value === 'sentence_arrangement') {
+        document.getElementById('sentenceArrangementFields').style.display = 'block';
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,299 @@
+<!-- groups/templates/groups/admin_list.html -->
+{% extends 'groups/base.html' %}
+
+{% block title %}Adminlar Ro'yxati{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <i class="fas fa-user-shield text-gray-600 text-xl mr-3"></i>
+                    <span class="font-semibold text-gray-900">Adminlar Ro'yxati</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'admin_panel' %}" class="text-sm text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-arrow-left mr-1"></i> Orqaga
+                    </a>
+                    {% if user.is_superuser %}
+                    <a href="{% url 'admin_add' %}" class="text-sm hover:bg-gray-600 hover:text-white text-gray-600 px-3 py-1 rounded-lg transition">
+                        <i class="fas fa-plus mr-1"></i> Yangi Admin
+                    </a>
+                    {% endif %}
+                    <span class="text-sm text-gray-600">
+                        <i class="fas fa-user mr-1"></i> {{ user.get_full_name|default:user.username }}
+                    </span>
+                    
+                  
+                    
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-6">
+            <h1 class="text-2xl font-semibold text-gray-900">Adminlar Ro'yxati</h1>
+            <p class="text-sm text-gray-500 mt-1">Tizimdagi barcha adminlar va superuserlar</p>
+        </div>
+        
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-yellow-50 to-white">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center">
+                        <i class="fas fa-list mr-2 text-gray-600"></i>
+                        <h3 class="text-lg font-medium text-gray-900">Adminlar</h3>
+                        <span class="ml-3 bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs">
+                            Jami: {{ admins|length }}
+                        </span>
+                    </div>
+                    <div class="flex space-x-2">
+                        <input type="text" id="searchInput" placeholder="Qidirish..." 
+                               class="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full" id="adminTable">
+                    <thead class="bg-gray-50">
+                        <tr class="text-left text-sm text-gray-500">
+                            <th class="px-6 py-3 w-16">#</th>
+                            <th class="px-6 py-3">To'liq ism</th>
+                            <th class="px-6 py-3">Username</th>
+                            <th class="px-6 py-3">Email</th>
+                            <th class="px-6 py-3">Rol</th>
+                            <th class="px-6 py-3">Oxirgi kirish</th>
+                            <th class="px-6 py-3">Qo'shilgan</th>
+                            <th class="px-6 py-3 w-40">Amallar</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for admin in admins %}
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="px-6 py-3 text-gray-500">{{ forloop.counter }}</td>
+                            <td class="px-6 py-3">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-2">
+                                        <i class="fas fa-user-shield text-gray-500 text-sm"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium text-gray-900">
+                                            {{ admin.get_full_name|default:admin.username }}
+                                            {% if admin.id == user.id %}
+                                            <span class="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded">Siz</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-3 text-gray-600 font-mono text-sm">{{ admin.username }}</td>
+                            <td class="px-6 py-3 text-gray-500">{{ admin.email|default:"-" }}</td>
+                            <td class="px-6 py-3">
+                                {% if admin.is_superuser %}
+                                <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">
+                                    <i class="fas fa-crown mr-1"></i> Superuser
+                                </span>
+                                {% else %}
+                                <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium">
+                                    <i class="fas fa-user-shield mr-1"></i> Admin
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-3 text-gray-500 text-sm">
+                                {% if admin.last_login %}
+                                {{ admin.last_login|date:"d.m.Y H:i" }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-3 text-gray-500 text-sm">{{ admin.date_joined|date:"d.m.Y" }}</td>
+                            <td class="px-6 py-3">
+                                <div class="flex items-center space-x-2">
+                                    <!-- PAROLNI KO'RISH - FAQAT SUPERUSERGA -->
+                                    {% if user.is_superuser %}
+                                    <button onclick="showPasswordModal({{ admin.id }}, '{{ admin.get_full_name|default:admin.username|escapejs }}')" 
+                                            class="text-purple-500 hover:text-purple-700 transition" 
+                                            title="Parolni ko'rish">
+                                        <i class="fas fa-key"></i>
+                                    </button>
+                                    {% endif %}
+                                    
+                                    <!-- Tahrirlash -->
+                                 <!-- admin_list.html dagi tahrirlash tugmasi -->
+<button onclick="editAdmin({{ admin.id }})" 
+class="text-blue-500 hover:text-blue-700 transition" 
+title="Tahrirlash">
+<i class="fas fa-edit"></i>
+</button>
+
+<script>
+// Tahrirlash funksiyasi - to'g'rilangan
+function editAdmin(adminId) {
+window.location.href = `/admin-edit/${adminId}/`;
+}
+</script>
+                                    
+                                    <!-- O'chirish -->
+                                    {% if user.is_superuser and admin.id != user.id %}
+                                    <a href="{% url 'admin_delete' admin.id %}" 
+                                       class="text-red-500 hover:text-red-700 transition" 
+                                       title="O'chirish"
+                                       onclick="return confirm('{{ admin.get_full_name|default:admin.username }} adminni o\'chirmoqchimisiz?')">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="px-6 py-12 text-center">
+                                <i class="fas fa-user-shield text-gray-300 text-5xl mb-3 block"></i>
+                                <p class="text-gray-500">Hech qanday admin mavjud emas</p>
+                                {% if user.is_superuser %}
+                                <a href="{% url 'admin_add' %}" class="inline-block mt-3 text-yellow-600 hover:text-yellow-700">
+                                    <i class="fas fa-plus mr-1"></i> Birinchi adminni qo'shish
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PAROLNI KO'RSATISH MODALI (faqat superuser) -->
+<div id="passwordModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50" style="display: none;">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-lg bg-white">
+        <div class="flex justify-between items-center pb-3 border-b">
+            <h3 class="text-lg font-semibold text-gray-900">
+                <i class="fas fa-key mr-2 text-purple-600"></i> Admin Paroli
+            </h3>
+            <button onclick="closePasswordModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <div class="mt-4">
+            <div class="bg-purple-50 rounded-lg p-4">
+                <p class="text-sm text-purple-700 mb-3">
+                    <i class="fas fa-shield-alt mr-1"></i> 
+                    <strong>⚠️ DIQQAT!</strong> Bu ma'lumot faqat superuser uchun!
+                </p>
+                
+                <div class="space-y-3">
+                    <div class="bg-white rounded-lg p-3">
+                        <label class="block text-xs text-gray-500">Admin</label>
+                        <div class="font-medium text-gray-900" id="modal_admin_name">-</div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg p-3">
+                        <label class="block text-xs text-gray-500">Username (Login)</label>
+                        <div class="font-mono text-sm font-bold text-gray-900" id="modal_username">-</div>
+                    </div>
+                    
+                    <div class="bg-yellow-50 rounded-lg p-3 border-2 border-yellow-300">
+                        <label class="block text-xs text-yellow-700 font-bold">
+                            <i class="fas fa-lock mr-1"></i> PAROL (Ochiq holda)
+                        </label>
+                        <div class="flex items-center justify-between mt-2">
+                            <code id="modal_password" class="text-lg font-mono font-bold text-red-600 bg-white px-3 py-2 rounded border">••••••••</code>
+                            <button onclick="copyPassword()" class="text-sm bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded">
+                                <i class="fas fa-copy"></i> Nusxa olish
+                            </button>
+                        </div>
+                        <p class="text-xs text-yellow-600 mt-2">
+                            <i class="fas fa-info-circle mr-1"></i> 
+                            Bu parol admin tomonidan o'zgartirilguncha amal qiladi
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="flex gap-3 mt-6">
+            <button onclick="closePasswordModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg transition">
+                Yopish
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentAdminId = null;
+
+// Parolni ko'rsatish modalini ochish (faqat superuser)
+function showPasswordModal(adminId, adminName) {
+    currentAdminId = adminId;
+    document.getElementById('modal_admin_name').innerHTML = adminName;
+    document.getElementById('modal_username').innerHTML = 'Yuklanmoqda...';
+    document.getElementById('modal_password').innerHTML = '••••••••';
+    document.getElementById('passwordModal').style.display = 'block';
+    
+    // AJAX orqali parolni olish
+    fetch(`/api/admin-get-plain-password/${adminId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('modal_username').innerHTML = data.username;
+                document.getElementById('modal_password').innerHTML = data.password;
+            } else {
+                document.getElementById('modal_password').innerHTML = 'Xatolik!';
+            }
+        })
+        .catch(error => {
+            console.error('Xato:', error);
+            document.getElementById('modal_password').innerHTML = 'Ulanish xatosi!';
+        });
+}
+
+function closePasswordModal() {
+    document.getElementById('passwordModal').style.display = 'none';
+}
+
+function copyPassword() {
+    const passwordText = document.getElementById('modal_password').innerText;
+    navigator.clipboard.writeText(passwordText).then(() => {
+        alert('Parol nusxa olindi!');
+    });
+}
+
+// Tahrirlash funksiyasi
+function editAdmin(adminId) {
+    window.location.href = `/admin-edit/${adminId}/`;
+}
+
+// Qidirish
+document.getElementById('searchInput').addEventListener('keyup', function() {
+    let searchText = this.value.toLowerCase();
+    let table = document.getElementById('adminTable');
+    let rows = table.getElementsByTagName('tr');
+    
+    for (let i = 1; i < rows.length; i++) {
+        let row = rows[i];
+        let name = row.cells[1]?.innerText.toLowerCase() || '';
+        let username = row.cells[2]?.innerText.toLowerCase() || '';
+        let email = row.cells[3]?.innerText.toLowerCase() || '';
+        
+        if (name.includes(searchText) || username.includes(searchText) || email.includes(searchText)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    }
+});
+
+// ESC bilan yopish
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closePasswordModal();
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,208 @@
+{% extends 'groups/base.html' %}
+{% load static %}
+{% block title %}Sertifikat{% endblock %}
+{% block content %}
+<a href="{% url 'admin_panel' %}" class="fixed top-4 left-4 z-20 bg-white/80 backdrop-blur rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-white shadow-sm border border-gray-200 transition flex items-center gap-2">
+    <i class="fas fa-arrow-left"></i> Orqaga
+</a>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Parisienne&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap");
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #222; font-family: "Poppins", sans-serif; padding: 20px; }
+.certificate, .certificate img, .field, .teacher, .stamp {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.modal {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center; z-index: 10;
+}
+.modal-box { width: 400px; background: white; padding: 20px; border-radius: 12px; }
+.modal-box h2 { margin-bottom: 15px; }
+.modal-box input, .modal-box select { width: 100%; height: 45px; margin-bottom: 12px; padding: 0 10px; font-size: 16px; }
+.btns { display: flex; gap: 10px; }
+.btns button { padding: 10px 16px; cursor: pointer; }
+.certificate {
+  width: 1123px; max-width: 100%; margin: 0 auto; position: relative;
+  aspect-ratio: 1.414 / 1;
+  overflow: hidden;
+}
+.certificate img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.field { position: absolute; text-align: center; color: #000; }
+.name {
+  top: 52%; left: 0; width: 100%;
+  font-size: 72px; font-weight: 500;
+  text-transform: capitalize;
+  font-family: "Parisienne", cursive;
+  line-height: 1.2;
+  letter-spacing: 1px;
+}
+.name-label {
+  top: 45%; left: 0; width: 100%;
+  font-size: 12px; font-weight: 400;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  font-family: "Poppins", sans-serif;
+}
+.direction {
+  top: 71%; left: 0; width: 100%;
+  font-size: 22px; font-weight: 500;
+  font-family: "Playfair Display", serif;
+  letter-spacing: 0.5px;
+}
+.direction-label {
+  top: 68%; left: 0; width: 100%;
+  font-size: 11px; font-weight: 400;
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  font-family: "Poppins", sans-serif;
+}
+.teacher {
+  right: 8%; bottom: 9%; width: 20%;
+  font-size: 14px; color: #1a1a1a;
+  font-weight: 500; text-align: center;
+  font-family: "Poppins", sans-serif;
+  line-height: 1.3;
+}
+.teacher-label {
+  right: 8%; bottom: 14%; width: 20%;
+  font-size: 9px; font-weight: 400;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-align: center;
+  font-family: "Poppins", sans-serif;
+}
+.stamp {
+  position: absolute;
+  left: 10%; bottom: 10%;
+  width: 110px;
+  height: 110px;
+  opacity: 0.7;
+}
+.stamp svg {
+  width: 100%;
+  height: 100%;
+}
+.score-field {
+  position: absolute;
+  right: 10%; bottom: 25%;
+  text-align: center;
+  font-family: "Poppins", sans-serif;
+}
+.score-field .score-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1a5c1a;
+}
+.score-field .score-label {
+  font-size: 9px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+.date-field {
+  position: absolute;
+  left: 50%; bottom: 6%;
+  transform: translateX(-50%);
+  text-align: center;
+  font-family: "Poppins", sans-serif;
+  font-size: 11px;
+  color: #555;
+  letter-spacing: 1px;
+}
+@page { size: A4 landscape; margin: 0; }
+@media print {
+  * { margin: 0; padding: 0; }
+  html, body { background: white; margin: 0; padding: 0; height: 100%; width: 100%; }
+  body { padding: 0; }
+  .modal { display: none !important; }
+  a.fixed { display: none !important; }
+  .certificate {
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    max-width: 100%; aspect-ratio: auto;
+  }
+  .certificate img { width: 100%; height: 100%; object-fit: fill; }
+  .teacher { color: #1a1a1a !important; }
+}
+</style>
+
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <h2>Sertifikat ma'lumotlari</h2>
+    <input type="text" id="nameInput" placeholder="Ism familiya" />
+    <select id="directionInput">
+      <option value="">Yo'nalishni tanlang</option>
+      <option value="English Proficiency Level: A1 (Starter)">A1 (Starter)</option>
+      <option value="English Proficiency Level: A1 (Beginner)">A1 (Beginner)</option>
+      <option value="English Proficiency Level: A2 (Elementary)">A2 (Elementary)</option>
+      <option value="English Proficiency Level: B1 (Pre-Intermediate)">B1 (Pre-Intermediate)</option>
+      <option value="English Proficiency Level: B2 (Intermediate)">B2 (Intermediate)</option>
+      <option value="English Proficiency Level: C1 (Upper-Intermediate)">C1 (Upper-Intermediate)</option>
+      <option value="English Proficiency Level: C2 (Advanced)">C2 (Advanced)</option>
+    </select>
+    <select id="teacherInput">
+      <option value="">O'qituvchini tanlang</option>
+      <option value="R.Tajiddinova">R.Tajiddinova</option>
+      <option value="F.Bakhromjonova">F.Bakhromjonova</option>
+      <option value="M.Abdujabborova">M.Abdujabborova</option>
+      <option value="S.Rakhmonberdiyeva">S.Rakhmonberdiyeva</option>
+      <option value="M.Makhammadjonova">M.Makhammadjonova</option>
+      <option value="G.Umaraliyeva">G.Umaraliyeva</option>
+      <option value="M.Akhmedova">M.Akhmedova</option>
+      <option value="O.Shakxobiddinova">O.Shakxobiddinova</option>
+      <option value="R.Gulomova">R.Gulomova</option>
+      <option value="G.Orinboyeva">G.Orinboyeva</option>
+      <option value="A.Akhmedov">A.Akhmedov</option>
+    </select>
+    <div class="btns">
+      <button onclick="generateCertificate()" class="bg-gray-900 text-white rounded-lg">Sertifikat yaratish</button>
+      <button onclick="window.print()" class="bg-gray-200 rounded-lg">Chop etish</button>
+    </div>
+  </div>
+</div>
+
+<div class="certificate">
+  <img src="{% if bg_image %}{{ bg_image }}{% else %}{% static 'sertifikat.png' %}{% endif %}" alt="Sertifikat" />
+  <p class="field name-label">Ushbu sertifikat topshirildi</p>
+  <h1 class="field name" id="nameText"></h1>
+  <p class="field direction-label">Yo'nalish</p>
+  <p class="field direction" id="directionText"></p>
+  <p class="field teacher-label">O'qituvchi</p>
+  <p class="field teacher" id="teacherText"></p>
+  <div class="stamp" id="stamp">
+    <svg viewBox="0 0 120 120">
+      <circle cx="60" cy="60" r="55" fill="none" stroke="#c0392b" stroke-width="2.5" opacity="0.8"/>
+      <circle cx="60" cy="60" r="50" fill="none" stroke="#c0392b" stroke-width="1" opacity="0.6"/>
+      <path d="M 60 10 A 50 50 0 1 1 59.9 10" fill="none" stroke="#c0392b" stroke-width="1.5" opacity="0.8"/>
+      <text x="60" y="38" text-anchor="middle" font-size="8" fill="#c0392b" font-family="Poppins, sans-serif" font-weight="600" opacity="0.8">TASDIQLANGAN</text>
+      <text x="60" y="50" text-anchor="middle" font-size="6" fill="#c0392b" font-family="Poppins, sans-serif" opacity="0.7">CERTIFIED</text>
+      <polygon points="60,52 64,62 75,62 66,69 69,80 60,73 51,80 54,69 45,62 56,62" fill="#c0392b" opacity="0.6"/>
+      <text x="60" y="100" text-anchor="middle" font-size="7" fill="#c0392b" font-family="Poppins, sans-serif" font-weight="500" opacity="0.7">№ 000001</text>
+    </svg>
+  </div>
+  <div class="date-field" id="dateText"></div>
+</div>
+
+<script>
+function generateCertificate() {
+  const name = document.getElementById("nameInput").value.trim();
+  const direction = document.getElementById("directionInput").value;
+  const teacher = document.getElementById("teacherInput").value;
+  if (!name || !direction || !teacher) { alert("Barcha maydonlarni to'ldiring"); return; }
+  document.getElementById("nameText").textContent = name;
+  document.getElementById("directionText").textContent = direction;
+  document.getElementById("teacherText").textContent = teacher;
+
+  const now = new Date();
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  const dateStr = now.toLocaleDateString('uz-UZ', options);
+  document.getElementById("dateText").textContent = 'Berilgan sana: ' + dateStr;
+
+  document.getElementById("modal").style.display = "none";
+}
+</script>
+{% endblock %}

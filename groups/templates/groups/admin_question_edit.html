@@ -1,0 +1,262 @@
+{% extends 'groups/base.html' %}
+
+{% block title %}Savolni tahrirlash{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-white py-8">
+    <div class="max-w-4xl mx-auto px-4">
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <a href="{% url 'admin_question_list' %}" class="text-gray-400 hover:text-gray-600 text-sm inline-flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Savollar ro'yxatiga qaytish
+            </a>
+            <h1 class="text-2xl md:text-3xl font-light text-gray-900 mt-3">Savolni tahrirlash</h1>
+            <p class="text-gray-400 text-sm mt-1">
+                ID: {{ question.id }} | 
+                Turi: {{ question.get_question_type_display }} | 
+                Kategoriya: {{ question.category.name }}
+            </p>
+        </div>
+
+        <!-- Form -->
+        <div class="border border-gray-200 bg-white p-6">
+            <form method="post">
+                {% csrf_token %}
+                
+                <!-- Kategoriya tanlash -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Kategoriya</label>
+                    <select name="category" required class="w-full border border-gray-200 rounded-lg px-4 py-2 focus:border-black focus:outline-none">
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if question.category.id == cat.id %}selected{% endif %}>
+                            {{ cat.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Savol turiga qarab forma -->
+                {% if question.question_type == 'fill_blank' %}
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Savol matni</label>
+                        <textarea name="fb_question_text" rows="3" required class="w-full border border-gray-200 rounded-lg px-4 py-2">{{ question.question_text }}</textarea>
+                        <p class="text-xs text-gray-400 mt-1">Bo'sh joy o'rniga "_____" yoki [blank] dan foydalaning</p>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">To'g'ri javob</label>
+                        <input type="text" name="fb_correct_answer" value="{{ question.correct_answer }}" required class="w-full border border-gray-200 rounded-lg px-4 py-2">
+                        <p class="text-xs text-gray-400 mt-1">Bir nechta variant bo'lsa, | bilan ajrating (masalan: apple|olma)</p>
+                    </div>
+                    
+                {% elif question.question_type == 'fill_blank_no_word' %}
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Savol matni</label>
+                        <textarea name="fbnw_question_text" rows="3" required class="w-full border border-gray-200 rounded-lg px-4 py-2">{{ question.question_text }}</textarea>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">To'g'ri javob</label>
+                        <input type="text" name="fbnw_correct_answer" value="{{ question.correct_answer }}" required class="w-full border border-gray-200 rounded-lg px-4 py-2">
+                    </div>
+                    
+                {% elif question.question_type == 'sentence_arrangement' %}
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Aralashtirilgan so'zlar</label>
+                        <textarea name="sa_scrambled_words" rows="2" required class="w-full border border-gray-200 rounded-lg px-4 py-2">{{ question.scrambled_words }}</textarea>
+                        <p class="text-xs text-gray-400 mt-1">So'zlarni vergul yoki bo'sh joy bilan ajrating</p>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">To'g'ri jumla</label>
+                        <textarea name="sa_correct_sentence" rows="2" required class="w-full border border-gray-200 rounded-lg px-4 py-2">{{ question.correct_sentence }}</textarea>
+                    </div>
+                    
+                {% elif question.question_type == 'reading_comprehension' %}
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <p class="text-yellow-700 mb-2">📖 Matnli savol</p>
+                        <p class="text-sm mb-2"><strong>Matn:</strong> {{ question.reading_text.title }}</p>
+                        <a href="{% url 'reading_text_edit' question.reading_text.id %}" class="text-blue-600 hover:underline text-sm">
+                            Matn va savollarni tahrirlash sahifasiga o'tish →
+                        </a>
+                    </div>
+                    
+                {% elif question.question_type == 'true_false' %}
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Savol matni</label>
+                        <textarea name="tf_question_text" rows="3" required class="w-full border border-gray-200 rounded-lg px-4 py-2">{{ question.question_text }}</textarea>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">To'g'ri javob</label>
+                        <select name="tf_correct_answer" required class="w-full border border-gray-200 rounded-lg px-4 py-2">
+                            <option value="true" {% if question.correct_answer == 'true' %}selected{% endif %}>✅ To'g'ri</option>
+                            <option value="false" {% if question.correct_answer == 'false' %}selected{% endif %}>❌ Noto'g'ri</option>
+                        </select>
+                    </div>
+                    
+                {% elif question.question_type == 'multiple_choice' %}
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Savol matni</label>
+                        <textarea name="mc_question_text" rows="3" required class="w-full border border-gray-200 rounded-lg px-4 py-2">{{ question.question_text }}</textarea>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Variantlar</label>
+                        <div id="options-container">
+                            {% for option in question.options_list %}
+                            <div class="flex gap-2 mb-2 option-item">
+                                <input type="text" name="option_{{ forloop.counter0 }}" value="{{ option }}" 
+                                       class="flex-1 border border-gray-200 rounded-lg px-4 py-2">
+                                <button type="button" class="remove-option text-red-500 hover:text-red-700">🗑️</button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button type="button" id="add-option" class="mt-2 text-sm text-blue-600 hover:text-blue-800">+ Yangi variant</button>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">To'g'ri javob</label>
+                        <select name="correct_option" required class="w-full border border-gray-200 rounded-lg px-4 py-2">
+                            {% for option in question.options_list %}
+                            <option value="{{ forloop.counter0 }}" {% if question.correct_answer == option %}selected{% endif %}>
+                                {{ option }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                {% elif question.question_type == 'underline_correct' %}
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Gap matni</label>
+                        <textarea name="uc_sentence_text" rows="3" required class="w-full border border-gray-200 rounded-lg px-4 py-2">{{ question.question_text }}</textarea>
+                        <p class="text-xs text-gray-400 mt-1">To'g'ri variantlarni / bilan ajrating (masalan: apple/apples)</p>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">To'g'ri javob</label>
+                        <input type="text" name="uc_correct_answer" value="{{ question.correct_answer }}" required class="w-full border border-gray-200 rounded-lg px-4 py-2">
+                    </div>
+                    
+                {% elif question.question_type == 'matching' %}
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Ko'rsatma</label>
+                        <input type="text" name="matching_instruction" value="{{ question.question_text }}" class="w-full border border-gray-200 rounded-lg px-4 py-2">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Chap tomon</label>
+                            <div id="left-items">
+                                {% for item in question.matching_left %}
+                                <div class="flex gap-2 mb-2">
+                                    <input type="text" name="left_item_{{ forloop.counter0 }}" value="{{ item }}" class="flex-1 border border-gray-200 rounded-lg px-4 py-2">
+                                    <button type="button" class="remove-left text-red-500">🗑️</button>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <button type="button" id="add-left" class="mt-2 text-sm text-blue-600">+ Qo'shish</button>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">O'ng tomon</label>
+                            <div id="right-items">
+                                {% for item in question.matching_right %}
+                                <div class="flex gap-2 mb-2">
+                                    <input type="text" name="right_item_{{ forloop.counter0 }}" value="{{ item }}" class="flex-1 border border-gray-200 rounded-lg px-4 py-2">
+                                    <button type="button" class="remove-right text-red-500">🗑️</button>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <button type="button" id="add-right" class="mt-2 text-sm text-blue-600">+ Qo'shish</button>
+                        </div>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Mosliklar</label>
+                        <div id="matches-container">
+                            {% for key, value in question.matching_matches.items %}
+                            <div class="flex gap-2 mb-2">
+                                <span class="w-24 pt-2">Element {{ key }}:</span>
+                                <select name="match_answer_{{ forloop.counter0 }}" class="flex-1 border border-gray-200 rounded-lg px-4 py-2">
+                                    <option value="">Tanlang</option>
+                                    {% for item in question.matching_right %}
+                                    <option value="{{ item }}" {% if value == item %}selected{% endif %}>{{ item }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                {% elif question.question_type == 'complete_the_words' %}
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Gap matni</label>
+                        <textarea name="ctw_sentence_text" rows="3" required class="w-full border border-gray-200 rounded-lg px-4 py-2">{{ question.question_text }}</textarea>
+                        <p class="text-xs text-gray-400 mt-1">Masalan: "I ___ (to be) a student"</p>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">To'liq so'z</label>
+                        <input type="text" name="ctw_correct_answer" value="{{ question.correct_answer }}" required class="w-full border border-gray-200 rounded-lg px-4 py-2">
+                    </div>
+                {% elif question.question_type == 'writing' %}
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Mavzu (Writing prompt)</label>
+                        <textarea name="w_topic" rows="3" required class="w-full border border-gray-200 rounded-lg px-4 py-2">{{ question.question_text }}</textarea>
+                        <p class="text-xs text-gray-400 mt-1">Student shu mavzuga oid matn yozadi</p>
+                    </div>
+                    <div class="p-3 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700 mb-6">
+                        📌 Bu savol turida student javobi admin tomonidan qo'lda baholanadi.
+                    </div>
+                {% elif question.question_type == 'speaking' %}
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Mavzu (Speaking prompt)</label>
+                        <textarea name="s_topic" rows="3" required class="w-full border border-gray-200 rounded-lg px-4 py-2">{{ question.question_text }}</textarea>
+                        <p class="text-xs text-gray-400 mt-1">Og'zaki imtihon mavzusi. Studentlarga ko'rinmaydi.</p>
+                    </div>
+                    <div class="p-3 bg-purple-50 border border-purple-200 rounded text-xs text-purple-700 mb-6">
+                        🎤 Bu savol turida ball o'qituvchi tomonidan qo'lda qo'yiladi.
+                    </div>
+                {% endif %}
+                
+                <!-- Ball -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Ball (necha ballik savol) <span class="text-red-500">*</span></label>
+                    <input type="number" name="points" value="{{ question.points|default:1 }}" min="1" max="100" class="w-32 border border-gray-200 rounded-lg px-4 py-2">
+                    <p class="text-xs text-gray-400 mt-1">📌 Bu savol necha ball ekanligini kiriting.</p>
+                </div>
+
+                <!-- Tugmalar -->
+                <div class="flex gap-3 pt-4 border-t border-gray-200 mt-6">
+                    <button type="submit" class="bg-black hover:bg-gray-800 text-white px-6 py-2 rounded-lg transition">
+                        💾 Saqlash
+                    </button>
+                    <a href="{% url 'admin_question_list' %}" class="border border-gray-300 bg-white hover:bg-gray-50 text-gray-600 px-6 py-2 rounded-lg transition">
+                        Bekor qilish
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Multiple Choice uchun variant qo'shish
+const addOptionBtn = document.getElementById('add-option');
+if (addOptionBtn) {
+    addOptionBtn.addEventListener('click', function() {
+        const container = document.getElementById('options-container');
+        const index = container.children.length;
+        const div = document.createElement('div');
+        div.className = 'flex gap-2 mb-2 option-item';
+        div.innerHTML = `
+            <input type="text" name="option_${index}" placeholder="Yangi variant" 
+                   class="flex-1 border border-gray-200 rounded-lg px-4 py-2">
+            <button type="button" class="remove-option text-red-500 hover:text-red-700">🗑️</button>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// Variantni o'chirish
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('remove-option')) {
+        e.target.closest('.option-item').remove();
+    }
+});
+</script>
+{% endblock %}

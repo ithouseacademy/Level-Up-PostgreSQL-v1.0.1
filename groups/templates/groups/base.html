@@ -1,0 +1,504 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0059ff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#1e293b" media="(prefers-color-scheme: dark)">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="IT House">
+    <meta name="description" content="IT House Level Up - Guruhlar boshqaruvi va professional IT platforma">
+    <meta name="keywords" content="IT, guruhlar, boshqaruv, level up">
+    <meta name="author" content="IT House Level Up">
+    
+    <title>{% block title %}IT House Level Up - Guruhlar Boshqaruvi{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    
+    <!-- Apple Touch Icon -->
+    <link rel="apple-touch-icon" href="{% static 'icons/icon-192.png' %}">
+    
+    <!-- Favicon -->
+<link rel="icon" type="img" href="{% static 'icons/icon-72.png' %}">     
+    <link rel="icon" type="image/png" href="{% static 'icons/icon-72.png' %}">
+    <link rel="shortcut icon" type="image/png" href="{% static 'icons/icon-72.png' %}">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        body {
+            background: #f1f5f9;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        
+        /* Minimal scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        
+        /* Simple animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        /* Loading spinner for PWA */
+        .pwa-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(79, 70, 229, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s;
+        }
+        
+        .pwa-loader.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Install banner */
+        .install-pwa-banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: white;
+            border-top: 2px solid #e5e7eb;
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 16px 20px;
+            padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+        }
+        
+        .install-pwa-banner.show {
+            transform: translateY(0);
+        }
+        
+        @media (display-mode: standalone) {
+            .install-pwa-banner {
+                display: none;
+            }
+        }
+        
+        .install-pwa-banner .app-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: #0059ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        /* "X" dismiss button */
+        .install-pwa-banner .dismiss-btn {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            color: #9ca3af;
+            cursor: pointer;
+            padding: 4px;
+        }
+        .install-pwa-banner .dismiss-btn:hover {
+            color: #6b7280;
+        }
+        
+        /* Offline indicator */
+        .offline-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #ef4444;
+            color: white;
+            text-align: center;
+            padding: 8px;
+            font-size: 14px;
+            z-index: 9999;
+            transform: translateY(-100%);
+            transition: transform 0.3s;
+        }
+        
+        .offline-indicator.show {
+            transform: translateY(0);
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="antialiased">
+    <!-- PWA Loader -->
+    <div id="pwaLoader" class="pwa-loader">
+        <div class="spinner"></div>
+    </div>
+    
+    <!-- Offline Indicator -->
+    <div id="offlineIndicator" class="offline-indicator">
+        <i class="fas fa-wifi mr-2"></i> Internet aloqasi uzildi. Offline rejimda ishlayapsiz.
+    </div>
+    
+    <!-- Install PWA Banner -->
+    <div id="installPWABanner" class="install-pwa-banner hidden">
+        <div class="dismiss-btn" id="dismissInstall" title="Yopish">
+            <i class="fas fa-times"></i>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="app-icon">
+                <i class="fas fa-graduation-cap text-white text-xl"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="font-semibold text-gray-900 text-sm">IT House Level Up</p>
+                <p class="text-xs text-gray-500 truncate">Qulay foydalanish uchun ilovani o'rnating</p>
+            </div>
+            <button id="installBtn" class="bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium px-5 py-2.5 rounded-lg whitespace-nowrap transition shrink-0">
+                <i class="fas fa-download mr-1.5"></i> Yuklab olish
+            </button>
+        </div>
+    </div>
+    
+    <!-- iOS Install Instructions (hidden by default) -->
+    <div id="iosInstallHint" class="hidden fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-6">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 relative animate-fade">
+            <button onclick="document.getElementById('iosInstallHint').classList.add('hidden')" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="text-center mb-4">
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-mobile-alt text-blue-600 text-2xl"></i>
+                </div>
+                <h3 class="font-semibold text-gray-900 text-lg">Ilovani o'rnatish</h3>
+                <p class="text-sm text-gray-500 mt-2">Ilovani ekran uyiga qo'shish uchun:</p>
+            </div>
+            <ol class="space-y-3 text-sm text-gray-700">
+                <li class="flex items-start gap-3">
+                    <span class="bg-gray-100 text-gray-600 w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium shrink-0">1</span>
+                    <span>Safari'da <i class="fas fa-share-alt text-blue-500 mx-1"></i> <strong>Ulashish</strong> tugmasini bosing</span>
+                </li>
+                <li class="flex items-start gap-3">
+                    <span class="bg-gray-100 text-gray-600 w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium shrink-0">2</span>
+                    <span><i class="fas fa-plus-square text-blue-500 mx-1"></i> <strong>Ekran uyiga qo'shish</strong> ni tanlang</span>
+                </li>
+                <li class="flex items-start gap-3">
+                    <span class="bg-gray-100 text-gray-600 w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium shrink-0">3</span>
+                    <span>Yuqori o'ng burchakdagi <strong>Qo'shish</strong> tugmasini bosing</span>
+                </li>
+            </ol>
+            <button onclick="document.getElementById('iosInstallHint').classList.add('hidden')" class="w-full mt-5 bg-gray-900 text-white py-2.5 rounded-lg text-sm font-medium">
+                Tushunarli
+            </button>
+        </div>
+    </div>
+    
+    {% if messages %}
+        <div class="fixed top-4 right-4 z-50 space-y-2">
+            {% for message in messages %}
+                <div class="bg-white border-l-4 {% if message.tags == 'success' %}border-green-500{% elif message.tags == 'error' %}border-red-500{% else %}border-blue-500{% endif %} shadow-lg rounded-lg px-4 py-3 animate-fade">
+                    <div class="flex items-center">
+                        <i class="fas {% if message.tags == 'success' %}fa-check-circle text-green-500{% elif message.tags == 'error' %}fa-exclamation-circle text-red-500{% else %}fa-info-circle text-blue-500{% endif %} mr-3"></i>
+                        <p class="text-gray-700 text-sm">{{ message }}</p>
+                        <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    
+    {% block content %}{% endblock %}
+    
+    <script>
+        // Hide loader after page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const loader = document.getElementById('pwaLoader');
+                if (loader) {
+                    loader.classList.add('hidden');
+                    setTimeout(() => loader.remove(), 500);
+                }
+            }, 500);
+        });
+        
+        // PWA Installation
+        let deferredPrompt;
+        const installBtn = document.getElementById('installBtn');
+        const installBanner = document.getElementById('installPWABanner');
+        const dismissBtn = document.getElementById('dismissInstall');
+        const iosHint = document.getElementById('iosInstallHint');
+        const PWA_DISMISSED_KEY = 'pwa_banner_dismissed';
+        
+        // Check if already in standalone mode (installed)
+        function isPwaInstalled() {
+            return window.matchMedia('(display-mode: standalone)').matches ||
+                   window.matchMedia('(display-mode: fullscreen)').matches ||
+                   window.navigator.standalone === true;
+        }
+        
+        // Check if banner was dismissed before
+        function isBannerDismissed() {
+            try {
+                return localStorage.getItem(PWA_DISMISSED_KEY) === 'true';
+            } catch(e) { return false; }
+        }
+        
+        // Show banner
+        function showInstallBanner() {
+            if (!isPwaInstalled() && !isBannerDismissed() && installBanner) {
+                setTimeout(() => {
+                    installBanner.classList.remove('hidden');
+                    // Trigger animation after display
+                    setTimeout(() => installBanner.classList.add('show'), 50);
+                }, 2000); // 2 sekunddan keyin chiqadi
+            }
+        }
+        
+        // Hide banner
+        function hideInstallBanner() {
+            if (installBanner) {
+                installBanner.classList.remove('show');
+                setTimeout(() => installBanner.classList.add('hidden'), 400);
+            }
+        }
+        
+        // Dismiss permanently
+        function dismissBanner() {
+            try { localStorage.setItem(PWA_DISMISSED_KEY, 'true'); } catch(e) {}
+            hideInstallBanner();
+        }
+        
+        // Standard PWA install (Android Chrome, etc.)
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            showInstallBanner();
+        });
+        
+        // Install button click
+        if (installBtn) {
+            installBtn.addEventListener('click', async () => {
+                // iOS detection
+                const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+                if (isIOS) {
+                    // Show iOS instructions instead
+                    dismissBanner();
+                    iosHint.classList.remove('hidden');
+                    return;
+                }
+                
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        console.log('IT House Level Up PWA installed');
+                        hideInstallBanner();
+                        try { localStorage.removeItem(PWA_DISMISSED_KEY); } catch(e) {}
+                    } else {
+                        dismissBanner();
+                    }
+                    deferredPrompt = null;
+                } else {
+                    // beforeinstallprompt didn't fire, maybe unsupported browser
+                    dismissBanner();
+                }
+            });
+        }
+        
+        // Dismiss button
+        if (dismissBtn) {
+            dismissBtn.addEventListener('click', dismissBanner);
+        }
+        
+        // Show banner on page load if not installed (for all browsers)
+        // Also detect if app was just installed
+        window.addEventListener('appinstalled', () => {
+            hideInstallBanner();
+            try { localStorage.removeItem(PWA_DISMISSED_KEY); } catch(e) {}
+            console.log('IT House Level Up PWA was installed');
+        });
+        
+        // Listen for display mode changes (e.g., installed while page was open)
+        if (window.matchMedia) {
+            const displayModeQuery = window.matchMedia('(display-mode: standalone)');
+            displayModeQuery.addEventListener('change', (e) => {
+                if (e.matches) hideInstallBanner();
+            });
+        }
+        
+        // On page load, show banner after short delay if PWA not installed
+        if (!isPwaInstalled()) {
+            showInstallBanner();
+        }
+        
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('{% static "sw.js" %}')
+                    .then(registration => {
+                        console.log('IT House Level Up Service Worker registered:', registration.scope);
+                        
+                        // Check for updates
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // New update available
+                                    const updateNotification = confirm('Yangi versiya mavjud! Yangilash kerakmi?');
+                                    if (updateNotification) {
+                                        window.location.reload();
+                                    }
+                                }
+                            });
+                        });
+                    })
+                    .catch(error => {
+                        console.log('Service Worker registration failed:', error);
+                    });
+            });
+        }
+        
+        // Online/Offline detection
+        window.addEventListener('online', () => {
+            const indicator = document.getElementById('offlineIndicator');
+            indicator.classList.remove('show');
+            // Refresh data when back online
+            if (window.refreshData) window.refreshData();
+        });
+        
+        window.addEventListener('offline', () => {
+            const indicator = document.getElementById('offlineIndicator');
+            indicator.classList.add('show');
+            setTimeout(() => {
+                indicator.classList.remove('show');
+            }, 3000);
+        });
+        
+        // Auto-hide messages
+        setTimeout(() => {
+            document.querySelectorAll('.fixed.top-4.right-4 .bg-white').forEach(el => {
+                setTimeout(() => {
+                    if (el && el.remove) el.remove();
+                }, 4000);
+            });
+        }, 1000);
+        
+        // Check if running as PWA
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            console.log('IT House Level Up running as PWA');
+            document.body.classList.add('pwa-mode');
+        }
+        
+        // Background sync for offline actions
+        async function syncData() {
+            if ('serviceWorker' in navigator && 'SyncManager' in window) {
+                const registration = await navigator.serviceWorker.ready;
+                try {
+                    await registration.sync.register('sync-data');
+                    console.log('Background sync registered');
+                } catch (err) {
+                    console.log('Background sync failed:', err);
+                }
+            }
+        }
+        
+        // Push notification support
+        async function subscribeToPush() {
+            if ('serviceWorker' in navigator && 'PushManager' in window) {
+                try {
+                    const registration = await navigator.serviceWorker.ready;
+                    const subscription = await registration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: urlBase64ToUint8Array('YOUR_VAPID_PUBLIC_KEY')
+                    });
+                    console.log('Push subscription:', subscription);
+                    // Send subscription to server
+                    await fetch('/api/save-push-subscription/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(subscription)
+                    });
+                } catch (err) {
+                    console.log('Push subscription failed:', err);
+                }
+            }
+        }
+        
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+        }
+        
+        // Export functions for use in other scripts
+        window.pwaFunctions = {
+            syncData,
+            subscribeToPush
+        };
+
+        // ============================================================
+        // SAYT BO'YICHA HIMOYA (Ctrl+U, F12, PrintScreen)
+        // ============================================================
+        document.addEventListener('contextmenu', (e) => { e.preventDefault(); });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'F12' ||
+                e.key === 'PrintScreen' ||
+                e.keyCode === 44 ||
+                (e.ctrlKey && e.shiftKey && ['i', 'j'].includes(e.key.toLowerCase())) ||
+                (e.ctrlKey && ['u', 's'].includes(e.key.toLowerCase()))) {
+                e.preventDefault();
+            }
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

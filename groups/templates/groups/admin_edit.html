@@ -1,0 +1,123 @@
+<!-- groups/templates/groups/admin_edit.html -->
+{% extends 'groups/base.html' %}
+
+{% block title %}Admin Tahrirlash - {{ admin.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-2xl mx-auto px-4 py-8">
+        <div class="mb-6">
+            <a href="{% url 'admin_list' %}" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-arrow-left mr-1"></i> Orqaga
+            </a>
+        </div>
+        
+        <div class="bg-white rounded-lg border border-gray-200 shadow-lg">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-yellow-50 to-white">
+                <h2 class="text-xl font-semibold text-gray-900">
+                    <i class="fas fa-edit mr-2 text-yellow-600"></i> Admin Tahrirlash
+                </h2>
+                <p class="text-sm text-gray-500 mt-1">{{ admin.get_full_name }} ma'lumotlarini o'zgartirish</p>
+            </div>
+            
+            <form method="POST" class="p-6">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Ism</label>
+                        <input type="text" name="first_name" value="{{ admin.first_name }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Familiya</label>
+                        <input type="text" name="last_name" value="{{ admin.last_name }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="fas fa-user mr-1"></i> Username (Login)
+                    </label>
+                    <input type="text" name="username" value="{{ admin.username }}" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                </div>
+                
+                <div class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="fas fa-envelope mr-1"></i> Email
+                    </label>
+                    <input type="email" name="email" value="{{ admin.email|default:'' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                </div>
+                
+                <div class="mt-4 border-t pt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="fas fa-key mr-1"></i> Yangi Parol
+                        <span class="text-xs text-gray-400">(ixtiyoriy)</span>
+                    </label>
+                    <input type="password" name="password" id="password"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                           placeholder="Agar o'zgartirmoqchi bo'lsangiz kiriting">
+                    <p class="text-xs text-gray-400 mt-1">Agar parolni o'zgartirmoqchi bo'lmasangiz, bo'sh qoldiring</p>
+                </div>
+                
+                <div class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Yangi Parolni tasdiqlang</label>
+                    <input type="password" name="password_confirm" id="password_confirm"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                           placeholder="Parolni qayta kiriting">
+                </div>
+                
+                {% if user.is_superuser %}
+                <div class="mt-4 flex items-center">
+                    <input type="checkbox" name="is_superuser" id="is_superuser" 
+                           {% if admin.is_superuser %}checked{% endif %}
+                           class="w-4 h-4 text-yellow-600 border-gray-300 rounded focus:ring-yellow-500">
+                    <label for="is_superuser" class="ml-2 text-sm font-medium text-gray-700">
+                        <i class="fas fa-crown mr-1 text-yellow-600"></i> Superuser qilish
+                    </label>
+                </div>
+                {% endif %}
+                
+                <div class="flex gap-3 mt-6">
+                    <button type="submit" class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition">
+                        <i class="fas fa-save mr-2"></i> Saqlash
+                    </button>
+                    <a href="{% url 'admin_list' %}" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg transition text-center">
+                        Bekor qilish
+                    </a>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Hozirgi parol ma'lumoti -->
+        <div class="mt-4 bg-blue-50 rounded-lg p-4">
+            <div class="flex items-start">
+                <i class="fas fa-info-circle text-blue-600 mt-0.5 mr-3"></i>
+                <div class="text-sm text-blue-700">
+                    <p><strong>Hozirgi parol:</strong> 
+                        <code class="bg-white px-2 py-1 rounded">{{ plain_password|default:"Parol saqlanmagan" }}</code>
+                    </p>
+                    <p class="text-xs mt-1">⚠️ Parolni o'zgartirganda, eski parol o'chib ketadi!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Parol mosligini tekshirish
+document.querySelector('form').addEventListener('submit', function(e) {
+    let password = document.getElementById('password').value;
+    let confirm = document.getElementById('password_confirm').value;
+    
+    if (password !== confirm) {
+        e.preventDefault();
+        alert('Parollar mos kelmadi!');
+    }
+});
+</script>
+{% endblock %}

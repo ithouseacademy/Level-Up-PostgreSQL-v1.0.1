@@ -1,0 +1,217 @@
+{% extends 'groups/base.html' %}
+
+{% block title %}{{ student.full_name }} - Profil{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Back -->
+        <a href="{% url 'student_list' %}" class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-6 transition">
+            <i class="fas fa-arrow-left mr-2"></i> Foydalanuvchilar ro'yxatiga qaytish
+        </a>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- LEFT: Profile & Edit -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Profile Card -->
+                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                    <div class="bg-gradient-to-r from-gray-900 to-gray-700 px-6 py-8 text-center">
+                        <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-user-graduate text-white text-3xl"></i>
+                        </div>
+                        <h2 class="text-xl font-bold text-white">{{ student.full_name }}</h2>
+                        <p class="text-gray-300 text-sm">@{{ student.user.username }}</p>
+                    </div>
+                    <div class="p-5 space-y-4">
+                        <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+                            <span class="text-sm text-gray-500">Guruh</span>
+                            <span class="font-medium text-sm text-gray-900">
+                                {% if student.group %}
+                                    <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs">{{ student.group.name }}</span>
+                                {% else %}
+                                    <span class="text-gray-400">Biriktirilmagan</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+                            <span class="text-sm text-gray-500">Email</span>
+                            <span class="text-sm text-gray-900">{{ student.user.email|default:"-" }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-500">Ro'yxatdan o'tgan</span>
+                            <span class="text-sm text-gray-900">{{ student.user.date_joined|date:"d.m.Y" }}</span>
+                        </div>
+
+                        <div class="flex justify-between items-center pt-3 border-t border-gray-100">
+                            <span class="text-sm text-gray-500">Holati</span>
+                            <span class="text-sm">
+                                {% if student.is_archived %}
+                                    <span class="text-red-600"><i class="fas fa-archive mr-1"></i> Arxivlangan</span>
+                                {% else %}
+                                    <span class="text-green-600"><i class="fas fa-check-circle mr-1"></i> Faol</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit Form -->
+                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                    <div class="px-5 py-4 border-b border-gray-200 bg-gray-50">
+                        <h3 class="font-semibold text-gray-900 flex items-center">
+                            <i class="fas fa-edit text-gray-600 mr-2"></i> Tahrirlash
+                        </h3>
+                    </div>
+                    <form method="post" class="p-5 space-y-4">
+                        {% csrf_token %}
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Ism</label>
+                            <input type="text" name="first_name" value="{{ student.user.first_name }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-gray-400">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Familiya</label>
+                            <input type="text" name="last_name" value="{{ student.user.last_name }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-gray-400">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Username</label>
+                            <input type="text" name="username" value="{{ student.user.username }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-gray-400">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Email</label>
+                            <input type="email" name="email" value="{{ student.user.email }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-gray-400">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Guruh</label>
+                            <select name="group" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-gray-400">
+                                <option value="">-- Guruh tanlang --</option>
+                                {% for group in groups %}
+                                    <option value="{{ group.id }}" {% if student.group and student.group.id == group.id %}selected{% endif %}>{{ group.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="w-full bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium py-2.5 rounded-lg transition">
+                            <i class="fas fa-save mr-1"></i> Saqlash
+                        </button>
+                    </form>
+                    <div class="px-5 pb-5">
+                        {% if student.is_archived %}
+                        <a href="{% url 'student_restore' student.pk %}" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition">
+                            <i class="fas fa-undo"></i> Arxivdan chiqarish
+                        </a>
+                        {% else %}
+                        <a href="{% url 'student_archive' student.pk %}" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition">
+                            <i class="fas fa-archive"></i> Arxivga olish
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: Results & Certificates -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Test Results -->
+                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                        <h3 class="font-semibold text-gray-900 flex items-center">
+                            <i class="fas fa-chart-bar text-gray-600 mr-2"></i> Test natijalari
+                        </h3>
+                        <span class="text-xs text-gray-400">{{ results|length }} ta</span>
+                    </div>
+                    {% if results %}
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="text-left text-xs text-gray-500 bg-gray-50">
+                                    <th class="px-6 py-3">#</th>
+                                    <th class="px-6 py-3">Guruh</th>
+                                    <th class="px-6 py-3">Ball</th>
+                                    <th class="px-6 py-3">Urinish</th>
+                                    <th class="px-6 py-3">Sana</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                {% for r in results %}
+                                <tr class="text-sm hover:bg-gray-50 transition">
+                                    <td class="px-6 py-3 text-gray-500">{{ forloop.counter }}</td>
+                                    <td class="px-6 py-3">
+                                        <span class="text-gray-900">{{ r.group_name_saved|default:r.quiz_session.group.name|default:"-" }}</span>
+                                    </td>
+                                    <td class="px-6 py-3">
+                                        {% with threshold=r.quiz_session.group.exam_config.high_threshold|default:passing_threshold %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                                            {% if r.score >= threshold %}bg-green-100 text-green-700
+                                            {% else %}bg-red-100 text-red-700{% endif %}">
+                                            {{ r.score }}%
+                                        </span>
+                                        {% endwith %}
+                                    </td>
+                                    <td class="px-6 py-3 text-gray-600">{{ r.attempt_number }}</td>
+                                    <td class="px-6 py-3 text-gray-500">{{ r.submitted_at|date:"d.m.Y H:i" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-12 text-gray-400">
+                        <i class="fas fa-inbox text-4xl mb-3 block"></i>
+                        <p class="text-sm">Hali test natijalari mavjud emas</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Certificates -->
+                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                        <h3 class="font-semibold text-gray-900 flex items-center">
+                            <i class="fas fa-certificate text-gray-600 mr-2"></i> Sertifikatlar
+                        </h3>
+                        <span class="text-xs text-gray-400">{{ certificates|length }} ta</span>
+                    </div>
+                    {% if certificates %}
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="text-left text-xs text-gray-500 bg-gray-50">
+                                    <th class="px-6 py-3">#</th>
+                                    <th class="px-6 py-3">Guruh</th>
+                                    <th class="px-6 py-3">Ball</th>
+                                    <th class="px-6 py-3">Yaratilgan</th>
+                                    <th class="px-6 py-3">Ko'rish</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                {% for c in certificates %}
+                                <tr class="text-sm hover:bg-gray-50 transition">
+                                    <td class="px-6 py-3 text-gray-500">{{ forloop.counter }}</td>
+                                    <td class="px-6 py-3 text-gray-900">{{ c.group_name|default:c.quiz_result.group_name_saved|default:c.quiz_result.quiz_session.group.name|default:"-" }}</td>
+                                    <td class="px-6 py-3">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                                            {% if c.score >= passing_threshold %}bg-green-100 text-green-700
+                                            {% else %}bg-red-100 text-red-700{% endif %}">
+                                            {{ c.score }}%
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-3 text-gray-500">{{ c.generated_at|date:"d.m.Y H:i" }}</td>
+                                    <td class="px-6 py-3">
+                                        <a href="{% url 'view_certificate' c.id %}" class="text-gray-400 hover:text-gray-600" target="_blank">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-12 text-gray-400">
+                        <i class="fas fa-certificate text-4xl mb-3 block"></i>
+                        <p class="text-sm">Sertifikatlar mavjud emas</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

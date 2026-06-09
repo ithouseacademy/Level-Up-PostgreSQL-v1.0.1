@@ -1,0 +1,62 @@
+{% extends 'groups/base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-3">
+    <a href="{% url 'dashboard' %}" class="text-gray-500 hover:text-gray-700 text-sm transition">
+        <i class="fas fa-arrow-left mr-1"></i> Orqaga
+    </a>
+</div>
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="modern-card">
+            <div class="card-header-custom">
+                <i class="fas fa-user-edit me-2"></i>
+                <strong>Profilni tahrirlash</strong>
+                <a href="{% url 'dashboard' %}" class="btn btn-sm btn-secondary ms-auto">
+                    <i class="fas fa-times"></i>
+                </a>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Ism</label>
+                        <input type="text" name="first_name" class="form-control modern-input" 
+                               value="{{ student.user.first_name }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Familiya</label>
+                        <input type="text" name="last_name" class="form-control modern-input" 
+                               value="{{ student.user.last_name }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-control modern-input" 
+                               value="{{ student.user.email }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Telefon</label>
+                        <input type="text" name="phone" class="form-control modern-input" 
+                               value="{{ student.phone }}" placeholder="+998 XX XXX XX XX">
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary rounded-pill py-2">
+                            <i class="fas fa-save me-2"></i> Saqlash
+                        </button>
+                        <a href="{% url 'dashboard' %}" class="btn btn-secondary rounded-pill py-2">
+                            Bekor qilish
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

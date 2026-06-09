@@ -1,0 +1,103 @@
+{% extends 'groups/base.html' %}
+{% load static %}
+
+{% block title %}O'qituvchilar baholash tarixi{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4">
+
+        <!-- Header -->
+        <div class="mb-8">
+            <a href="{% url 'admin_panel' %}" class="text-gray-500 hover:text-gray-700 text-sm inline-flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Admin panelga qaytish
+            </a>
+            <h1 class="text-3xl font-light text-gray-900 mt-4 tracking-tight">Baholash tarixi</h1>
+            <p class="text-gray-500 text-sm mt-1 font-light">O'qituvchilar tomonidan qo'shilgan baholar</p>
+        </div>
+
+        {% if logs %}
+        <div class="bg-white border border-gray-200">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="border-b border-gray-100">
+                        <tr class="text-left text-xs text-gray-500 uppercase tracking-wider">
+                            <th class="px-6 py-3 font-medium">#</th>
+                            <th class="px-6 py-3 font-medium">Turi</th>
+                            <th class="px-6 py-3 font-medium">O'qituvchi</th>
+                            <th class="px-6 py-3 font-medium">Student</th>
+                            <th class="px-6 py-3 font-medium">Guruh</th>
+                            <th class="px-6 py-3 font-medium">Ball</th>
+                            <th class="px-6 py-3 font-medium">Izoh</th>
+                            <th class="px-6 py-3 font-medium">Vaqt</th>
+                         </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for log in logs %}
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-3 text-sm text-gray-500">{{ forloop.counter }}</td>
+                            <td class="px-6 py-3">
+                                {% if log.type == 'teacher_log' %}
+                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                                        <i class="fas fa-chalkboard-teacher text-xs"></i> Test bahosi
+                                    </span>
+                                {% elif log.type == 'quiz' %}
+                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
+                                        <i class="fas fa-file-alt text-xs"></i> Test
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium 
+                                        {% if log.assessment_type == 'speaking' %}bg-purple-100 text-purple-700
+                                        {% else %}bg-green-100 text-green-700{% endif %}">
+                                        <i class="fas {% if log.assessment_type == 'speaking' %}fa-microphone{% else %}fa-pen{% endif %} text-xs"></i>
+                                        {{ log.assessment_type_display }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-3">
+                                <div class="font-medium text-gray-800">{{ log.teacher_name }}</div>
+                            </td>
+                            <td class="px-6 py-3">
+                                <div class="text-gray-700">{{ log.student_name }}</div>
+                            </td>
+                            <td class="px-6 py-3">
+                                <span class="text-sm text-gray-500">{{ log.group_name }}</span>
+                            </td>
+                            <td class="px-6 py-3">
+                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm font-bold
+                                    {% if log.score >= 70 %}bg-green-100 text-green-700
+                                    {% elif log.score >= 40 %}bg-yellow-100 text-yellow-700
+                                    {% else %}bg-red-100 text-red-700{% endif %}">
+                                    {{ log.score }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-3">
+                                <span class="text-sm text-gray-500">{{ log.comment|default:"—" }}</span>
+                            </td>
+                            <td class="px-6 py-3 text-sm text-gray-400">
+                                {{ log.created_at|date:"d.m.Y H:i:s" }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="px-6 py-3 border-t border-gray-100 bg-gray-50 text-xs text-gray-400">
+                Jami {{ logs|length }} ta yozuv
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-20">
+            <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-chart-line text-gray-300 text-3xl"></i>
+            </div>
+            <h2 class="text-xl font-light text-gray-400">Baholar yo'q</h2>
+            <p class="text-sm text-gray-300 mt-2">Hali hech qanday baho qo'shilmagan.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

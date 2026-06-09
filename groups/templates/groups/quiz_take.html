@@ -1,0 +1,1822 @@
+{% extends 'groups/base.html' %}
+{% load static %}
+
+{% block title %}Test topshirish - {{ group.name }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100 py-8">
+    <div class="max-w-4xl mx-auto px-4">
+        <div class="bg-white rounded-none border border-gray-300 shadow-sm">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-gray-300 bg-white">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-800">{{ group.name }}</h1>
+                        <p class="text-sm text-gray-400 mt-1">{{ student.full_name }}</p>
+                    </div>
+                    <div class="text-right">
+                        {% if config.time_limit > 0 %}
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-100 px-4 py-2">
+                            <div class="text-xs text-gray-400">Qolgan vaqt</div>
+                            <div class="text-2xl font-mono font-bold text-gray-800" id="timer">--:--</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- TEST HOLATI -->
+            {% if not is_exam_active %}
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 py-16 text-center" id="waitingScreen">
+                    <div class="text-6xl mb-4">🔒</div>
+                    <h2 class="text-xl font-medium text-gray-700 mb-2">Test hali boshlanmagan</h2>
+                    <p class="text-gray-400 mb-4">Iltimos, o'qituvchingizni kuting...</p>
+                    <div class="flex justify-center gap-4">
+                        <div class="animate-pulse flex space-x-2">
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0s"></div>
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+                        </div>
+                    </div>
+                    <button onclick="checkExamStatus()" class="mt-6 inline-block text-black border-b border-black text-sm">
+                        🔄 Holatni tekshirish
+                    </button>
+                </div>
+
+            {% elif has_completed or already_submitted %}
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 py-16 text-center">
+                    <div class="text-6xl mb-4">📋</div>
+                    <h2 class="text-xl font-medium text-gray-700 mb-2">Siz testni topshirgansiz</h2>
+                    <p class="text-gray-400 mb-3">
+                        Siz maksimal {{ max_attempts }} marta topshirgansiz.<br>
+                        Urinishlar: {{ attempts_used }}/{{ max_attempts }}
+                    </p>
+                    <a href="{% url 'student_panel' %}" class="inline-block mt-4 text-black border-b border-black">Panelga qaytish</a>
+                </div>
+
+            {% else %}
+                <!-- PROGRESS BAR -->
+                <div class="mb-6">
+                    <div class="flex justify-between text-xs text-gray-400 mb-1">
+                        <span>Javob berilgan savollar</span>
+                        <span id="progressText">0/{{ total_questions }}</span>
+                    </div>
+                    <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div id="progressBar" class="h-full bg-black transition-all duration-300 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <form id="quizForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="group_id" value="{{ group.id }}" id="groupId">
+                    <input type="hidden" id="csrfToken" value="{{ csrf_token }}">
+
+                    <!-- KATEGORIYALAR SAHIFALARI -->
+                    <div class="book-container relative">
+                        {% for cat in category_list %}
+                            <div class="category-page" data-page="{{ forloop.counter0 }}" data-category-id="{{ cat.grouper.id }}" style="display: {% if forloop.first %}block{% else %}none{% endif %}">
+                                
+                                <!-- KATEGORIYA NOMI -->
+                                <div class="text-center mb-6">
+                                    <div class="inline-flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full text-xs text-gray-500 mb-3">
+                                        <span>📖 {{ forloop.counter }} / {{ category_list|length }}</span>
+                                        <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                        <span>{{ cat.list|length }} ta savol</span>
+                                    </div>
+                                    <h2 class="text-2xl font-bold text-gray-800">{{ cat.grouper.name }}</h2>
+                                    {% if cat.grouper.description %}
+                                        <p class="text-gray-500 text-sm mt-2 max-w-md mx-auto">{{ cat.grouper.description }}</p>
+                                    {% endif %}
+                                </div>
+
+                                <!-- KATEGORIYA AUDIO -->
+                                {% if cat.grouper.audio_file %}
+                                <div class="audio-card mb-6 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-100">
+                                    <div class="flex items-center justify-between flex-wrap gap-3">
+                                        <div class="flex items-center gap-4">
+                                            <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                                                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <h3 class="font-medium text-gray-800">Audio material</h3>
+                                                <p class="text-xs text-gray-500">{{ cat.grouper.name }} uchun audio</p>
+                                            </div>
+                                        </div>
+                                        <button type="button" class="play-audio-btn bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-full text-sm font-medium transition flex items-center gap-2 shadow-sm" data-category-id="{{ cat.grouper.id }}">
+                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M3 9v6h4l5 5V4L7 9H3z"/>
+                                            </svg>
+                                            Boshlash
+                                        </button>
+                                    </div>
+                                    <div class="mt-3 flex items-center gap-3">
+                                        <div class="flex-1">
+                                            <div class="text-xs text-gray-500 flex justify-between mb-1">
+                                                <span>Eshitilgan:</span>
+                                                <span class="audio-play-count font-medium" data-category-id="{{ cat.grouper.id }}">0/{% if cat.grouper.max_audio_plays == 0 %}∞{% else %}{{ cat.grouper.max_audio_plays }}{% endif %}</span>
+                                            </div>
+                                            <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                                <div class="audio-progress bg-purple-500 h-1.5 rounded-full" style="width: 0%"></div>
+                                            </div>
+                                        </div>
+                                        {% if cat.grouper.audio_instruction %}
+                                        <div class="text-xs text-gray-400 max-w-[200px]">
+                                            💡 {{ cat.grouper.audio_instruction|truncatewords:10 }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <audio class="category-audio hidden" data-category-id="{{ cat.grouper.id }}" preload="auto">
+                                        <source src="{{ cat.grouper.audio_file.url }}" type="audio/mpeg">
+                                    </audio>
+                                </div>
+                                {% endif %}
+
+                                <!-- WORD BANK -->
+                                {% if cat.has_fill_blank and cat.fill_blank_words %}
+                                <div class="wordbank-card bg-gray-50 rounded-xl p-4 mb-6 border border-gray-200">
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <span class="text-lg">📋</span>
+                                        <span class="text-sm font-medium text-gray-700">WORD BANK</span>
+                                        <span class="text-xs text-gray-400">(so'zni bosing, inputga tushadi)</span>
+                                    </div>
+                                    <div class="flex flex-wrap gap-2" id="wordBank-{{ cat.grouper.id }}">
+                                        {% for word in cat.fill_blank_words %}
+                                            <button type="button" class="word-btn bg-white border border-gray-300 hover:bg-black hover:text-white hover:border-black px-3 py-1.5 text-sm rounded-full transition shadow-sm" data-word="{{ word }}">
+                                                {{ word }}
+                                            </button>
+                                        {% empty %}
+                                            <span class="text-xs text-gray-400 italic">So'zlar mavjud emas</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- SAVOLLAR -->
+                                <div class="space-y-5">
+                                    {% for q in cat.list %}
+                                        <div class="question-card bg-white rounded-xl border border-gray-100 shadow-sm p-5 transition hover:shadow-md" data-qid="{{ q.id }}" data-question-type="{{ q.question_type }}">
+                                            <div class="flex justify-between items-start mb-3">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center text-xs font-medium text-gray-600">{{ forloop.counter }}</span>
+                                                    <span class="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full">
+                                                        {% if q.question_type == 'fill_blank' %}📝 Word Bank
+                                                        {% elif q.question_type == 'fill_blank_no_word' %}📝 Bo'sh joy
+                                                        {% elif q.question_type == 'sentence_arrangement' %}🔀 So'z tartib
+                                                        {% elif q.question_type == 'reading_comprehension' %}📖 Matnli
+                                                        {% elif q.question_type == 'true_false' %}✓✗ True/False
+                                                        {% elif q.question_type == 'multiple_choice' %}🔘 Test
+                                                        {% elif q.question_type == 'underline_correct' %}✏️ To'g'ri so'z
+                                                        {% elif q.question_type == 'matching' %}🔗 Moslashtirish
+                                                        {% elif q.question_type == 'cloze_multiple_blanks' %}📄 Ko'p bo'sh joy
+                                                        {% elif q.question_type == 'complete_the_words' %}🔤 So'zlarni to'ldirish
+                                                        {% elif q.question_type == 'writing' %}✍️ Yozma ish
+                                                        {% elif q.question_type == 'speaking' %}🎤 Og'zaki
+                                                        {% endif %}
+                                                    </span>
+                                                    <span class="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full font-medium">
+                                                        {{ q.points }} ball
+                                                    </span>
+                                                </div>
+                                                <div class="question-status">
+                                                    <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                    </svg>
+                                                </div>
+                                            </div>
+
+                                            <!-- SAVOL TURLARI -->
+
+                                            <!-- 1. FILL BLANK -->
+                                            {% if q.question_type == 'fill_blank' %}
+                                                <div class="text-gray-800 mb-3 leading-relaxed">
+                                                    {{ q.get_question_text_with_inline_inputs|safe }}
+                                                </div>
+                                                <input type="hidden" name="q_{{ q.id }}" class="hidden-answer-input" value="{{ user_answers|get_item:q.id }}">
+
+                                            <!-- 2. FILL BLANK NO WORD -->
+                                            {% elif q.question_type == 'fill_blank_no_word' %}
+                                                <div class="text-gray-800 mb-3 leading-relaxed">
+                                                    {{ q.get_question_text_with_inline_inputs|safe }}
+                                                </div>
+                                                <input type="hidden" name="q_{{ q.id }}" class="hidden-answer-input" value="{{ user_answers|get_item:q.id }}">
+
+                                            <!-- 3. SENTENCE ARRANGEMENT -->
+                                            {% elif q.question_type == 'sentence_arrangement' %}
+                                                <div class="mb-4">
+                                                    <p class="text-gray-500 text-sm mb-3">👉 So'zlarni to'g'ri tartibda joylashtiring:</p>
+                                                    
+                                                    <div class="flex flex-wrap gap-2 mb-3 words-container" data-question-id="{{ q.id }}">
+                                                        {% for w in q.get_scrambled_words_list %}
+                                                            <span class="sent-word bg-gray-100 hover:bg-gray-300 px-3 py-1.5 text-sm rounded-full cursor-pointer transition shadow-sm" data-word="{{ w }}">
+                                                                {{ w }}
+                                                            </span>
+                                                        {% endfor %}
+                                                    </div>
+                                                    
+                                                    <div class="sentence-builder bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-3 min-h-[70px] flex flex-wrap gap-2 mb-2"></div>
+                                                    
+                                                    <input type="hidden" name="q_{{ q.id }}" class="sentence-input" value="{{ user_answers|get_item:q.id }}">
+                                                    
+                                                    <button type="button" class="clear-sentence text-xs text-gray-400 hover:text-red-500 transition flex items-center gap-1 mt-2">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                        Hammasini tozalash
+                                                    </button>
+                                                </div>
+
+                                            <!-- 4. MULTIPLE CHOICE -->
+                                            {% elif q.question_type == 'multiple_choice' %}
+                                                <p class="text-gray-800 font-medium mb-3">{{ q.question_text }}</p>
+                                                <div class="space-y-2">
+                                                    {% for opt in q.get_options_list %}
+                                                        <label class="flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                                                            <input type="radio" name="q_{{ q.id }}" value="{{ opt }}" class="w-4 h-4 accent-black" {% if user_answers|get_item:q.id == opt %}checked{% endif %}>
+                                                            <span class="text-sm text-gray-700">{{ opt }}</span>
+                                                        </label>
+                                                    {% endfor %}
+                                                </div>
+
+                                            <!-- 5. TRUE/FALSE -->
+                                            {% elif q.question_type == 'true_false' %}
+                                                <p class="text-gray-800 mb-3">{{ q.question_text }}</p>
+                                                <div class="flex gap-4">
+                                                    <label class="flex items-center gap-2 cursor-pointer">
+                                                        <input type="radio" name="q_{{ q.id }}" value="true" class="w-4 h-4" {% if user_answers|get_item:q.id == 'true' %}checked{% endif %}> 
+                                                        <span class="text-green-600">✅ To'g'ri</span>
+                                                    </label>
+                                                    <label class="flex items-center gap-2 cursor-pointer">
+                                                        <input type="radio" name="q_{{ q.id }}" value="false" class="w-4 h-4" {% if user_answers|get_item:q.id == 'false' %}checked{% endif %}> 
+                                                        <span class="text-red-600">❌ Noto'g'ri</span>
+                                                    </label>
+                                                </div>
+
+                                            <!-- 6. UNDERLINE CORRECT -->
+                                            {% elif q.question_type == 'underline_correct' %}
+                                                <div class="mb-4">
+                                                    <p class="text-gray-800 font-medium mb-3">{{ q.question_text|safe }}</p>
+                                                    <div class="flex flex-wrap gap-3">
+                                                        {% for opt in q.get_underline_options %}
+                                                            <label class="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-full cursor-pointer hover:border-black transition {% if user_answers|get_item:q.id == opt %}bg-black text-white border-black{% endif %}">
+                                                                <input type="radio" name="q_{{ q.id }}" value="{{ opt }}" class="w-4 h-4 accent-black" {% if user_answers|get_item:q.id == opt %}checked{% endif %}>
+                                                                <span class="text-sm">{{ opt }}</span>
+                                                            </label>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+
+                                            <!-- 7. MATCHING -->
+                                            {% elif q.question_type == 'matching' %}
+                                                <div class="mb-4">
+                                                    <div class="grid grid-cols-2 gap-4 mb-4">
+                                                        <div class="bg-gray-50 rounded-lg p-3">
+                                                            <div class="font-medium text-sm text-gray-700 mb-2 pb-1 border-b border-gray-200">📌 Chap tomon</div>
+                                                            {% for item in q.get_matching_left_items %}
+                                                                <div class="p-2 border-b border-gray-100 text-sm" data-left-idx="{{ forloop.counter }}">
+                                                                    <span class="font-medium text-gray-500">{{ forloop.counter }}.</span> 
+                                                                    <span class="text-gray-700">{{ item }}</span>
+                                                                </div>
+                                                            {% endfor %}
+                                                        </div>
+                                                        <div class="bg-gray-50 rounded-lg p-3">
+                                                            <div class="font-medium text-sm text-gray-700 mb-2 pb-1 border-b border-gray-200">📌 O'ng tomon</div>
+                                                            {% for item in q.get_matching_right_items %}
+                                                                <div class="p-2 border-b border-gray-100 text-sm">
+                                                                    <span class="font-medium text-gray-500">{{ forloop.counter0|add:"65"|stringformat:"c" }}.</span> 
+                                                                    <span class="text-gray-700">{{ item }}</span>
+                                                                </div>
+                                                            {% endfor %}
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="space-y-3 mt-4">
+                                                        <p class="text-xs text-gray-400 mb-2">👇 Chap tomon elementlariga o'ng tomondan mos keladigan variantni tanlang</p>
+                                                        {% for item in q.get_matching_left_items %}
+                                                            <div class="flex items-center gap-3 p-2 bg-white border border-gray-100 rounded-lg hover:border-gray-200 transition">
+                                                                <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm font-medium text-gray-600">
+                                                                    {{ forloop.counter }}
+                                                                </div>
+                                                                <div class="flex-1 text-sm text-gray-700">{{ item }}</div>
+                                                                <div class="w-48">
+                                                                    <select name="q_{{ q.id }}_{{ forloop.counter }}" 
+                                                                            class="matching-select w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-black focus:outline-none bg-white"
+                                                                            data-question-id="{{ q.id }}"
+                                                                            data-match-idx="{{ forloop.counter }}"
+                                                                            data-left-item="{{ item }}">
+                                                                        <option value="">-- Tanlang --</option>
+                                                                        {% for r in q.get_matching_right_items %}
+                                                                            <option value="{{ forloop.counter0|add:'65'|stringformat:'c' }}"
+                                                                                {% if user_answers|get_item:q.id|get_item:forloop.parentloop.counter == forloop.counter0|add:'65'|stringformat:'c' %}selected{% endif %}>
+                                                                                {{ forloop.counter0|add:"65"|stringformat:"c" }}. {{ r }}
+                                                                            </option>
+                                                                        {% endfor %}
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+
+                                            <!-- 8. READING COMPREHENSION -->
+                                            {% elif q.question_type == 'reading_comprehension' and q.reading_data %}
+                                                <div class="bg-gray-50 rounded-lg p-4 mb-4 border-l-4 border-black">
+                                                    <h4 class="font-bold text-gray-800">{{ q.reading_data.title }}</h4>
+                                                    <div class="text-gray-600 text-sm mt-2 leading-relaxed">{{ q.reading_data.content|linebreaksbr }}</div>
+                                                </div>
+                                                {% for sq in q.reading_data.sub_questions %}
+                                                    <div class="mb-4">
+                                                        <label class="text-sm font-medium text-gray-700 block mb-2">{{ forloop.counter }}. {{ sq.text }}</label>
+                                                        <input type="text" name="q_{{ sq.id }}" class="answer-input w-full border-b-2 border-gray-200 px-0 py-2 focus:border-black focus:outline-none text-gray-700" placeholder="Javobingiz..." value="{{ sq.user_answer }}">
+                                                    </div>
+                                                {% endfor %}
+
+                                            <!-- 9. CLOZE MULTIPLE BLANKS -->
+                                            {% elif q.question_type == 'cloze_multiple_blanks' %}
+                                                <div class="bg-gray-50 rounded-lg p-4 mb-3 text-gray-700 leading-relaxed cloze-text">
+                                                    {{ q.get_cloze_text_with_selects|safe }}
+                                                </div>
+
+                                            <!-- 10. COMPLETE THE WORDS -->
+                                            {% elif q.question_type == 'complete_the_words' %}
+                                                <div class="text-gray-800 mb-3 leading-relaxed">
+                                                    {{ q.get_question_text_with_inline_inputs|safe }}
+                                                </div>
+                                                <p class="text-xs text-gray-400 mb-2">💡 Berilgan harfga mos so'zni to'liq yozing</p>
+                                                <input type="hidden" name="q_{{ q.id }}" class="hidden-answer-input ctw-hidden" value="{{ user_answers|get_item:q.id }}">
+
+                                            <!-- 11. WRITING -->
+                                            {% elif q.question_type == 'writing' %}
+                                                <div class="mb-4">
+                                                    <p class="text-gray-800 font-medium mb-3">{{ q.question_text }}</p>
+                                                    <textarea name="q_{{ q.id }}" rows="6" class="answer-input w-full border border-gray-200 rounded-lg px-4 py-3 text-gray-700 focus:border-black focus:outline-none text-sm" placeholder="Javobingizni yozing...">{{ user_answers|get_item:q.id }}</textarea>
+                                                </div>
+
+                                            <!-- 12. SPEAKING -->
+                                            {% elif q.question_type == 'speaking' %}
+                                                <div class="mb-4">
+                                                    <p class="text-gray-800 font-medium mb-3">{{ q.question_text }}</p>
+                                                    <p class="text-sm text-gray-500 italic">🎤 Ushbu savolga og'zaki javob bering. O'qituvchingiz ball qo'yadi.</p>
+                                                    <input type="hidden" name="q_{{ q.id }}" value="spoken">
+                                                </div>
+
+                                            {% else %}
+                                                <p class="text-gray-500 text-sm">⚠️ Noma'lum savol turi</p>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+
+                                <!-- NAVIGATION TUGMALARI -->
+                                <div class="flex justify-between items-center mt-8 pt-4 border-t border-gray-200">
+                                    <button type="button" class="prev-page flex items-center gap-2 border border-gray-300 bg-white px-6 py-3 text-base rounded-full hover:bg-gray-50 transition {% if forloop.first %}invisible{% endif %}">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                                        Oldingi
+                                    </button>
+                                    <span class="text-sm text-gray-400">{{ forloop.counter }} / {{ category_list|length }}</span>
+                                    <button type="button" class="next-page flex items-center gap-2 bg-black text-white px-6 py-3 text-base rounded-full hover:bg-gray-800 transition {% if forloop.last %}invisible{% endif %}">
+                                        Keyingi
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- SUBMIT TUGMASI -->
+                    <button type="submit" id="submitBtn" class="w-full bg-black hover:bg-gray-800 text-white py-4 rounded-xl text-base font-medium mt-8 transition flex items-center justify-center gap-2 shadow-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Testni yakunlash
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl p-6 text-center shadow-xl">
+        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-black mx-auto mb-3"></div>
+        <p class="text-gray-600">Natijalar saqlanmoqda...</p>
+    </div>
+</div>
+
+<!-- PAUZA OVERLAY -->
+<div id="pauseOverlay" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] hidden">
+    <div class="bg-white rounded-2xl p-8 text-center shadow-2xl max-w-md mx-4">
+        <div class="text-6xl mb-4">⏸️</div>
+        <h2 class="text-2xl font-bold text-gray-800 mb-3">Test vaqtincha to'xtatildi!</h2>
+        <p class="text-gray-500 mb-4">O'qituvchi tomonidan test pauzaga qo'yildi.</p>
+        <p class="text-sm text-gray-400 mb-6">Iltimos, o'qituvchingizni kuting...</p>
+        <div class="animate-pulse flex justify-center gap-2 mb-6">
+            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0s"></div>
+            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+        </div>
+    </div>
+</div>
+
+<!-- STOP OVERLAY -->
+<div id="stopOverlay" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] hidden">
+    <div class="bg-white rounded-2xl p-8 text-center shadow-2xl max-w-md mx-4">
+        <div class="text-6xl mb-4">⛔</div>
+        <h2 class="text-2xl font-bold text-gray-800 mb-3">Test to'xtatildi!</h2>
+        <p class="text-gray-500 mb-4">O'qituvchi tomonidan test yakunlandi.</p>
+        <p class="text-sm text-gray-400 mb-6">Sizning barcha javoblaringiz saqlandi va baholandi.</p>
+        <div class="animate-pulse flex justify-center gap-2 mb-6">
+            <div class="w-2 h-2 bg-gray-400 rounded-full"></div>
+            <div class="w-2 h-2 bg-gray-400 rounded-full"></div>
+            <div class="w-2 h-2 bg-gray-400 rounded-full"></div>
+        </div>
+        <a href="{% url 'student_panel' %}" class="inline-block bg-black text-white px-6 py-2 rounded-lg text-sm hover:bg-gray-800 transition">
+            Panelga qaytish
+        </a>
+    </div>
+</div>
+
+<!-- SIGNALIZATSIYA OVERLAY -->
+<div id="securityAlarmOverlay" class="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] hidden">
+    <div class="bg-white rounded-2xl p-8 text-center shadow-2xl max-w-md mx-4 border-4 border-red-600 animate-pulse">
+        <div class="text-7xl mb-4"><i  class="fas fa-exclamation-triangle text-red-600"></i></div>
+        <h2 class="text-3xl font-bold text-red-600 mb-3">DIQQAT! SIGNALIZATSIYA!</h2>
+        <p class="text-gray-500 mb-2">Test vaqtida boshqa oynaga o'tish taqiqlanadi!</p>
+        <p class="text-sm text-gray-400 mb-6">Signal to'xtashi uchun OK tugmasini bosing.</p>
+        <button onclick="stopAlarm()" class="bg-red-600 text-white px-10 py-3 rounded-lg text-lg font-bold hover:bg-red-700 transition shadow-lg">
+            OK
+        </button>
+    </div>
+</div>
+
+<!-- QOIDALAR OVERLAY -->
+{% if is_exam_active and not has_completed and not already_submitted and not student.rules_accepted_at %}
+<div id="rulesOverlay" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[110]">
+    <div class="bg-white rounded-2xl p-8 shadow-2xl max-w-lg mx-4">
+        <div class="text-center mb-6">
+            <div class="text-5xl mb-3">📋</div>
+            <h2 class="text-2xl font-bold text-gray-800">Test qoidalari</h2>
+        </div>
+        <div class="text-sm text-gray-600 space-y-2 mb-6 max-h-60 overflow-y-auto border rounded-lg p-4 bg-gray-50">
+            <p>1. Test davomida oynani yangilash yoki orqaga qaytish taqiqlanadi.</p>
+            <p>2. Har bir savolga bir marta javob berish mumkin.</p>
+            <p>3. Ajratilgan vaqt tugagandan so'ng test avtomatik yakunlanadi.</p>
+            <p>4. Testni o'qituvchi ruxsatisiz tark etish mumkin emas.</p>
+            <p>5. Agar tizimda g'ayrioddiy harakat aniqlansa, test bekor qilinishi mumkin.</p>
+        </div>
+        <button onclick="acceptRules()" class="w-full bg-black text-white py-3 rounded-lg text-sm font-medium hover:bg-gray-800 transition">
+            Qoidalarni qabul qilaman
+        </button>
+    </div>
+</div>
+{% endif %}
+
+<style>
+    .category-page {
+        animation: fadeSlide 0.3s ease-out;
+    }
+    @keyframes fadeSlide {
+        from { opacity: 0; transform: translateX(20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    .word-btn, .sent-word, .prev-page, .next-page {
+        transition: all 0.2s ease;
+    }
+    .word-btn:active, .sent-word:active {
+        transform: scale(0.96);
+    }
+    .answer-input:focus, .cloze-select:focus, select:focus {
+        border-color: black;
+        outline: none;
+    }
+    
+    /* Sentence Arrangement */
+    .sent-word {
+        user-select: none;
+        cursor: pointer;
+    }
+    .sentence-builder {
+        min-height: 70px;
+        transition: all 0.2s ease;
+    }
+    .sentence-builder .built-word {
+        background: #e5e7eb;
+        padding: 8px 16px;
+        border-radius: 24px;
+        font-size: 14px;
+        display: inline-block;
+        cursor: pointer;
+    }
+    .sentence-builder .built-word:hover {
+        background: #d1d5db;
+    }
+    
+    .invisible { visibility: hidden; }
+    
+    /* INLINE BLANK INPUT STYLES */
+    .inline-blank-input {
+        display: inline-block;
+        min-width: 80px;
+        max-width: 150px;
+        background: #f9fafb;
+        transition: all 0.2s ease;
+        border-bottom: 2px solid #d1d5db;
+        padding: 4px 8px;
+        text-align: center;
+        border-radius: 0;
+        font-size: 14px;
+    }
+    .inline-blank-input:focus {
+        background: white;
+        border-bottom-color: black;
+        outline: none;
+    }
+    .inline-blank-input:hover {
+        background: #f3f4f6;
+    }
+    
+    /* Word Bank button hover */
+    .word-btn:hover {
+        background-color: black !important;
+        color: white !important;
+        border-color: black !important;
+        transform: scale(1.02);
+    }
+    
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+    }
+    .animate-bounce {
+        animation: bounce 0.8s ease-in-out infinite;
+    }
+    
+    /* Screenshot, print va select oldini olish */
+    @media print {
+        body { display: none !important; }
+    }
+    body {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+    }
+    img, video {
+        -webkit-touch-callout: none;
+        pointer-events: none;
+    }
+    
+    @media (max-width: 768px) {
+        .prev-page, .next-page {
+            padding: 12px 20px !important;
+            font-size: 16px !important;
+        }
+        .word-btn, .sent-word {
+            padding: 8px 16px !important;
+            font-size: 14px !important;
+        }
+        .inline-blank-input {
+            min-width: 60px;
+            max-width: 120px;
+            font-size: 14px;
+        }
+        .question-card {
+            padding: 20px !important;
+        }
+        .cloze-select {
+            padding: 10px !important;
+        }
+        .matching-select {
+            font-size: 14px !important;
+        }
+        .sentence-builder .built-word {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        .sent-word {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+    }
+</style>
+
+<script>
+// ============================================================
+// LOCAL STORAGE
+// ============================================================
+const STORAGE_KEY = `quiz_answers_{{ group.id }}_{{ student.id }}`;
+const CURRENT_PAGE_KEY = `quiz_current_page_{{ group.id }}_{{ student.id }}`;
+
+function saveAnswersToLocalStorage() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    let allAnswers = saved ? JSON.parse(saved) : {};
+    
+    document.querySelectorAll('.inline-blank-input').forEach(input => {
+        if (input.name && input.value && input.value.trim()) {
+            allAnswers[input.name] = input.value.trim();
+        } else if (input.name) {
+            delete allAnswers[input.name];
+        }
+    });
+    
+    document.querySelectorAll('.sentence-input').forEach(el => {
+        if (el.name && el.value && el.value.trim()) {
+            allAnswers[el.name] = el.value.trim();
+        } else if (el.name) {
+            delete allAnswers[el.name];
+        }
+    });
+    
+    document.querySelectorAll('.answer-input:not(.inline-blank-input)').forEach(el => {
+        if (el.name && el.value && el.value.trim()) {
+            allAnswers[el.name] = el.value.trim();
+        } else if (el.name) {
+            delete allAnswers[el.name];
+        }
+    });
+    
+    document.querySelectorAll('input[type="radio"]').forEach(r => {
+        if (r.checked) {
+            allAnswers[r.name] = r.value;
+        }
+    });
+    
+    document.querySelectorAll('select').forEach(s => {
+        if (s.name && s.value) {
+            allAnswers[s.name] = s.value;
+        } else if (s.name) {
+            delete allAnswers[s.name];
+        }
+    });
+    
+    document.querySelectorAll('.cloze-input').forEach(input => {
+        if (input.name && input.value && input.value.trim()) {
+            allAnswers[input.name] = input.value.trim();
+        } else if (input.name) {
+            delete allAnswers[input.name];
+        }
+    });
+    
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(allAnswers));
+    localStorage.setItem(CURRENT_PAGE_KEY, currentPage);
+}
+
+function loadAnswersFromLocalStorage() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return;
+    try {
+        const answers = JSON.parse(saved);
+        
+        for (const [name, value] of Object.entries(answers)) {
+            if (name.startsWith('q_')) {
+                const input = document.querySelector(`[name="${name}"]`);
+                if (input) {
+                    if (input.type === 'radio') {
+                        const radio = document.querySelector(`[name="${name}"][value="${value}"]`);
+                        if (radio) radio.checked = true;
+                    } else if (input.tagName === 'SELECT') {
+                        input.value = value;
+                    } else {
+                        input.value = value;
+                    }
+                }
+            }
+        }
+        
+        const savedPage = localStorage.getItem(CURRENT_PAGE_KEY);
+        if (savedPage && parseInt(savedPage) < totalPages) {
+            showPage(parseInt(savedPage));
+        }
+        updateProgress();
+        restoreSentenceBuilders();
+        restoreCompleteTheWords();
+    } catch (e) { console.error('LocalStorage error:', e); }
+}
+
+// ============================================================
+// SENTENCE ARRANGEMENT
+// ============================================================
+
+function addWordToBuilder(wordElement, questionCard) {
+    const builder = questionCard.querySelector('.sentence-builder');
+    const wordsContainer = questionCard.querySelector('.words-container');
+    const txt = wordElement.innerText;
+    
+    const existingWords = builder.querySelectorAll('.built-word');
+    for (let w of existingWords) {
+        if (w.innerText === txt) return;
+    }
+    
+    const span = document.createElement('span');
+    span.className = 'built-word bg-gray-200 px-3 py-1.5 text-sm rounded-full shadow-sm';
+    span.innerText = txt;
+    
+    span.addEventListener('click', function(e) {
+        e.stopPropagation();
+        span.remove();
+        const newWord = document.createElement('span');
+        newWord.className = 'sent-word bg-gray-100 hover:bg-gray-300 px-3 py-1.5 text-sm rounded-full cursor-pointer transition shadow-sm';
+        newWord.innerText = txt;
+        newWord.setAttribute('data-word', txt);
+        newWord.addEventListener('click', function() {
+            if (isBlocked) return;
+            addWordToBuilder(this, questionCard);
+        });
+        wordsContainer.appendChild(newWord);
+        updateSentenceInput(questionCard);
+        saveAnswersToLocalStorage();
+        updateProgress();
+    });
+    
+    builder.appendChild(span);
+    wordElement.remove();
+    updateSentenceInput(questionCard);
+    saveAnswersToLocalStorage();
+    updateProgress();
+}
+
+function updateSentenceInput(questionCard) {
+    const builder = questionCard.querySelector('.sentence-builder');
+    const hiddenInput = questionCard.querySelector('.sentence-input');
+    const words = Array.from(builder.querySelectorAll('.built-word')).map(x => x.innerText);
+    const sentence = words.join(' ');
+    hiddenInput.value = sentence;
+    
+    if (hiddenInput.name && sentence) {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        let answers = saved ? JSON.parse(saved) : {};
+        answers[hiddenInput.name] = sentence;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(answers));
+    }
+}
+
+function clearSentence(questionCard) {
+    const builder = questionCard.querySelector('.sentence-builder');
+    const wordsContainer = questionCard.querySelector('.words-container');
+    const hiddenInput = questionCard.querySelector('.sentence-input');
+    
+    builder.querySelectorAll('.built-word').forEach(span => {
+        const txt = span.innerText;
+        const newWord = document.createElement('span');
+        newWord.className = 'sent-word bg-gray-100 hover:bg-gray-300 px-3 py-1.5 text-sm rounded-full cursor-pointer transition shadow-sm';
+        newWord.innerText = txt;
+        newWord.setAttribute('data-word', txt);
+        newWord.addEventListener('click', function() {
+            if (isBlocked) return;
+            addWordToBuilder(this, questionCard);
+        });
+        wordsContainer.appendChild(newWord);
+    });
+    
+    builder.innerHTML = '';
+    hiddenInput.value = '';
+    
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+        let answers = JSON.parse(saved);
+        delete answers[hiddenInput.name];
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(answers));
+    }
+    updateProgress();
+}
+
+function initSentenceArrangement() {
+    document.querySelectorAll('.sent-word').forEach(word => {
+        const newWord = word.cloneNode(true);
+        word.parentNode.replaceChild(newWord, word);
+        newWord.addEventListener('click', function(e) {
+            if (isBlocked) return;
+            const questionCard = this.closest('.question-card');
+            addWordToBuilder(this, questionCard);
+        });
+    });
+    
+    document.querySelectorAll('.clear-sentence').forEach(btn => {
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+        newBtn.addEventListener('click', function(e) {
+            if (isBlocked) return;
+            const questionCard = this.closest('.question-card');
+            clearSentence(questionCard);
+        });
+    });
+}
+
+function restoreSentenceBuilders() {
+    document.querySelectorAll('.question-card[data-question-type="sentence_arrangement"]').forEach(card => {
+        const hiddenInput = card.querySelector('.sentence-input');
+        if (hiddenInput && hiddenInput.value) {
+            const sentence = hiddenInput.value;
+            const words = sentence.split(' ');
+            const builder = card.querySelector('.sentence-builder');
+            const wordsContainer = card.querySelector('.words-container');
+            builder.innerHTML = '';
+            
+            words.forEach(word => {
+                if (word.trim()) {
+                    const span = document.createElement('span');
+                    span.className = 'built-word bg-gray-200 px-3 py-1.5 text-sm rounded-full shadow-sm';
+                    span.innerText = word;
+                    span.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        span.remove();
+                        const newWord = document.createElement('span');
+                        newWord.className = 'sent-word bg-gray-100 hover:bg-gray-300 px-3 py-1.5 text-sm rounded-full cursor-pointer transition shadow-sm';
+                        newWord.innerText = word;
+                        newWord.setAttribute('data-word', word);
+                        newWord.addEventListener('click', function() {
+                            if (isBlocked) return;
+                            addWordToBuilder(this, card);
+                        });
+                        wordsContainer.appendChild(newWord);
+                        updateSentenceInput(card);
+                        saveAnswersToLocalStorage();
+                        updateProgress();
+                    });
+                    builder.appendChild(span);
+                    const existingWord = Array.from(wordsContainer.querySelectorAll('.sent-word')).find(w => w.innerText === word);
+                    if (existingWord) existingWord.remove();
+                }
+            });
+        }
+    });
+}
+
+// ============================================================
+// WORD BANK - BIRMA-BIR INPUTGA TUSHIRISH
+// ============================================================
+function initWordBank() {
+    document.querySelectorAll('.word-btn').forEach(btn => {
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+        
+        newBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (isBlocked) return;
+            
+            const word = this.innerText;
+            console.log("Word Bank so'z bosildi:", word);
+            
+            const visiblePage = document.querySelector('.category-page[style*="block"]');
+            if (!visiblePage) {
+                console.log("Ko'rinadigan sahifa topilmadi");
+                return;
+            }
+            
+            let blankInputs = visiblePage.querySelectorAll('.inline-blank-input');
+            if (blankInputs.length === 0) {
+                blankInputs = visiblePage.querySelectorAll('.answer-input:not(.inline-blank-input)');
+            }
+            
+            if (blankInputs.length === 0) {
+                console.log("Hech qanday input topilmadi");
+                return;
+            }
+            
+            // Birinchi bo'sh inputni topish
+            let targetInput = null;
+            for (let input of blankInputs) {
+                if (!input.value || input.value.trim() === '') {
+                    targetInput = input;
+                    break;
+                }
+            }
+            
+            if (!targetInput) {
+                targetInput = blankInputs[0];
+            }
+            
+            if (targetInput) {
+                targetInput.value = word;
+                targetInput.focus();
+                targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+                targetInput.dispatchEvent(new Event('change', { bubbles: true }));
+                
+                const hiddenInput = targetInput.closest('.question-card')?.querySelector('.hidden-answer-input');
+                if (hiddenInput) {
+                    hiddenInput.value = word;
+                }
+                
+                saveAnswersToLocalStorage();
+                updateProgress();
+                
+                targetInput.style.backgroundColor = '#f0fdf4';
+                setTimeout(() => {
+                    targetInput.style.backgroundColor = '';
+                }, 300);
+            }
+        });
+    });
+}
+
+// ============================================================
+// COMPLETE THE WORDS
+// ============================================================
+function initCompleteTheWords() {
+    document.querySelectorAll('.complete-word-input').forEach(input => {
+        input.addEventListener('input', function() {
+            const blankNum = this.dataset.blankNum;
+            const questionCard = this.closest('.question-card');
+            const qid = questionCard?.dataset.qid;
+            if (qid && blankNum) {
+                const hiddenInput = questionCard.querySelector('.ctw-hidden');
+                if (hiddenInput) {
+                    let currentAnswers = {};
+                    try {
+                        currentAnswers = JSON.parse(hiddenInput.value || '{}');
+                    } catch(e) {}
+                    currentAnswers[blankNum] = this.value;
+                    hiddenInput.value = JSON.stringify(currentAnswers);
+                }
+                const saved = localStorage.getItem(STORAGE_KEY);
+                let answers = saved ? JSON.parse(saved) : {};
+                answers[`q_${qid}_blank_${blankNum}`] = this.value;
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(answers));
+                updateProgress();
+            }
+        });
+    });
+}
+
+function restoreCompleteTheWords() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return;
+    const answers = JSON.parse(saved);
+    document.querySelectorAll('.question-card[data-question-type="complete_the_words"]').forEach(card => {
+        const qid = card.dataset.qid;
+        card.querySelectorAll('.complete-word-input').forEach(input => {
+            const blankNum = input.dataset.blankNum;
+            const key = `q_${qid}_blank_${blankNum}`;
+            if (answers[key]) {
+                input.value = answers[key];
+            }
+        });
+    });
+}
+
+// ============================================================
+// MATCHING
+// ============================================================
+function initMatchingQuestions() {
+    document.querySelectorAll('.matching-select').forEach(select => {
+        const newSelect = select.cloneNode(true);
+        select.parentNode.replaceChild(newSelect, select);
+        newSelect.addEventListener('change', function() {
+            if (isBlocked) return;
+            const questionId = this.dataset.questionId;
+            const matchIdx = this.dataset.matchIdx;
+            const selectedValue = this.value;
+            if (questionId && matchIdx) {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                let answers = saved ? JSON.parse(saved) : {};
+                const key = `q_${questionId}_${matchIdx}`;
+                answers[key] = selectedValue;
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(answers));
+                updateProgress();
+            }
+        });
+    });
+}
+
+// ============================================================
+// CLOZE
+// ============================================================
+function initClozeQuestions() {
+    document.querySelectorAll('.cloze-select, .cloze-input').forEach(el => {
+        const newEl = el.cloneNode(true);
+        el.parentNode.replaceChild(newEl, el);
+        const eventType = newEl.tagName === 'SELECT' ? 'change' : 'input';
+        newEl.addEventListener(eventType, function() {
+            if (isBlocked) return;
+            if (this.name) {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                let answers = saved ? JSON.parse(saved) : {};
+                if (this.value && this.value.trim()) {
+                    answers[this.name] = this.value.trim();
+                } else {
+                    delete answers[this.name];
+                }
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(answers));
+                updateProgress();
+            }
+        });
+    });
+}
+
+// ============================================================
+// READING COMPREHENSION
+// ============================================================
+function initReadingComprehension() {
+    document.querySelectorAll('.question-card[data-question-type="reading_comprehension"] .answer-input').forEach(input => {
+        input.addEventListener('input', function() {
+            saveAnswersToLocalStorage();
+            updateProgress();
+        });
+    });
+}
+
+// ============================================================
+// PROGRESS
+// ============================================================
+function updateProgress() {
+    let answered = 0;
+    let total = {{ total_questions }};
+    
+    document.querySelectorAll('.question-card').forEach(card => {
+        let hasAnswer = false;
+        
+        card.querySelectorAll('.inline-blank-input').forEach(input => {
+            if (input.value && input.value.trim()) hasAnswer = true;
+        });
+        
+        card.querySelectorAll('.sentence-input').forEach(input => {
+            if (input.value && input.value.trim()) hasAnswer = true;
+        });
+        
+        card.querySelectorAll('.answer-input:not(.inline-blank-input)').forEach(input => {
+            if (input.value && input.value.trim()) hasAnswer = true;
+        });
+        
+        if (card.querySelector('input[type="radio"]:checked')) hasAnswer = true;
+        
+        card.querySelectorAll('select').forEach(select => {
+            if (select.value && select.value !== '') hasAnswer = true;
+        });
+        
+        if (hasAnswer) answered++;
+    });
+    
+    const percent = total > 0 ? (answered / total) * 100 : 0;
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    if (progressBar) progressBar.style.width = `${percent}%`;
+    if (progressText) progressText.textContent = `${answered}/${total}`;
+}
+
+// ============================================================
+// CSRF TOKEN
+// ============================================================
+function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || document.getElementById('csrfToken')?.value || '{{ csrf_token }}';
+}
+
+// ============================================================
+// QOIDALARNI QABUL QILISH
+// ============================================================
+async function acceptRules() {
+    try {
+        const response = await fetch('/api/accept-rules/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCSRFToken() }
+        });
+        const data = await response.json();
+        if (data.success) {
+            document.getElementById('rulesOverlay')?.remove();
+        } else {
+            alert('Xatolik: ' + (data.error || 'Noma\'lum xato'));
+        }
+    } catch(err) {
+        alert('Server xatosi! Qaytadan urinib ko\'ring');
+    }
+}
+
+// ============================================================
+// PAUZA VA RESUME - STATUS CHECK
+// ============================================================
+let examCheckInterval = null;
+let isExamActive = {{ is_exam_active|yesno:"true,false" }};
+let isPaused = false;
+let isSubmitting = false;
+let isBlocked = false;
+let remainingSeconds = {{ config.time_limit|default:0 }} * 60;
+let timerInt = null;
+
+// Pauza vaqtida DOM dagi barcha javoblarni snapshot qilib olish
+let answersSnapshot = {};
+
+function captureAnswersSnapshot() {
+    answersSnapshot = {};
+    document.querySelectorAll('.question-card').forEach(card => {
+        const qid = card.dataset.qid;
+        card.querySelectorAll('input[type="radio"]').forEach(r => {
+            if (r.checked) answersSnapshot[r.name] = r.value;
+        });
+        card.querySelectorAll('select').forEach(s => {
+            if (s.name && s.value) answersSnapshot[s.name] = s.value;
+        });
+        card.querySelectorAll('input:not([type="radio"]):not([type="hidden"]), textarea').forEach(el => {
+            if (el.name && el.value && el.value.trim()) answersSnapshot[el.name] = el.value.trim();
+        });
+        card.querySelectorAll('.sentence-input').forEach(el => {
+            if (el.name && el.value && el.value.trim()) answersSnapshot[el.name] = el.value.trim();
+        });
+    });
+    document.querySelectorAll('.cloze-input').forEach(el => {
+        if (el.name && el.value && el.value.trim()) answersSnapshot[el.name] = el.value.trim();
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(answersSnapshot));
+}
+
+function restoreAnswersFromSnapshot() {
+    for (const [name, value] of Object.entries(answersSnapshot)) {
+        const el = document.querySelector(`[name="${name}"]`);
+        if (!el) continue;
+        if (el.type === 'radio') {
+            const radio = document.querySelector(`[name="${name}"][value="${CSS.escape(value)}"]`);
+            if (radio) radio.checked = true;
+        } else if (el.tagName === 'SELECT') {
+            el.value = value;
+        } else {
+            el.value = value;
+        }
+    }
+    updateProgress();
+    restoreSentenceBuilders();
+    restoreCompleteTheWords();
+}
+
+async function checkExamStatus() {
+    if (isBlocked || isSubmitting) return;
+    
+    try {
+        const response = await fetch('/quiz/check-status/', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json', 
+                'X-CSRFToken': getCSRFToken() 
+            },
+            body: JSON.stringify({ group_id: {{ group.id }} })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // PAUZA HOLATI
+            if (data.is_paused && !isPaused && data.is_active === false) {
+                console.log("Test pauzaga qo'yildi!");
+                captureAnswersSnapshot();
+                await saveAnswersToServer();
+                isExamActive = false;
+                isPaused = true;
+                showPauseOverlay();
+                return;
+            }
+            
+            // RESUME - QAYTA BOSHLANDI (sahifa yangilanmasdan)
+            if (!data.is_paused && isPaused && data.is_active === true) {
+                console.log("Test qayta boshlandi!");
+                isExamActive = true;
+                isPaused = false;
+                hidePauseOverlay();
+                restoreAnswersFromSnapshot();
+                await saveAnswersToServer();
+                saveAnswersToLocalStorage();
+                return;
+            }
+            
+            // TEST STOP BO'LGAN (pauza holatidan keyin ham ishlashi uchun)
+            if (!data.is_active && !data.is_paused && isExamActive) {
+                console.log("Test stopped by admin - auto submitting...");
+                await autoSubmitOnStop();
+                return;
+            }
+            
+            // QOLGAN VAQTNI YANGILASH
+            if (data.remaining_time !== null) {
+                remainingSeconds = data.remaining_time;
+                const mins = Math.floor(remainingSeconds / 60);
+                const secs = remainingSeconds % 60;
+                const timerEl = document.getElementById('timer');
+                if (timerEl) timerEl.innerText = `${mins}:${secs.toString().padStart(2, '0')}`;
+            }
+            
+            // VAQT TUGASA - avtomatik yakunlash
+            if (data.remaining_time !== null && data.remaining_time <= 0 && !data.is_paused && !isPaused) {
+                console.log("Vaqt tugadi - test yakunlanmoqda...");
+                await autoSubmitOnStop();
+                return;
+            }
+            
+            isExamActive = data.is_active;
+        }
+    } catch (error) { 
+        console.error('Status check error:', error); 
+    }
+}
+
+function showPauseOverlay() {
+    stopAlarm();
+    
+    if (timerInt) {
+        clearInterval(timerInt);
+        timerInt = null;
+    }
+    
+    if (handleBeforeUnload) {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+        handleBeforeUnload = null;
+    }
+    
+    document.querySelectorAll('input, select, button').forEach(el => {
+        el.disabled = true;
+    });
+    
+    const pauseOverlay = document.getElementById('pauseOverlay');
+    if (pauseOverlay) {
+        pauseOverlay.classList.remove('hidden');
+    }
+}
+
+function hidePauseOverlay() {
+    const pauseOverlay = document.getElementById('pauseOverlay');
+    if (pauseOverlay) {
+        pauseOverlay.classList.add('hidden');
+    }
+    
+    if (!isBlocked) {
+        document.querySelectorAll('input, select, button').forEach(el => {
+            el.disabled = false;
+        });
+    }
+    
+    if (!handleBeforeUnload) {
+        handleBeforeUnload = function(e) {
+            if (isSubmitting) return;
+            e.preventDefault();
+            e.returnValue = 'Testdan chiqishni xohlaysizmi? Barcha javoblar yo\'qoladi!';
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+    }
+}
+
+async function autoSubmitOnStop() {
+    if (isSubmitting || isBlocked) return;
+    stopAlarm();
+    
+    if (timerInt) clearInterval(timerInt);
+    if (examCheckInterval) clearInterval(examCheckInterval);
+    if (handleBeforeUnload) {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+        handleBeforeUnload = null;
+    }
+    
+    saveAnswersToLocalStorage();
+    
+    // Pauza overlayini yopish (agar pauza holatida bo'lsa)
+    const pauseOverlay = document.getElementById('pauseOverlay');
+    if (pauseOverlay) pauseOverlay.classList.add('hidden');
+    
+    const stopOverlay = document.getElementById('stopOverlay');
+    if (stopOverlay) stopOverlay.classList.remove('hidden');
+    
+    // Avval serverga saqlash (isBlocked dan oldin)
+    await saveAnswersToServer();
+    
+    document.querySelectorAll('input, select, button').forEach(el => { el.disabled = true; });
+    isBlocked = true;
+    
+    const answers = collectAllAnswers();
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    if (loadingOverlay) loadingOverlay.classList.remove('hidden');
+    
+    try {
+        const response = await fetch('/quiz-submit/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
+            body: JSON.stringify({ group_id: {{ group.id }}, answers: answers })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            localStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem(CURRENT_PAGE_KEY);
+            if (loadingOverlay) loadingOverlay.classList.add('hidden');
+            setTimeout(() => { window.location.href = '/student-panel/'; }, 3000);
+        } else {
+            if (loadingOverlay) loadingOverlay.classList.add('hidden');
+        }
+    } catch (error) {
+        console.error("Submit error:", error);
+        if (loadingOverlay) loadingOverlay.classList.add('hidden');
+    }
+}
+
+function collectAllAnswers() {
+    const savedAnswers = localStorage.getItem(STORAGE_KEY);
+    let answers = savedAnswers ? JSON.parse(savedAnswers) : {};
+    
+    document.querySelectorAll('.inline-blank-input').forEach(input => {
+        if (input.name && input.value && input.value.trim()) {
+            answers[input.name] = input.value.trim();
+        }
+    });
+    
+    document.querySelectorAll('.sentence-input').forEach(el => {
+        if (el.name && el.value && el.value.trim()) {
+            answers[el.name] = el.value.trim();
+        }
+    });
+    
+    document.querySelectorAll('.answer-input:not(.inline-blank-input)').forEach(el => {
+        if (el.name && el.value && el.value.trim()) {
+            answers[el.name] = el.value.trim();
+        }
+    });
+    
+    document.querySelectorAll('input[type="radio"]:checked').forEach(r => {
+        answers[r.name] = r.value;
+    });
+    
+    document.querySelectorAll('select').forEach(s => {
+        if (s.name && s.value) {
+            answers[s.name] = s.value;
+        }
+    });
+    
+    document.querySelectorAll('.cloze-input').forEach(input => {
+        if (input.name && input.value && input.value.trim()) {
+            answers[input.name] = input.value.trim();
+        }
+    });
+    
+    // complete_the_words: collect individual blanks into JSON under q_questionId
+    document.querySelectorAll('.question-card[data-question-type="complete_the_words"]').forEach(card => {
+        const qid = card.dataset.qid;
+        if (!qid) return;
+        const blankData = {};
+        let hasAny = false;
+        card.querySelectorAll('.complete-word-input').forEach(input => {
+            const blankNum = input.dataset.blankNum;
+            if (blankNum && input.value && input.value.trim()) {
+                blankData[blankNum] = input.value.trim();
+                hasAny = true;
+            }
+        });
+        if (hasAny) {
+            answers[`q_${qid}`] = JSON.stringify(blankData);
+            // Remove individual blank keys
+            Object.keys(answers).forEach(key => {
+                if (key.startsWith(`q_${qid}_blank_`)) {
+                    delete answers[key];
+                }
+            });
+        }
+    });
+    
+    return answers;
+}
+
+// ============================================================
+// SAHIFALAR
+// ============================================================
+let currentPage = 0;
+const totalPages = {{ category_list|length }};
+
+function showPage(index) {
+    document.querySelectorAll('.category-page').forEach((page, i) => {
+        page.style.display = i === index ? 'block' : 'none';
+    });
+    currentPage = index;
+    saveAnswersToLocalStorage();
+}
+
+document.querySelectorAll('.prev-page').forEach(btn => {
+    btn.addEventListener('click', () => { if (currentPage > 0) showPage(currentPage - 1); });
+});
+document.querySelectorAll('.next-page').forEach(btn => {
+    btn.addEventListener('click', () => { if (currentPage < totalPages - 1) showPage(currentPage + 1); });
+});
+
+// ============================================================
+// AUDIO
+// ============================================================
+async function checkAudioPlay(categoryId) {
+    if (isBlocked) return false;
+    try {
+        const response = await fetch('/quiz/check-audio-play/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
+            body: JSON.stringify({ group_id: {{ group.id }}, category_id: categoryId })
+        });
+        const data = await response.json();
+        if (data.success) {
+            const countSpan = document.querySelector(`.audio-play-count[data-category-id="${categoryId}"]`);
+            const progressBar = document.querySelector(`.audio-progress[data-category-id="${categoryId}"]`);
+            if (countSpan) {
+                const maxPlays = data.max_plays === 0 ? '∞' : data.max_plays;
+                countSpan.textContent = `${data.play_count}/${maxPlays}`;
+            }
+            if (progressBar && data.max_plays > 0) {
+                progressBar.style.width = `${(data.play_count / data.max_plays) * 100}%`;
+            }
+            return data.can_play;
+        }
+        return false;
+    } catch (error) { return false; }
+}
+
+async function recordAudioPlay(categoryId) {
+    if (isBlocked) return false;
+    try {
+        const response = await fetch('/quiz/record-audio-play/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
+            body: JSON.stringify({ group_id: {{ group.id }}, category_id: categoryId })
+        });
+        const data = await response.json();
+        if (data.success) {
+            const countSpan = document.querySelector(`.audio-play-count[data-category-id="${categoryId}"]`);
+            if (countSpan) {
+                const maxPlays = data.max_plays === 0 ? '∞' : data.max_plays;
+                countSpan.textContent = `${data.play_count}/${maxPlays}`;
+            }
+            return true;
+        } else {
+            alert(data.message);
+            return false;
+        }
+    } catch (error) { return false; }
+}
+
+document.querySelectorAll('.play-audio-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        if (isBlocked) return;
+        const categoryId = this.dataset.categoryId;
+        const canPlay = await checkAudioPlay(categoryId);
+        if (!canPlay) {
+            alert('⚠️ Siz bu audio uchun maksimal eshitish limitiga yetdingiz!');
+            return;
+        }
+        const audio = document.querySelector(`.category-audio[data-category-id="${categoryId}"]`);
+        if (audio) {
+            audio.currentTime = 0;
+            audio.play().catch(e => console.log('Audio play error:', e));
+            await recordAudioPlay(categoryId);
+        }
+    });
+});
+
+// ============================================================
+// TIMER
+// ============================================================
+function startTimer() {
+    if (remainingSeconds <= 0) return;
+    const timerEl = document.getElementById('timer');
+    if (!timerEl) return;
+    if (timerInt) clearInterval(timerInt);
+    timerInt = setInterval(() => {
+        if (isSubmitting || isBlocked || isPaused) return;
+        if (remainingSeconds <= 0) {
+            clearInterval(timerInt);
+            timerInt = null;
+            autoSubmitTest();
+        } else {
+            remainingSeconds--;
+            const mins = Math.floor(remainingSeconds / 60);
+            const secs = remainingSeconds % 60;
+            timerEl.innerText = `${mins}:${secs.toString().padStart(2, '0')}`;
+            if (remainingSeconds === 60) {
+                alert("⏰ Diqqat! Test tugashiga 1 daqiqa qoldi!");
+            }
+        }
+    }, 1000);
+}
+
+async function autoSubmitTest() {
+    if (isSubmitting || isBlocked) return;
+    if (handleBeforeUnload) {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+        handleBeforeUnload = null;
+    }
+    const form = document.getElementById('quizForm');
+    if (form) {
+        const event = new Event('submit', { bubbles: true, cancelable: true });
+        form.dispatchEvent(event);
+    }
+}
+
+async function getRemainingTime() {
+    try {
+        const response = await fetch('/quiz/get-remaining-time/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
+            body: JSON.stringify({ group_id: {{ group.id }} })
+        });
+        const data = await response.json();
+        if (data.success && data.remaining_time !== null && data.remaining_time !== undefined) {
+            remainingSeconds = data.remaining_time;
+            const mins = Math.floor(remainingSeconds / 60);
+            const secs = remainingSeconds % 60;
+            const timerEl = document.getElementById('timer');
+            if (timerEl) timerEl.innerText = `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+        return data;
+    } catch (error) { console.error('Get remaining time error:', error); }
+}
+
+// ============================================================
+// EXAM SECURITY - HIMOYA (SCREENSHOT, PRINT, TAB SWITCH)
+// ============================================================
+let handleBeforeUnload = null;
+let alarmAudio = null;
+let isAlarmPlaying = false;
+
+function initAlarm() {
+    alarmAudio = new Audio("{% static 'SIGNALIZATSIYA.mp3' %}");
+    alarmAudio.loop = true;
+    alarmAudio.volume = 1.0;
+}
+
+function playAlarm() {
+    if (isAlarmPlaying || isSubmitting || isBlocked || isPaused) return;
+    isAlarmPlaying = true;
+    if (!alarmAudio) initAlarm();
+    alarmAudio.currentTime = 0;
+    alarmAudio.play().catch(function() {});
+}
+
+function stopAlarm() {
+    if (alarmAudio) {
+        alarmAudio.pause();
+        alarmAudio.currentTime = 0;
+    }
+    isAlarmPlaying = false;
+    const overlay = document.getElementById('securityAlarmOverlay');
+    if (overlay) overlay.classList.add('hidden');
+}
+
+function showAlarmOverlay() {
+    if (isSubmitting || isBlocked) return;
+    const overlay = document.getElementById('securityAlarmOverlay');
+    if (overlay) overlay.classList.remove('hidden');
+}
+
+if ({{ is_exam_active|yesno:"true,false" }} && !{{ has_completed|yesno:"true,false" }}) {
+    // Disable right-click
+    document.addEventListener('contextmenu', (e) => { e.preventDefault(); });
+
+    // Disable copy, cut, paste, drag, drop
+    document.addEventListener('copy', (e) => { e.preventDefault(); });
+    document.addEventListener('cut', (e) => { e.preventDefault(); });
+    document.addEventListener('paste', (e) => { e.preventDefault(); });
+    document.addEventListener('dragstart', (e) => { e.preventDefault(); });
+    document.addEventListener('drop', (e) => { e.preventDefault(); });
+
+    // Block all screenshot/print/devtools keys
+    document.addEventListener('keydown', (e) => {
+        const blocked = (
+            e.key === 'F12' ||
+            e.key === 'PrintScreen' ||
+            e.keyCode === 44 ||
+            e.code === 'PrintScreen' ||
+            (e.ctrlKey && ['u', 's', 'p'].includes(e.key.toLowerCase())) ||
+            (e.ctrlKey && e.shiftKey && ['i', 'j', 'c'].includes(e.key.toLowerCase())) ||
+            (e.metaKey && e.shiftKey && ['i', 'j'].includes(e.key.toLowerCase())) ||
+            (e.altKey && e.key.toLowerCase() === 'f4')
+        );
+        if (blocked) {
+            e.preventDefault();
+        }
+    });
+
+    // Blur - oyna fokusni yo'qotganda SIGNALIZATSIYA
+    window.addEventListener('blur', () => {
+        if (!isSubmitting && !isBlocked && !isPaused) {
+            playAlarm();
+        }
+    });
+
+    // Focus - qaytib kelganda overlay chiqarish
+    window.addEventListener('focus', () => {
+        if (isAlarmPlaying && !isSubmitting && !isBlocked) {
+            showAlarmOverlay();
+        }
+    });
+
+    // visibility change - tab almashganda SIGNALIZATSIYA
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            if (!isSubmitting && !isBlocked && !isPaused) {
+                playAlarm();
+            }
+        } else {
+            if (isAlarmPlaying && !isSubmitting && !isBlocked) {
+                showAlarmOverlay();
+            }
+        }
+    });
+
+    // Screen Capture API ni bloklash
+    if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+        navigator.mediaDevices.getDisplayMedia = function() {
+            alert('⚠ Ekran almashish test vaqtida taqiqlangan!');
+            return Promise.reject(new Error('Ekran almashish bloklandi'));
+        };
+    }
+
+    // Warn on page leave / refresh
+    handleBeforeUnload = function(e) {
+        if (isSubmitting) return;
+        playAlarm();
+        e.preventDefault();
+        e.returnValue = 'Testdan chiqishni xohlaysizmi? Barcha javoblar yo\'qoladi!';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+}
+
+// ============================================================
+// INIT - TIMER: serverdan qolgan vaqtni olib keyin ishga tush
+// ============================================================
+if ({{ config.time_limit|default:0 }} > 0 && {{ is_exam_active|yesno:"true,false" }} && !{{ has_completed|yesno:"true,false" }}) {
+    getRemainingTime().then((data) => {
+        if (data && data.success && data.remaining_time !== null && data.remaining_time <= 0) {
+            autoSubmitOnStop();
+        } else {
+            startTimer();
+        }
+    });
+}
+
+// ============================================================
+// SERVERGA JAVOBLARNI SAQLASH (periodic va har o'zgarishda)
+// ============================================================
+let serverSaveTimeout = null;
+
+async function saveAnswersToServer() {
+    if (isBlocked || isSubmitting) return;
+    const answers = collectAllAnswers();
+    if (Object.keys(answers).length === 0) return;
+    try {
+        await fetch('/save-answer-api/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
+            body: JSON.stringify({ group_id: {{ group.id }}, answers: answers })
+        });
+    } catch (e) { /* silent */ }
+}
+
+function debouncedSaveToServer() {
+    if (serverSaveTimeout) clearTimeout(serverSaveTimeout);
+    serverSaveTimeout = setTimeout(() => {
+        saveAnswersToServer();
+    }, 2000);
+}
+
+if (!{{ has_completed|yesno:"true,false" }} && {{ is_exam_active|yesno:"true,false" }}) {
+    examCheckInterval = setInterval(async () => { await checkExamStatus(); }, 2000);
+    setInterval(() => { saveAnswersToLocalStorage(); }, 3000);
+    setInterval(async () => { await saveAnswersToServer(); }, 10000);
+    
+    // Har qanday o'zgarishda serverga saqlash
+    document.addEventListener('change', function(e) {
+        const tag = e.target.tagName;
+        const type = e.target.type;
+        if (tag === 'SELECT' || tag === 'INPUT' || tag === 'TEXTAREA') {
+            if (e.target.closest('.question-card')) {
+                debouncedSaveToServer();
+            }
+        }
+    });
+    
+    document.addEventListener('input', function(e) {
+        if (e.target.closest('.question-card') && 
+            (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+            debouncedSaveToServer();
+        }
+    });
+}
+
+window.addEventListener('beforeunload', () => {
+    saveAnswersToLocalStorage();
+    try {
+        const answers = collectAllAnswers();
+        if (Object.keys(answers).length > 0) {
+            fetch('/save-answer-api/', {
+                method: 'POST',
+                keepalive: true,
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
+                body: JSON.stringify({ group_id: {{ group.id }}, answers: answers })
+            });
+        }
+    } catch(e) {}
+    if (examCheckInterval) clearInterval(examCheckInterval);
+    if (timerInt) clearInterval(timerInt);
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadAnswersFromLocalStorage();
+    updateProgress();
+    initMatchingQuestions();
+    initClozeQuestions();
+    initCompleteTheWords();
+    initReadingComprehension();
+    initSentenceArrangement();
+    initWordBank();
+});
+
+// ============================================================
+// SUBMIT
+// ============================================================
+document.getElementById('quizForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (isSubmitting || isBlocked) return;
+    
+    let unanswered = 0;
+    document.querySelectorAll('.question-card').forEach(card => {
+        let hasAnswer = false;
+        card.querySelectorAll('.inline-blank-input, .sentence-input, .answer-input').forEach(input => {
+            if (input.value && input.value.trim()) hasAnswer = true;
+        });
+        if (card.querySelector('input[type="radio"]:checked')) hasAnswer = true;
+        card.querySelectorAll('select').forEach(select => {
+            if (select.value && select.value !== '') hasAnswer = true;
+        });
+        if (!hasAnswer) unanswered++;
+    });
+    
+    if (unanswered > 0) {
+        if (!confirm(`⚠️ ${unanswered} ta savolga javob berilmagan.\n\nTestni yakunlamoqchimisiz?`)) return;
+    } else {
+        if (!confirm(`✅ Barcha savollarga javob berildi!\n\nTestni yakunlamoqchimisiz?`)) return;
+    }
+    
+    const answers = collectAllAnswers();
+    
+    if (timerInt) clearInterval(timerInt);
+    if (examCheckInterval) clearInterval(examCheckInterval);
+    if (handleBeforeUnload) window.removeEventListener('beforeunload', handleBeforeUnload);
+    
+    const btn = document.getElementById('submitBtn');
+    const overlay = document.getElementById('loadingOverlay');
+    isSubmitting = true;
+    btn.disabled = true;
+    btn.innerHTML = '<div class="animate-spin w-4 h-4 border-2 border-white rounded-full border-t-transparent mx-auto"></div>';
+    overlay.classList.remove('hidden');
+    
+    try {
+        const res = await fetch('/quiz-submit/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
+            body: JSON.stringify({ group_id: {{ group.id }}, answers: answers })
+        });
+        const data = await res.json();
+        if (data.success) {
+            localStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem(CURRENT_PAGE_KEY);
+            alert(`✅ Natijangiz: ${data.score}/100`);
+            window.location.href = '/student-panel/';
+        } else {
+            alert('❌ Xatolik: ' + data.message);
+            btn.disabled = false;
+            btn.innerHTML = '📤 Testni yakunlash';
+            isSubmitting = false;
+            overlay.classList.add('hidden');
+            if (typeof startTimer === 'function') startTimer();
+        }
+    } catch(err) {
+        console.error('Submit error:', err);
+        alert('⚠️ Server xatosi! Qaytadan urinib ko\'ring');
+        btn.disabled = false;
+        btn.innerHTML = '📤 Testni yakunlash';
+        isSubmitting = false;
+        overlay.classList.add('hidden');
+        if (typeof startTimer === 'function') startTimer();
+    }
+});
+
+
+
+// Qurilma tracking
+(function() {
+    let deviceId = localStorage.getItem('_dev_id');
+    if (!deviceId) {
+        deviceId = 'DEV-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+        localStorage.setItem('_dev_id', deviceId);
+    }
+
+    function registerDevice() {
+        fetch('/device/register/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({
+                device_id: deviceId,
+                platform: navigator.platform || navigator.userAgent || '',
+                user_agent: navigator.userAgent,
+                screen_resolution: screen.width + 'x' + screen.height
+            })
+        }).catch(function() {});
+    }
+
+    registerDevice();
+    setInterval(registerDevice, 30000);
+
+    // Tab yopilganda qurilmani offline qilish
+    window.addEventListener('beforeunload', function() {
+        navigator.sendBeacon('/device/offline/', JSON.stringify({device_id: deviceId}));
+    });
+})();
+</script>
+{% endblock %}

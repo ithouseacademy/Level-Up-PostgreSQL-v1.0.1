@@ -1,0 +1,603 @@
+{% extends 'groups/base.html' %}
+{% load static %}
+
+{% block title %}{{ group.name }} - Imtihon sozlamalari{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-6xl mx-auto px-4">
+        <!-- Header -->
+        <div class="mb-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <a href="{% url 'exam_control' group.id %}" class="text-gray-500 hover:text-gray-700 text-sm">
+                        <i class="fas fa-arrow-left mr-1"></i> Imtihon boshqaruviga qaytish
+                    </a>
+                    <h1 class="text-2xl font-bold text-gray-900 mt-2">{{ group.name }}</h1>
+                    <p class="text-gray-500 text-sm">Imtihon sozlamalari va kategoriya savol miqdorlarini belgilang</p>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="{% url 'group_categories_manage' group.id %}" class="text-blue-600 hover:text-blue-800 text-sm">
+                        <i class="fas fa-tags mr-1"></i> Kategoriyalar
+                    </a>
+                    <a href="{% url 'group_folders_manage' group.id %}" class="text-amber-600 hover:text-amber-800 text-sm">
+                        <i class="fas fa-folder mr-1"></i> Papkalar
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- ============ 1-QISM: Guruh umumiy sozlamalari ============ -->
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+                <div class="border-b border-gray-200 px-6 py-4">
+                    <h2 class="text-lg font-semibold text-gray-900">
+                        <i class="fas fa-sliders-h text-gray-600 mr-2"></i> Umumiy sozlamalar
+                    </h2>
+                    <p class="text-sm text-gray-500">Guruh uchun umumiy imtihon sozlamalari</p>
+                </div>
+                
+                <form method="POST" class="p-6" id="mainConfigForm">
+                    {% csrf_token %}
+                    
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-3">
+                            <i class="fas fa-user-graduate mr-2"></i> Har bir talabaga savollar soni
+                        </label>
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                                <button type="button" onclick="changeCount(-1)" class="px-3 py-2 bg-gray-50 hover:bg-gray-100">-</button>
+                                <input type="number" id="questionCount" name="questions_per_student" 
+                                       value="{{ config.questions_per_student|default:5 }}" min="1" max="{{ total_questions }}"
+                                       class="w-20 text-center py-2 border-0 focus:ring-0">
+                                <button type="button" onclick="changeCount(1)" class="px-3 py-2 bg-gray-50 hover:bg-gray-100">+</button>
+                            </div>
+                            <span class="text-sm text-gray-500">Mavjud savollar: <strong>{{ total_questions }}</strong> ta</span>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-2">Har bir talaba {{ total_questions }} ta savoldan random ravishda shuncha savol oladi</p>
+                    </div>
+
+                    <div class="mb-4 py-2 border-t border-gray-100 pt-4">
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" name="random_order" {% if config.random_order %}checked{% endif %} class="w-4 h-4 rounded border-gray-300">
+                            <span class="text-sm text-gray-700">Savollarni random tartibda chiqarish</span>
+                        </label>
+                    </div>
+
+                    <div class="mb-4 py-2">
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" name="show_correct_answer" {% if config.show_correct_answer %}checked{% endif %} class="w-4 h-4 rounded border-gray-300">
+                            <span class="text-sm text-gray-700">Test tugagandan so'ng to'g'ri javoblarni ko'rsatish</span>
+                        </label>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" name="use_category_configs" id="useCategoryConfigs" 
+                                   {% if config.use_category_configs %}checked{% endif %} class="w-4 h-4 rounded border-gray-300">
+                            <span class="text-sm font-semibold text-gray-700">Har bir kategoriya sozlamalaridan foydalanish</span>
+                        </label>
+                        <p class="text-xs text-gray-400 mt-1 ml-7">
+                            Yoqilganda, quyidagi kategoriya sozlamalari ishlaydi. O'chirilganda, yuqoridagi "Savollar soni" ishlaydi.
+                        </p>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-3">Vaqt limiti (daqiqa)</label>
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                                <button type="button" onclick="changeTime(-5)" class="px-3 py-2 bg-gray-50 hover:bg-gray-100">-</button>
+                                <input type="number" id="timeLimit" name="time_limit" value="{{ config.time_limit|default:0 }}" min="0" step="5" class="w-24 text-center py-2 border-0 focus:ring-0">
+                                <button type="button" onclick="changeTime(5)" class="px-3 py-2 bg-gray-50 hover:bg-gray-100">+</button>
+                            </div>
+                            <span class="text-sm text-gray-500">daqiqa (0 = cheksiz)</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-3">Maksimal urinishlar</label>
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                                <button type="button" onclick="changeAttempts(-1)" class="px-3 py-2 bg-gray-50 hover:bg-gray-100">-</button>
+                                <input type="number" id="maxAttempts" name="max_attempts" value="{{ config.max_attempts|default:1 }}" min="1" max="10" class="w-20 text-center py-2 border-0 focus:ring-0">
+                                <button type="button" onclick="changeAttempts(1)" class="px-3 py-2 bg-gray-50 hover:bg-gray-100">+</button>
+                            </div>
+                            <span class="text-sm text-gray-500">marta</span>
+                        </div>
+                    </div>
+
+                    <!-- ============ Baholash tizimi ============ -->
+                    <div id="grading" class="mb-6 pt-4 border-t border-gray-100">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-base font-semibold text-gray-900">
+                                    <i class="fas fa-trophy text-amber-500 mr-2"></i> Baholash tizimi
+                                </h3>
+                                <p class="text-xs text-gray-500">Student ballariga qarab past/o'rta/yuqori yorliqlarini ko'rsatish</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="grading_enabled" class="sr-only peer" 
+                                       id="gradingEnabled" {% if config.grading_enabled %}checked{% endif %}>
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                            </label>
+                        </div>
+                        
+                        <div id="gradingSettings" class="{% if not config.grading_enabled %}hidden{% endif %} space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Past yorlig'i</label>
+                                    <input type="text" name="label_low" value="{{ config.label_low|default:'Past' }}" 
+                                           class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Past/o'rta chegarasi (%)</label>
+                                    <input type="number" name="low_threshold" value="{{ config.low_threshold|default:40 }}" 
+                                           min="1" max="99" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">O'rta yorlig'i</label>
+                                    <input type="text" name="label_medium" value="{{ config.label_medium|default:'O\'rta' }}" 
+                                           class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">O'rta/yuqori chegarasi (%)</label>
+                                    <input type="number" name="high_threshold" value="{{ config.high_threshold|default:70 }}" 
+                                           min="1" max="99" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Yuqori yorlig'i</label>
+                                    <input type="text" name="label_high" value="{{ config.label_high|default:'Yuqori' }}" 
+                                           class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                                </div>
+                                <div class="flex items-end">
+                                    <div class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-600">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        Masalan: &lt; {{ config.low_threshold|default:40 }}% → <span class="text-red-600">{{ config.label_low|default:'Past' }}</span>,
+                                        {{ config.low_threshold|default:40 }}-{{ config.high_threshold|default:70 }}% → <span class="text-yellow-600">{{ config.label_medium|default:"O'rta" }}</span>,
+                                        &gt; {{ config.high_threshold|default:70 }}% → <span class="text-green-600">{{ config.label_high|default:'Yuqori' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ============ Sertifikat sozlamalari ============ -->
+                    <div class="mb-6 pt-4 border-t border-gray-100">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-base font-semibold text-gray-900">
+                                    <i class="fas fa-certificate text-green-600 mr-2"></i> Sertifikat sozlamalari
+                                </h3>
+                                <p class="text-xs text-gray-500">Guruh uchun sertifikat darajasi va o'qituvchi</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="certificate_enabled" class="sr-only peer" 
+                                       id="certificateEnabled" {% if config.certificate_enabled %}checked{% endif %}>
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                            </label>
+                        </div>
+                        
+                        <div id="certificateSettings" class="{% if not config.certificate_enabled %}hidden{% endif %} space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Ingliz tili darajasi</label>
+                                    <select name="certificate_level" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                                        <option value="">-- Tanlang --</option>
+                                        {% for level in level_choices %}
+                                        <option value="{{ level }}" {% if config.certificate_level == level %}selected{% endif %}>{{ level }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <p class="text-xs text-gray-400 mt-1">Sertifikatda ko'rsatiladigan daraja</p>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">O'qituvchi</label>
+                                    <input type="text" name="certificate_teacher" value="{% firstof config.certificate_teacher group.teacher %}" 
+                                           class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="O'qituvchi ismi">
+                                    <p class="text-xs text-gray-400 mt-1">Sertifikatda ko'rsatiladigan o'qituvchi ismi</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center pt-4 border-t border-gray-100">
+                        <div class="text-sm text-gray-500">
+                            <i class="fas fa-info-circle mr-1"></i> Har bir talaba turlicha savollar oladi
+                        </div>
+                        <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white px-6 py-2 rounded-lg">
+                            <i class="fas fa-save mr-2"></i> Saqlash
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ============ 2-QISM: Kategoriya bo'yicha savol sozlamalari ============ -->
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+                <div class="border-b border-gray-200 px-6 py-4 bg-gray-50 rounded-t-xl">
+                    <h2 class="text-lg font-semibold text-gray-900">
+                        <i class="fas fa-layer-group text-blue-600 mr-2"></i> Kategoriya savol sozlamalari
+                    </h2>
+                    <p class="text-sm text-gray-500">Har bir kategoriyadan nechta savol tushishini belgilang</p>
+                </div>
+                
+                <div class="p-6">
+                    {% if group_categories %}
+                        <div class="space-y-4">
+                            {% for gc in group_categories %}
+                            {% with config=category_configs|get_item:gc.category.id %}
+                            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition" data-category-id="{{ gc.category.id }}">
+                                <div class="flex justify-between items-start mb-3">
+                                    <div>
+                                        <h3 class="font-semibold text-gray-900">
+                                            {{ gc.category.name }}
+                                            {% if gc.is_active %}
+                                                <span class="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Faol</span>
+                                            {% endif %}
+                                        </h3>
+                                        {% if gc.category.description %}
+                                            <p class="text-xs text-gray-500 mt-1">{{ gc.category.description|truncatewords:15 }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <a href="{% url 'category_questions_list' gc.category.id %}" 
+                                       class="text-blue-600 hover:text-blue-800 text-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="text-xs text-gray-500 block mb-1">Jami savollar</label>
+                                        <div class="text-lg font-bold text-gray-800">
+                                            {{ gc.category.quiz_questions.count }}
+                                            <span class="text-sm font-normal text-gray-500">ta</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-gray-500 block mb-1">Tushadigan savol soni</label>
+                                        <div class="flex items-center gap-2">
+                                            <button type="button" onclick="updateCategoryCount('{{ gc.category.id }}', -1)" 
+                                                    class="w-6 h-6 rounded bg-gray-200 hover:bg-gray-300 text-gray-700">-</button>
+                                            <span id="cat-count-{{ gc.category.id }}" class="category-count font-bold text-lg min-w-[40px] text-center">
+                                                {{ config.questions_count|default:3 }}
+                                            </span>
+                                            <button type="button" onclick="updateCategoryCount('{{ gc.category.id }}', 1)" 
+                                                    class="w-6 h-6 rounded bg-gray-200 hover:bg-gray-300 text-gray-700">+</button>
+                                        </div>
+                                        <p class="text-xs text-gray-400 mt-1">Maks: {{ gc.category.quiz_questions.count }}</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-3 pt-3 border-t border-gray-100">
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" id="cat-random-{{ gc.category.id }}" 
+                                               class="category-random w-3 h-3 rounded border-gray-300"
+                                               {% if config.random_order %}checked{% endif %}>
+                                        <span class="text-xs text-gray-600">Bu kategoriya savollarini random tartibda chiqarish</span>
+                                    </label>
+                                </div>
+                            </div>
+                            {% endwith %}
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mt-6 pt-4 border-t border-gray-200">
+                            <button type="button" onclick="saveCategoryConfigs()" 
+                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition">
+                                <i class="fas fa-save mr-2"></i> Kategoriya sozlamalarini saqlash
+                            </button>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-8">
+                            <i class="fas fa-folder-open text-gray-300 text-5xl mb-3"></i>
+                            <p class="text-gray-500">Bu guruhga hech qanday kategoriya biriktirilmagan</p>
+                            <a href="{% url 'group_categories_manage' group.id %}" class="mt-3 inline-block text-blue-600 hover:text-blue-800">
+                                <i class="fas fa-plus mr-1"></i> Kategoriya biriktirish
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ 3-QISM: Papka sozlamalari ============ -->
+        {% if group_folders %}
+        <div class="mt-6 bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div class="border-b border-gray-200 px-6 py-4 bg-gray-50 rounded-t-xl">
+                <h2 class="text-lg font-semibold text-gray-900">
+                    <i class="fas fa-folder text-amber-600 mr-2"></i> Papka sozlamalari
+                </h2>
+                <p class="text-sm text-gray-500">Har bir papkadan nechta kategoriya random tushishini belgilang</p>
+            </div>
+            
+            <div class="p-6">
+                <div class="space-y-4">
+                    {% for gf in group_folders %}
+                    {% with fconfig=folder_configs|get_item:gf.folder.id %}
+                    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition" data-folder-id="{{ gf.folder.id }}">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h3 class="font-semibold text-gray-900">
+                                    <i class="fas fa-folder text-amber-500 mr-1"></i> {{ gf.folder.name }}
+                                </h3>
+                                <p class="text-xs text-gray-500 mt-1">{{ gf.folder.folder_categories.count }} ta kategoriya</p>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs text-gray-500 block mb-1">Papkadagi kategoriyalar</label>
+                                <div class="text-sm text-gray-700">
+                                    {% for fc in gf.folder.folder_categories.all %}
+                                    <span class="inline-block bg-gray-100 text-gray-700 text-xs px-2 py-0.5 rounded mr-1 mb-1">{{ fc.category.name }}</span>
+                                    {% empty %}
+                                    <span class="text-gray-400 text-xs">Kategoriya yo'q</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 block mb-1">Tanlanadigan kategoriyalar soni</label>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" onclick="updateFolderCatCount('{{ gf.folder.id }}', -1)" 
+                                            class="w-6 h-6 rounded bg-gray-200 hover:bg-gray-300 text-gray-700">-</button>
+                                    <span id="folder-cat-count-{{ gf.folder.id }}" class="folder-cat-count font-bold text-lg min-w-[40px] text-center"
+                                          data-config-id="{{ fconfig.id }}">
+                                        {{ fconfig.categories_to_select|default:1 }}
+                                    </span>
+                                    <button type="button" onclick="updateFolderCatCount('{{ gf.folder.id }}', 1)" 
+                                            class="w-6 h-6 rounded bg-gray-200 hover:bg-gray-300 text-gray-700">+</button>
+                                </div>
+                                <p class="text-xs text-gray-400 mt-1">Maks: {{ gf.folder.folder_categories.count }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3 pt-3 border-t border-gray-100">
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="folder-random-{{ gf.folder.id }}" 
+                                       class="folder-random w-3 h-3 rounded border-gray-300"
+                                       data-config-id="{{ fconfig.id }}"
+                                       {% if fconfig.randomize_categories %}checked{% endif %}>
+                                <span class="text-xs text-gray-600">Kategoriyalarni random tanlash</span>
+                            </label>
+                        </div>
+                    </div>
+                    {% endwith %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Qo'shimcha ma'lumot -->
+        <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div class="flex items-start gap-3">
+                <i class="fas fa-lightbulb text-blue-500 mt-0.5"></i>
+                <div class="text-sm text-blue-800">
+                    <p class="font-semibold mb-1">Qanday ishlaydi?</p>
+                    <ul class="list-disc list-inside space-y-1 text-blue-700">
+                        <li><strong>"Har bir kategoriya sozlamalaridan foydalanish"</strong> yoqilgan bo'lsa, har bir kategoriyadan yuqorida belgilangan sondagi savollar chiqadi</li>
+                        <li>Bu sozlama o'chirilgan bo'lsa, faqat "Umumiy sozlamalar" dagi savollar soni ishlaydi</li>
+                        <li>Har bir talaba test topshirganda, kategoriyalardan random savollar tanlanadi</li>
+                        <li>Agar guruhga papka biriktirilgan bo'lsa, papkadagi kategoriyalardan random tanlab olinadi</li>
+                        <li>Bir xil savol qayta-qayta chiqmasligi uchun tizim avtomatik ravishda nazorat qiladi</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Umumiy sozlamalar uchun funksiyalar
+function changeCount(delta) {
+    let input = document.getElementById('questionCount');
+    let newVal = parseInt(input.value) + delta;
+    let min = 1, max = {{ total_questions }};
+    if (newVal >= min && newVal <= max) {
+        input.value = newVal;
+    }
+}
+
+function changeTime(delta) {
+    let input = document.getElementById('timeLimit');
+    let newVal = parseInt(input.value) + delta;
+    if (newVal >= 0) input.value = newVal;
+}
+
+function changeAttempts(delta) {
+    let input = document.getElementById('maxAttempts');
+    let newVal = parseInt(input.value) + delta;
+    if (newVal >= 1 && newVal <= 10) input.value = newVal;
+}
+
+function updateCategoryCount(categoryId, delta) {
+    let span = document.getElementById(`cat-count-${categoryId}`);
+    let currentVal = parseInt(span.innerText);
+    let newVal = currentVal + delta;
+    
+    // Maksimal qiymatni topish
+    let categoryDiv = document.querySelector(`[data-category-id="${categoryId}"]`);
+    let maxQuestions = 0;
+    if (categoryDiv) {
+        let jamiText = categoryDiv.querySelector('.text-lg.font-bold.text-gray-800')?.innerText;
+        if (jamiText) {
+            maxQuestions = parseInt(jamiText) || 20;
+        }
+    }
+    
+    if (newVal >= 1 && newVal <= (maxQuestions || 20)) {
+        span.innerText = newVal;
+    }
+}
+
+// Kategoriya sozlamalarini saqlash
+function saveCategoryConfigs() {
+    let configs = [];
+    let categoryDivs = document.querySelectorAll('[data-category-id]');
+    
+    categoryDivs.forEach(div => {
+        let categoryId = div.getAttribute('data-category-id');
+        let countElem = document.getElementById(`cat-count-${categoryId}`);
+        let randomCheckbox = document.getElementById(`cat-random-${categoryId}`);
+        
+        if (countElem && categoryId) {
+            configs.push({
+                category_id: parseInt(categoryId),
+                questions_count: parseInt(countElem.innerText),
+                random_order: randomCheckbox ? randomCheckbox.checked : true
+            });
+        }
+    });
+    
+    if (configs.length === 0) {
+        alert('Hech qanday kategoriya topilmadi!');
+        return;
+    }
+    
+    // CSRF token olish
+    let csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+    if (!csrftoken) {
+        csrftoken = getCookie('csrftoken');
+    }
+    
+    // AJAX so'rov yuborish
+    fetch('{% url "save_category_configs_api" group.id %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+        },
+        body: JSON.stringify({ configs: configs })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('✅ Kategoriya sozlamalari saqlandi!');
+        } else {
+            alert('❌ Xatolik: ' + (data.message || 'Noma\'lum xatolik'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('❌ Xatolik yuz berdi! ' + error);
+    });
+}
+
+// CSRF token olish uchun yordamchi funksiya
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        let cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            let cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Papka kategoriya sonini o'zgartirish
+function updateFolderCatCount(folderId, delta) {
+    let span = document.getElementById(`folder-cat-count-${folderId}`);
+    let currentVal = parseInt(span.innerText);
+    let newVal = currentVal + delta;
+    let maxEl = span.closest('.border').querySelector('.grid .text-gray-400');
+    let maxVal = 20;
+    if (maxEl) {
+        let m = parseInt(maxEl.innerText.replace('Maks: ', ''));
+        if (!isNaN(m)) maxVal = m;
+    }
+    if (newVal >= 1 && newVal <= maxVal) {
+        span.innerText = newVal;
+        saveFolderConfig(span.dataset.configId, {categories_to_select: newVal});
+    }
+}
+
+// Papka sozlamalarini saqlash
+function saveFolderConfig(configId, data) {
+    fetch("{% url 'folder_group_config_edit_api' 0 %}".replace('0', configId), {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
+        body: JSON.stringify(data)
+    })
+    .then(r => r.json())
+    .then(d => { if(!d.success) { alert('Xatolik: ' + d.message); } })
+    .catch(() => { alert('Xatolik yuz berdi'); });
+}
+
+// Folder random checkbox
+document.querySelectorAll('.folder-random').forEach(cb => {
+    cb.addEventListener('change', function() {
+        saveFolderConfig(this.dataset.configId, {randomize_categories: this.checked});
+    });
+});
+
+// Baholash tizimini yoqish/o'chirish
+document.getElementById('gradingEnabled')?.addEventListener('change', function() {
+    let settings = document.getElementById('gradingSettings');
+    if (this.checked) {
+        settings.classList.remove('hidden');
+    } else {
+        settings.classList.add('hidden');
+    }
+});
+
+// Sertifikat sozlamalarini yoqish/o'chirish
+document.getElementById('certificateEnabled')?.addEventListener('change', function() {
+    let settings = document.getElementById('certificateSettings');
+    if (this.checked) {
+        settings.classList.remove('hidden');
+    } else {
+        settings.classList.add('hidden');
+    }
+});
+
+// Real-time preview update
+document.querySelectorAll('#gradingSettings input').forEach(function(input) {
+    input.addEventListener('input', function() {
+        updateGradePreview();
+    });
+});
+
+function updateGradePreview() {
+    let low = document.querySelector('[name="low_threshold"]')?.value || 40;
+    let high = document.querySelector('[name="high_threshold"]')?.value || 70;
+    let labelLow = document.querySelector('[name="label_low"]')?.value || 'Past';
+    let labelMed = document.querySelector('[name="label_medium"]')?.value || "O'rta";
+    let labelHigh = document.querySelector('[name="label_high"]')?.value || 'Yuqori';
+    let infoDiv = document.querySelector('#gradingSettings .bg-gray-50.border');
+    if (infoDiv) {
+        infoDiv.innerHTML = `<i class="fas fa-info-circle mr-1"></i>
+            Masalan: &lt; ${low}% → <span class="text-red-600">${labelLow}</span>,
+            ${low}-${high}% → <span class="text-yellow-600">${labelMed}</span>,
+            &gt; ${high}% → <span class="text-green-600">${labelHigh}</span>`;
+    }
+}
+
+// Form submit qilganda
+document.getElementById('mainConfigForm')?.addEventListener('submit', function(e) {
+    let useCategoryConfigs = document.getElementById('useCategoryConfigs');
+    if (useCategoryConfigs && useCategoryConfigs.checked) {
+        // Agar kategoriya sozlamalari ishlatilsa, umumiy savol sonini yubormaymiz
+        document.getElementById('questionCount').disabled = true;
+    } else {
+        document.getElementById('questionCount').disabled = false;
+    }
+});
+</script>
+
+<style>
+button:active {
+    transform: scale(0.98);
+}
+.category-count {
+    transition: all 0.2s;
+}
+</style>
+{% endblock %}

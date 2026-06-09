@@ -1,0 +1,75 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Sahifa topilmadi | IT House Level Up</title>
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background: #f1f5f9;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-16px); }
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.1); }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        .animate-slide { animation: slideUp 0.5s ease-out forwards; opacity: 0; }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex items-center justify-center p-6">
+    <div class="max-w-lg w-full text-center">
+        <!-- 404 rasm/ikonka -->
+        <div class="mb-8 animate-float">
+            <div class="w-32 h-32 bg-white border-2 border-gray-200 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+                <div class="text-center">
+                    <div class="text-6xl font-light text-gray-300 tracking-tighter">404</div>
+                    <div class="flex items-center justify-center gap-1.5 mt-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-gray-300" style="animation: pulse-dot 1.2s ease-in-out infinite; animation-delay: 0s;"></span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-gray-300" style="animation: pulse-dot 1.2s ease-in-out infinite; animation-delay: 0.4s;"></span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-gray-300" style="animation: pulse-dot 1.2s ease-in-out infinite; animation-delay: 0.8s;"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Matn -->
+        <h1 class="text-3xl font-light text-gray-900 mb-3 animate-slide delay-1 tracking-tight">Sahifa topilmadi</h1>
+        <p class="text-gray-500 text-sm leading-relaxed animate-slide delay-2 max-w-sm mx-auto">
+            Siz izlagan sahifa olib tashlangan, nomi o'zgartirilgan yoki vaqtincha mavjud emas.
+        </p>
+
+        <!-- Harakat tugmalari -->
+        <div class="flex items-center justify-center gap-3 mt-8 animate-slide delay-3">
+            <a href="javascript:history.back()" class="inline-flex items-center gap-2 px-5 py-2.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-800 transition-colors">
+                <i class="fas fa-arrow-left text-xs"></i>
+                Orqaga qaytish
+            </a>
+            <a href="/" class="inline-flex items-center gap-2 px-5 py-2.5 text-sm text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors">
+                <i class="fas fa-home text-xs"></i>
+                Bosh sahifa
+            </a>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-12 text-xs text-gray-400 animate-slide delay-4">
+            <p>IT House Level Up &copy; {% now "Y" %}</p>
+        </div>
+    </div>
+</body>
+</html>

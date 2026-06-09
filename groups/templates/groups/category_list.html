@@ -1,0 +1,72 @@
+{% extends 'groups/base.html' %}
+
+{% block title %}Kategoriyalar{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-6xl mx-auto px-4">
+        <div class="mb-6 flex justify-between items-center">
+            <div>
+                <a href="{% url 'admin_panel' %}" class="text-gray-500 hover:text-gray-700 text-sm mb-2 inline-block">← Bosh sahifaga qaytish</a>
+                <h1 class="text-2xl font-bold text-gray-900">Kategoriyalar</h1>
+                <p class="text-gray-500 text-sm">Fan va bo'limlarni boshqarish</p>
+            </div>
+            <a href="{% url 'category_add' %}" class="bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg text-sm">
+                <i class="fas fa-plus mr-1"></i> Kategoriya qo'shish
+            </a>
+        </div>
+
+        <div class="bg-white rounded-lg border border-gray-200">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr class="text-left text-sm text-gray-500">
+                            <th class="px-6 py-3">#</th>
+                            <th class="px-6 py-3">Nomi</th>
+                            <th class="px-6 py-3">Tavsif</th>
+                            <th class="px-6 py-3">Savollar</th>
+                            <th class="px-6 py-3">Guruhlar</th>
+                            <th class="px-6 py-3 text-center">Amallar</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for cat in categories %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-3 text-sm text-gray-500">{{ forloop.counter }}</td>
+                            <td class="px-6 py-3 font-medium text-gray-900">{{ cat.name }}</td>
+                            <td class="px-6 py-3 text-sm text-gray-500">{{ cat.description|truncatechars:40|default:"-" }}</td>
+                            <td class="px-6 py-3 text-sm">
+                                <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">{{ cat.questions_count }}</span>
+                            </td>
+                            <td class="px-6 py-3 text-sm">
+                                <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">{{ cat.groups_count }}</span>
+                            </td>
+                            <td class="px-6 py-3 text-center">
+                                <div class="flex items-center justify-center space-x-3">
+                                    <a href="{% url 'admin_question_add'  %}" class="text-blue-400 hover:text-blue-600" title="Savollar">
+                                        <i class="fas fa-question-circle"></i>
+                                    </a>
+                                    <a href="{% url 'category_edit' cat.id %}" class="text-gray-400 hover:text-gray-600" title="Tahrirlash">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'category_delete' cat.id %}" class="text-red-400 hover:text-red-600" title="O'chirish">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                                <i class="fas fa-folder-open text-gray-300 text-4xl mb-3 block"></i>
+                                Hech qanday kategoriya mavjud emas
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

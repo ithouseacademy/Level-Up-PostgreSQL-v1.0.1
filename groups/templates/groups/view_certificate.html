@@ -1,0 +1,63 @@
+{% extends 'groups/base.html' %}
+{% block title %}Sertifikat - {{ cert.student_name }}{% endblock %}
+{% block content %}
+<style>
+@page { size: A4 landscape; margin: 0; }
+@media print {
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body { background: white; }
+  .no-print { display: none !important; }
+  .min-h-screen { min-height: auto !important; }
+  .max-w-5xl { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+  .px-4 { padding-left: 0 !important; padding-right: 0 !important; }
+  .py-8 { padding-top: 0 !important; padding-bottom: 0 !important; }
+  .bg-white.rounded-xl { border: none !important; border-radius: 0 !important; box-shadow: none !important; background: white !important; }
+  .flex.justify-center { padding: 0 !important; background: white !important; }
+  .cert-img { 
+    position: fixed; top: 0; left: 0; 
+    width: 100%; height: 100%; 
+    max-width: 100%; max-height: 100%;
+    object-fit: fill; box-shadow: none !important; 
+  }
+}
+.cert-img { width: 100%; object-fit: contain; }
+</style>
+
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-5xl mx-auto px-4 py-8">
+    <div class="no-print flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Sertifikat</h1>
+        <p class="text-gray-500 text-sm">{{ cert.student_name }} | {{ cert.group_name|default:cert.quiz_result.group_name_saved|default:cert.quiz_result.quiz_session.group.name|default:"-" }}</p>
+      </div>
+      <div class="flex gap-3">
+        <button onclick="window.print()" class="bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+          <i class="fas fa-print"></i> Chop etish
+        </button>
+        <a href="{{ cert.certificate_file.url }}" download class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+          <i class="fas fa-download"></i> Yuklab olish
+        </a>
+        <a href="{% url 'certificate_list' %}" class="text-gray-500 hover:text-gray-700 text-sm flex items-center">
+          <i class="fas fa-arrow-left mr-1"></i> Orqaga
+        </a>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-lg">
+      <div class="no-print p-3 bg-gray-50 border-b border-gray-200 flex flex-wrap items-center gap-4 text-sm">
+        <span class="text-gray-500">Student:</span>
+        <span class="font-medium text-gray-900">{{ cert.student_name }}</span>
+        <span class="text-gray-300">|</span>
+        <span class="text-gray-500">Guruh:</span>
+        <span class="font-medium text-gray-900">{{ cert.group_name|default:cert.quiz_result.group_name_saved|default:cert.quiz_result.quiz_session.group.name|default:"-" }}</span>
+        <span class="text-gray-300">|</span>
+        <span class="text-gray-500">Ball:</span>
+        <span class="{% if cert.score >= threshold %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %} px-2 py-0.5 rounded-full text-xs font-medium">{{ cert.score }}%</span>
+      </div>
+      <div class="flex justify-center bg-gray-100 p-4">
+        <img src="{{ cert.certificate_file.url }}" alt="Sertifikat" class="cert-img w-full max-w-[1123px] shadow-md rounded-lg">
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

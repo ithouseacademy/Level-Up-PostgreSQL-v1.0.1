@@ -1,0 +1,37 @@
+{% extends 'groups/base.html' %}
+
+{% block title %}Savolni o'chirish{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-md mx-auto px-4">
+        <a href="{% url 'category_questions_list' category.id %}" class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4 transition">
+            <i class="fas fa-arrow-left mr-1"></i> Orqaga
+        </a>
+        <div class="bg-white rounded-lg border border-gray-200 p-6 text-center">
+            <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-trash-alt text-red-500 text-2xl"></i>
+            </div>
+            <h2 class="text-xl font-bold text-gray-900 mb-2">Savolni o'chirish</h2>
+            <p class="text-gray-500 mb-4">
+                Ushbu savolni o'chirmoqchimisiz?
+            </p>
+            <div class="bg-gray-50 rounded-lg p-3 mb-4 text-left">
+                <p class="text-sm text-gray-600 truncate">{{ question.question_text|truncatechars:100 }}</p>
+                <p class="text-xs text-green-600 mt-1">To'g'ri javob: {{ question.correct_answer }}</p>
+            </div>
+            <form method="POST">
+                {% csrf_token %}
+                <div class="flex space-x-3">
+                    <a href="{% url 'category_questions_list' category.id %}" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-center">
+                        Bekor qilish
+                    </a>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
+                        O'chirish
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

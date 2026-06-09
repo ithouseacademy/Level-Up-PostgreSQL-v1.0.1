@@ -1,0 +1,1007 @@
+        {% extends 'groups/base.html' %}
+        {% load static %}
+
+        {% block title %}Yangi savol qo'shish{% endblock %}
+
+        {% block content %}
+        <div class="min-h-screen bg-white py-8">
+            <div class="max-w-3xl mx-auto px-4">
+                
+                <div class="mb-8">
+                    <a href="{% url 'admin_question_list' %}" class="text-gray-400 hover:text-gray-600 text-sm">← Savollar ro'yxatiga qaytish</a>
+                    <h1 class="text-2xl font-light text-black mt-3">Yangi savol qo'shish</h1>
+                    <p class="text-gray-400 text-sm mt-1">Savol turini tanlang va ma'lumotlarni to'ldiring</p>
+                </div>
+
+                <form method="post" class="border border-gray-200 bg-white" id="questionForm" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <!-- ============================================================ -->
+                    <!-- KATEGORIYA VA AUDIO SOZLAMALARI -->
+                    <!-- ============================================================ -->
+                    <div class="px-6 pt-6 pb-4 border-b border-gray-100">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Kategoriya <span class="text-red-500">*</span></label>
+                        <select name="category" id="categorySelect" required class="w-full border border-gray-200 px-3 py-2 text-gray-700 focus:border-black focus:outline-none text-sm">
+                            <option value="">-- Kategoriya tanlang --</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}" 
+                                    data-audio-url="{% if cat.audio_file %}{{ cat.audio_file.url }}{% endif %}"
+                                    data-audio-plays="{{ cat.max_audio_plays|default:1 }}"
+                                    data-audio-instruction="{{ cat.audio_instruction|default:''|escapejs }}">
+                                {{ cat.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- AUDIO SOZLAMALARI - Kategoriya tanlanganda ko'rinadi -->
+                    <div id="categoryAudioSection" class="px-6 py-5 border-b border-gray-100" style="display: none;">
+                        <div class="mb-4">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="text-lg">🎵</span>
+                                <span class="font-medium text-gray-700">Kategoriya audio sozlamalari</span>
+                            </div>
+                            
+                            <!-- Audio fayl yuklash -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Audio fayl (ixtiyoriy)</label>
+                                <input type="file" name="category_audio" id="categoryAudioInput" accept="audio/*" class="w-full border border-gray-200 px-3 py-2 text-sm">
+                                <p class="text-xs text-gray-400 mt-1">MP3, WAV, OGG formatlari (max 10MB). Bu audio kategoriya uchun saqlanadi</p>
+                            </div>
+                            
+                            <!-- Mavjud audio ma'lumoti -->
+                            <div id="existingAudioInfo" class="hidden p-3 bg-gray-50 rounded mb-4">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex-1">
+                                        <p class="text-sm font-medium text-gray-700">📁 Mavjud audio:</p>
+                                        <p id="existingAudioName" class="text-xs text-gray-500"></p>
+                                        <audio id="existingAudioPlayer" controls class="w-full mt-2 h-8 hidden">
+                                            <source id="existingAudioSource" src="">
+                                        </audio>
+                                    </div>
+                                    <button type="button" id="clearAudioBtn" class="text-red-500 text-xs border border-red-200 px-2 py-1 rounded hover:bg-red-50 transition">
+                                        🗑️ O'chirish
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Audio sozlamalari -->
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">🔊 Maksimal eshitish soni</label>
+                                    <input type="number" name="category_max_audio_plays" id="categoryMaxAudioPlays" value="1" min="0" class="w-full border border-gray-200 px-3 py-2 text-sm">
+                                    <p class="text-xs text-gray-400 mt-1">0 = cheksiz, 1 = faqat 1 marta eshitish mumkin</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">📝 Audio ko'rsatmasi</label>
+                                    <textarea name="category_audio_instruction" id="categoryAudioInstruction" rows="2" class="w-full border border-gray-200 px-3 py-2 text-sm" placeholder="Masalan: Matnni diqqat bilan tinglang va savollarga javob bering"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3 p-3 bg-blue-50 border border-blue-100 rounded">
+                            <p class="text-xs text-blue-600">
+                                💡 <strong>Eslatma:</strong> Bu audio fayl ushbu kategoriyaga bog'lanadi. 
+                                Studentlar test topshirayotganda audio tugmasini bosib eshitishlari mumkin.
+                                Maksimal eshitish soni cheklanishi mumkin.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- ============================================================ -->
+                    <!-- SAVOL TURI (10 TA) -->
+                    <!-- ============================================================ -->
+                    <div class="px-6 py-5 border-b border-gray-100">
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Savol turi <span class="text-red-500">*</span></label>
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                            <label class="flex items-center gap-2 p-3 border border-gray-200 cursor-pointer hover:bg-gray-50">
+                                <input type="radio" name="question_type" value="fill_blank" class="mr-1" required>
+                                <span class="text-sm">📝 Bo'sh joy (Word Bank)</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-3 border border-gray-200 cursor-pointer hover:bg-gray-50">
+                                <input type="radio" name="question_type" value="fill_blank_no_word" class="mr-1">
+                                <span class="text-sm">📝 Bo'sh joy (Variantlarsiz)</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-3 border border-gray-200 cursor-pointer hover:bg-gray-50">
+                                <input type="radio" name="question_type" value="sentence_arrangement" class="mr-1">
+                                <span class="text-sm">🔀 So'z tartib</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-3 border border-gray-200 cursor-pointer hover:bg-gray-50">
+                                <input type="radio" name="question_type" value="reading_comprehension" class="mr-1">
+                                <span class="text-sm">📖 Matnli</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-3 border border-gray-200 cursor-pointer hover:bg-gray-50">
+                                <input type="radio" name="question_type" value="true_false" class="mr-1">
+                                <span class="text-sm">✓✗ True/False</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-3 border border-gray-200 cursor-pointer hover:bg-gray-50">
+                                <input type="radio" name="question_type" value="multiple_choice" class="mr-1">
+                                <span class="text-sm">🔘 Test</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-3 border border-gray-200 cursor-pointer hover:bg-gray-50">
+                                <input type="radio" name="question_type" value="underline_correct" class="mr-1">
+                                <span class="text-sm">✏️ To'g'ri so'z</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-3 border border-gray-200 cursor-pointer hover:bg-gray-50">
+                                <input type="radio" name="question_type" value="matching" class="mr-1">
+                                <span class="text-sm">🔗 Moslashtirish</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-3 border border-gray-200 cursor-pointer hover:bg-gray-50">
+                                <input type="radio" name="question_type" value="cloze_multiple_blanks" class="mr-1">
+                                <span class="text-sm">📄 Matn ichidagi bo'sh joylar</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-3 border border-gray-200 cursor-pointer hover:bg-gray-50">
+                                <input type="radio" name="question_type" value="complete_the_words" class="mr-1">
+                                <span class="text-sm">🔤 So'zlarni to'ldirish</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-3 border border-gray-200 cursor-pointer hover:bg-gray-50">
+                                <input type="radio" name="question_type" value="writing" class="mr-1">
+                                <span class="text-sm">✍️ Yozma ish (Writing)</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-3 border border-gray-200 cursor-pointer hover:bg-gray-50">
+                                <input type="radio" name="question_type" value="speaking" class="mr-1">
+                                <span class="text-sm">🎤 Og'zaki (Speaking)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Speaking fields -->
+                    <div id="speakingFields" class="px-6 py-5 border-b border-gray-100" style="display: none;">
+                        <div class="mb-5">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Mavzu <span class="text-red-500">*</span></label>
+                            <input type="text" name="s_topic" class="w-full border border-gray-300 rounded px-4 py-2.5 text-sm focus:border-black focus:outline-none" placeholder="Masalan: Introduce yourself">
+                            <p class="text-xs text-gray-400 mt-1">Studentlarga ko'rinmaydi, faqat o'qituvchi uchun</p>
+                        </div>
+                    </div>
+
+                    <!-- ============================================================ -->
+                    <!-- 1. FILL BLANK (Word Bank) -->
+                    <!-- ============================================================ -->
+                    <div id="fillBlankFields" class="px-6 py-5 border-b border-gray-100" style="display: none;">
+                        <div class="mb-5">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Savol matni <span class="text-red-500">*</span></label>
+                            <textarea name="fb_question_text" rows="4" class="w-full border border-gray-200 px-3 py-2 text-gray-700 focus:border-black focus:outline-none text-sm" placeholder="Masalan: I ___ to school every day"></textarea>
+                            <p class="text-xs text-gray-400 mt-1">💡 Bo'sh joy o'rniga <code class="bg-gray-100 px-1">___</code> yozing</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">To'g'ri javob <span class="text-red-500">*</span></label>
+                            <input type="text" name="fb_correct_answer" class="w-full border border-gray-200 px-3 py-2 text-gray-700 focus:border-black focus:outline-none text-sm" placeholder="Masalan: go">
+                            <p class="text-xs text-gray-400 mt-1">💡 Bir nechta variant bo'lsa | bilan ajrating (masalan: go|walk|drive)</p>
+                        </div>
+                    </div>
+
+                    <!-- ============================================================ -->
+                    <!-- 2. FILL BLANK NO WORD -->
+                    <!-- ============================================================ -->
+                    <div id="fillBlankNoWordFields" class="px-6 py-5 border-b border-gray-100" style="display: none;">
+                        <div class="mb-5">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Savol matni <span class="text-red-500">*</span></label>
+                            <textarea name="fbnw_question_text" rows="4" class="w-full border border-gray-200 px-3 py-2 text-gray-700 focus:border-black focus:outline-none text-sm" placeholder="Masalan: Hello, what ___"></textarea>
+                            <p class="text-xs text-gray-400 mt-1">💡 Bo'sh joy o'rniga <code class="bg-gray-100 px-1">___</code> yozing</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">To'g'ri javob <span class="text-red-500">*</span></label>
+                            <input type="text" name="fbnw_correct_answer" class="w-full border border-gray-200 px-3 py-2 text-gray-700 focus:border-black focus:outline-none text-sm" placeholder="Masalan: is your name">
+                        </div>
+                    </div>
+
+                    <!-- ============================================================ -->
+                    <!-- 3. SENTENCE ARRANGEMENT -->
+                    <!-- ============================================================ -->
+                    <div id="sentenceArrangementFields" class="px-6 py-5 border-b border-gray-100" style="display: none;">
+                        <div class="mb-5">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Chalkashtirilgan so'zlar <span class="text-red-500">*</span></label>
+                            <textarea name="sa_scrambled_words" rows="3" class="w-full border border-gray-200 px-3 py-2 font-mono text-sm" placeholder="he / go / school / I / to"></textarea>
+                            <p class="text-xs text-gray-400 mt-1">💡 So'zlarni / (slash) yoki bo'sh joy bilan ajrating</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">To'g'ri gap <span class="text-red-500">*</span></label>
+                            <input type="text" name="sa_correct_sentence" class="w-full border border-gray-200 px-3 py-2 text-gray-700 focus:border-black focus:outline-none text-sm" placeholder="I go to school">
+                        </div>
+                    </div>
+
+                    <!-- ============================================================ -->
+                    <!-- 4. READING COMPREHENSION -->
+                    <!-- ============================================================ -->
+                    <div id="readingComprehensionFields" class="px-6 py-5 border-b border-gray-100" style="display: none;">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Matn yaratish usuli</label>
+                            <div class="flex gap-4">
+                                <label class="flex items-center gap-2"><input type="radio" name="reading_mode" value="new" checked> <span>Yangi matn</span></label>
+                                <label class="flex items-center gap-2"><input type="radio" name="reading_mode" value="existing"> <span>Mavjud matn</span></label>
+                            </div>
+                        </div>
+                        <div id="newTextSection">
+                            <div class="mb-4">
+                                <input type="text" name="reading_title" class="w-full border border-gray-200 px-3 py-2 text-sm" placeholder="Matn sarlavhasi">
+                            </div>
+                            <div class="mb-4">
+                                <textarea name="reading_content" rows="5" class="w-full border border-gray-200 px-3 py-2 text-sm" placeholder="Matn mazmuni..."></textarea>
+                            </div>
+                        </div>
+                        <div id="existingTextSection" style="display: none;">
+                            <select name="existing_reading_text" class="w-full border border-gray-200 px-3 py-2 text-sm">
+                                <option value="">-- Matn tanlang --</option>
+                                {% for text in reading_texts %}
+                                <option value="{{ text.id }}">{{ text.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="border-t pt-4 mt-3">
+                            <h3 class="font-medium mb-2 text-sm">Matnga oid savollar</h3>
+                            <div id="readingQuestionsContainer">
+                                <div class="border border-gray-200 p-3 mb-2 rounded">
+                                    <input type="text" name="reading_question_0" class="w-full border border-gray-200 px-2 py-1 mb-2 text-sm" placeholder="Savol matni">
+                                    <input type="text" name="reading_answer_0" class="w-full border border-gray-200 px-2 py-1 text-sm" placeholder="To'g'ri javob">
+                                    <button type="button" class="remove-q text-red-400 text-xs mt-1">O'chirish</button>
+                                </div>
+                            </div>
+                            <button type="button" id="addReadingQuestion" class="text-sm text-gray-500 hover:text-gray-700 mt-2">+ Savol qo'shish</button>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-3">📌 Matn asosida nechta savol kerak bo'lsa, shuncha qo'shing</p>
+                    </div>
+
+                    <!-- ============================================================ -->
+                    <!-- 5. TRUE/FALSE -->
+                    <!-- ============================================================ -->
+                    <div id="trueFalseFields" class="px-6 py-5 border-b border-gray-100" style="display: none;">
+                        <div class="mb-5">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Savol matni <span class="text-red-500">*</span></label>
+                            <textarea name="tf_question_text" rows="3" class="w-full border border-gray-200 px-3 py-2 text-sm" placeholder="Masalan: The Earth is flat"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">To'g'ri javob <span class="text-red-500">*</span></label>
+                            <div class="flex gap-4">
+                                <label class="flex items-center gap-2"><input type="radio" name="tf_correct_answer" value="true"> <span class="text-green-700">✅ To'g'ri</span></label>
+                                <label class="flex items-center gap-2"><input type="radio" name="tf_correct_answer" value="false"> <span class="text-red-700">❌ Noto'g'ri</span></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ============================================================ -->
+                    <!-- 6. MULTIPLE CHOICE -->
+                    <!-- ============================================================ -->
+                    <div id="multipleChoiceFields" class="px-6 py-5 border-b border-gray-100" style="display: none;">
+                        <div class="mb-5">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Savol matni <span class="text-red-500">*</span></label>
+                            <textarea name="mc_question_text" rows="3" class="w-full border border-gray-200 px-3 py-2 text-sm" placeholder="Masalan: What is the capital of Uzbekistan?"></textarea>
+                        </div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Variantlar <span class="text-red-500">*</span></label>
+                        <div id="optionsContainer">
+                            <div class="flex gap-2 mb-2">
+                                <input type="text" name="option_0" class="flex-1 border border-gray-200 px-3 py-2 text-sm rounded" placeholder="A) Tashkent">
+                                <input type="radio" name="correct_option" value="0" class="w-4 h-4">
+                                <span class="text-xs text-gray-400 w-16">To'g'ri</span>
+                            </div>
+                            <div class="flex gap-2 mb-2">
+                                <input type="text" name="option_1" class="flex-1 border border-gray-200 px-3 py-2 text-sm rounded" placeholder="B) Samarkand">
+                                <input type="radio" name="correct_option" value="1" class="w-4 h-4">
+                                <span class="text-xs text-gray-400 w-16">To'g'ri</span>
+                            </div>
+                            <div class="flex gap-2 mb-2">
+                                <input type="text" name="option_2" class="flex-1 border border-gray-200 px-3 py-2 text-sm rounded" placeholder="C) Bukhara">
+                                <input type="radio" name="correct_option" value="2" class="w-4 h-4">
+                                <span class="text-xs text-gray-400 w-16">To'g'ri</span>
+                            </div>
+                            <div class="flex gap-2 mb-2">
+                                <input type="text" name="option_3" class="flex-1 border border-gray-200 px-3 py-2 text-sm rounded" placeholder="D) Andijan">
+                                <input type="radio" name="correct_option" value="3" class="w-4 h-4">
+                                <span class="text-xs text-gray-400 w-16">To'g'ri</span>
+                            </div>
+                        </div>
+                        <button type="button" id="addOption" class="text-sm text-gray-500 hover:text-gray-700 mt-2">+ Variant qo'shish</button>
+                        <p class="text-xs text-gray-400 mt-2">💡 Kamida 2 ta variant bo'lishi kerak. To'g'ri javobni radio tugma bilan belgilang</p>
+                    </div>
+
+                    <!-- ============================================================ -->
+                    <!-- 7. UNDERLINE CORRECT -->
+                    <!-- ============================================================ -->
+                  <!-- 7. UNDERLINE CORRECT -->
+<div id="underlineCorrectFields" class="px-6 py-5 border-b border-gray-100" style="display: none;">
+    <div class="mb-5">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Gap matni <span class="text-red-500">*</span></label>
+        <textarea name="uc_sentence_text" rows="3" class="w-full border border-gray-200 px-3 py-2 text-sm" placeholder="Masalan: It's very hot in Australia in / by summer."></textarea>
+        <p class="text-xs text-gray-400 mt-1">💡 <strong>Qoida:</strong> / belgisining chap tomonidagi <strong>oxirgi so'z</strong> va o'ng tomonidagi <strong>birinchi so'z</strong> variant sifatida olinadi.</p>
+        <p class="text-xs text-gray-400">📌 Misol: "It's very hot in Australia in / by summer." → variantlar: <code>in</code> va <code>by</code></p>
+        <p class="text-xs text-gray-400">📌 Misol 2: "How's / What's the weather like?" → variantlar: <code>How's</code> va <code>What's</code></p>
+    </div>
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">To'g'ri javob <span class="text-red-500">*</span></label>
+        <input type="text" name="uc_correct_answer" class="w-full border border-gray-200 px-3 py-2 text-sm" placeholder="Masalan: in yoki What's">
+        <p class="text-xs text-gray-400 mt-1">💡 Yuqoridagi variantlardan birini kiriting</p>
+    </div>
+</div>
+
+                    <!-- ============================================================ -->
+                    <!-- 8. MATCHING -->
+                    <!-- ============================================================ -->
+                    <div id="matchingFields" class="px-6 py-5 border-b border-gray-100" style="display: none;">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Ko'rsatma (ixtiyoriy)</label>
+                            <textarea name="matching_instruction" rows="2" class="w-full border border-gray-200 px-3 py-2 text-sm" placeholder="Masalan: Match the words with their definitions"></textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Chap tomon <span class="text-red-500">*</span></label>
+                                <div id="leftItemsContainer">
+                                    <div class="flex gap-2 mb-2">
+                                        <input type="text" name="left_item_0" class="flex-1 border border-gray-200 px-3 py-2 text-sm rounded" placeholder="1. apple">
+                                        <button type="button" class="remove-left text-red-400 text-sm">✕</button>
+                                    </div>
+                                    <div class="flex gap-2 mb-2">
+                                        <input type="text" name="left_item_1" class="flex-1 border border-gray-200 px-3 py-2 text-sm rounded" placeholder="2. car">
+                                        <button type="button" class="remove-left text-red-400 text-sm">✕</button>
+                                    </div>
+                                </div>
+                                <button type="button" id="addLeftItem" class="text-sm text-gray-500 hover:text-gray-700 mt-1">+ Chap tomon qo'shish</button>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">O'ng tomon <span class="text-red-500">*</span></label>
+                                <div id="rightItemsContainer">
+                                    <div class="flex gap-2 mb-2">
+                                        <input type="text" name="right_item_0" class="flex-1 border border-gray-200 px-3 py-2 text-sm rounded" placeholder="A. fruit">
+                                        <button type="button" class="remove-right text-red-400 text-sm">✕</button>
+                                    </div>
+                                    <div class="flex gap-2 mb-2">
+                                        <input type="text" name="right_item_1" class="flex-1 border border-gray-200 px-3 py-2 text-sm rounded" placeholder="B. vehicle">
+                                        <button type="button" class="remove-right text-red-400 text-sm">✕</button>
+                                    </div>
+                                </div>
+                                <button type="button" id="addRightItem" class="text-sm text-gray-500 hover:text-gray-700 mt-1">+ O'ng tomon qo'shish</button>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-3 border-t">
+                            <h4 class="text-sm font-medium mb-2">To'g'ri javoblar <span class="text-red-500">*</span></h4>
+                            <div id="matchingAnswersContainer">
+                                <div class="flex gap-2 mb-2 items-center">
+                                    <span class="w-10 text-sm">1 →</span>
+                                    <select name="match_answer_0" class="flex-1 border border-gray-200 px-3 py-2 text-sm rounded">
+                                        <option value="">-- Tanlang --</option>
+                                        <option value="A">A</option>
+                                        <option value="B">B</option>
+                                    </select>
+                                </div>
+                                <div class="flex gap-2 mb-2 items-center">
+                                    <span class="w-10 text-sm">2 →</span>
+                                    <select name="match_answer_1" class="flex-1 border border-gray-200 px-3 py-2 text-sm rounded">
+                                        <option value="">-- Tanlang --</option>
+                                        <option value="A">A</option>
+                                        <option value="B">B</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-3">📌 Har bir chap tomon elementiga o'ng tomondan mos keladigan variantni tanlang</p>
+                    </div>
+
+                    <!-- ============================================================ -->
+                    <!-- 9. CLOZE MULTIPLE BLANKS -->
+                    <!-- ============================================================ -->
+                    <div id="clozeMultipleBlanksFields" class="px-6 py-5 border-b border-gray-100" style="display: none;">
+                        <div class="mb-5">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Matn (___1___, ___2___ shaklida belgilang) <span class="text-red-500">*</span></label>
+                            <textarea name="cloze_text" id="clozeText" rows="8" class="w-full border border-gray-200 px-3 py-2 font-mono text-sm" placeholder="Masalan:
+        London is ___1___ city. It is ___2___ than New York. The weather is ___3___ in summer."></textarea>
+                            <p class="text-xs text-gray-400 mt-1">💡 Bo'sh joylarni <code class="bg-gray-100 px-1">___1___</code>, <code class="bg-gray-100 px-1">___2___</code> shaklida belgilang</p>
+                        </div>
+                        
+                        <div class="border-t pt-4 mt-2">
+                            <h3 class="font-medium mb-3 text-sm">Har bir bo'sh joy uchun variantlar</h3>
+                            <div id="blanksContainer" class="space-y-4">
+                                <div class="text-center text-gray-400 py-4 border border-dashed border-gray-200 rounded">
+                                    ⚡ "Bo'sh joylarni aniqlash" tugmasini bosing
+                                </div>
+                            </div>
+                            <button type="button" id="detectBlanksBtn" class="bg-gray-100 text-gray-700 px-4 py-2 text-sm mt-2 hover:bg-gray-200 transition rounded">
+                                🔍 Bo'sh joylarni aniqlash
+                            </button>
+                        </div>
+                        
+                        <div class="mt-4 p-3 bg-gray-50 text-xs text-gray-500 rounded">
+                            <p>📌 <strong>Eslatma:</strong> Har bir bo'sh joy uchun 2-4 ta variant qo'shing. To'g'ri javob variantlardan biri sifatida belgilanadi.</p>
+                        </div>
+                    </div>
+
+                    <!-- ============================================================ -->
+                    <!-- 10. COMPLETE THE WORDS -->
+                    <!-- ============================================================ -->
+                    <div id="completeTheWordsFields" class="px-6 py-5 border-b border-gray-100" style="display: none;">
+                        <div class="mb-5">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Gap matni <span class="text-red-500">*</span></label>
+                            <textarea name="ctw_sentence_text" id="ctwSentenceText" rows="4" class="w-full border border-gray-200 px-3 py-2 text-gray-700 focus:border-black focus:outline-none text-sm" placeholder="Masalan: My grandmother w___ in 1934.&#10;Yoki: My grandmother w________ b________ in 1934."></textarea>
+                            <p class="text-xs text-gray-400 mt-1">💡 Bo'sh joy o'rniga <code class="bg-gray-100 px-1">___</code> yoki <code class="bg-gray-100 px-1">w___</code> yoki <code class="bg-gray-100 px-1">w________</code> yozing</p>
+                        </div>
+                        <div class="mb-5">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">To'g'ri javob <span class="text-red-500">*</span></label>
+                            <input type="text" name="ctw_correct_answer" id="ctwCorrectAnswer" class="w-full border border-gray-200 px-3 py-2 text-gray-700 focus:border-black focus:outline-none text-sm" placeholder='1 ta bo\'sh joy: was&#10;2 ta bo\'sh joy: was, born&#10;3 ta bo\'sh joy: was, born, in'>
+                            <p class="text-xs text-gray-400 mt-1">💡 <strong>Qoidalar:</strong></p>
+                            <p class="text-xs text-gray-400">• 1 ta bo'sh joy: <code>was</code> yoki <code>was|worked|lived</code> (| bilan variantlar)</p>
+                            <p class="text-xs text-gray-400">• 2 ta bo'sh joy: <code>was, born</code> (vergul bilan ajrating)</p>
+                            <p class="text-xs text-gray-400">• 3 ta bo'sh joy: <code>was, born, in</code> (vergul bilan ajrating)</p>
+                        </div>
+                        <div class="mt-4 p-3 bg-gray-50 text-xs text-gray-500 rounded">
+                            <p>📌 <strong>Misollar:</strong></p>
+                            <p>• "My grandmother w___ in 1934." → <code>was</code> yoki <code>was|worked|lived</code></p>
+                            <p>• "My grandmother w________ b________ in 1934." → <code>was, born</code></p>
+                            <p>• "I ___ to school ___ morning." → <code>go, every</code></p>
+                        </div>
+                    </div>
+
+                    <!-- ============================================================ -->
+                    <!-- 11. WRITING (Yozma ish) -->
+                    <!-- ============================================================ -->
+                    <div id="writingFields" class="px-6 py-5 border-b border-gray-100" style="display: none;">
+                        <div class="mb-5">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Mavzu (Writing prompt) <span class="text-red-500">*</span></label>
+                            <textarea name="w_topic" rows="3" class="w-full border border-gray-200 px-3 py-2 text-gray-700 focus:border-black focus:outline-none text-sm" placeholder="Masalan: Write about your favorite hobby. Why do you like it?"></textarea>
+                            <p class="text-xs text-gray-400 mt-1">💡 Student shu mavzuga oid matn yozadi</p>
+                        </div>
+                        <div class="p-3 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700">
+                            📌 Bu savol turida student javobi admin tomonidan qo'lda baholanadi.
+                        </div>
+                    </div>
+
+                    <!-- ============================================================ -->
+                    <!-- BALL (PASTKI QISM) -->
+                    <!-- ============================================================ -->
+                    <div class="px-6 py-5 border-b border-gray-100">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Ball (necha ballik savol) <span class="text-red-500">*</span></label>
+                        <input type="number" name="points" value="1" min="1" max="100" class="w-32 border border-gray-200 px-3 py-2 text-gray-700 focus:border-black focus:outline-none text-sm">
+                        <p class="text-xs text-gray-400 mt-1">📌 Bu savol necha ball ekanligini kiriting. Masalan: 1, 2, 3, 5, 10</p>
+                    </div>
+
+                    <!-- ============================================================ -->
+                    <!-- FORM BUTTONLARI -->
+                    <!-- ============================================================ -->
+                    <div class="px-6 py-5 bg-gray-50 flex gap-3">
+                        <button type="submit" class="bg-black text-white px-6 py-2 text-sm hover:bg-gray-800 transition rounded">💾 Savolni saqlash</button>
+                        <a href="{% url 'admin_question_list' %}" class="border border-gray-300 bg-white px-6 py-2 text-sm hover:bg-gray-50 transition rounded">Bekor qilish</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <style>
+            button:active {
+                transform: scale(0.98);
+            }
+            .remove-left, .remove-right, .remove-q, .remove-opt {
+                cursor: pointer;
+                transition: color 0.2s;
+            }
+            .remove-left:hover, .remove-right:hover, .remove-q:hover, .remove-opt:hover {
+                color: #ef4444 !important;
+            }
+            .option-input:focus, select:focus, textarea:focus, input[type="text"]:focus {
+                border-color: black;
+                outline: none;
+                box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+            }
+            .hidden {
+                display: none;
+            }
+        </style>
+
+        <script>
+        // ============================================================
+        // AUDIO SOZLAMALARI - KATEGORIYA TANLANGANDA
+        // ============================================================
+        const categorySelect = document.getElementById('categorySelect');
+        const audioSection = document.getElementById('categoryAudioSection');
+        const existingAudioInfo = document.getElementById('existingAudioInfo');
+        const existingAudioName = document.getElementById('existingAudioName');
+        const existingAudioPlayer = document.getElementById('existingAudioPlayer');
+        const existingAudioSource = document.getElementById('existingAudioSource');
+        const clearAudioBtn = document.getElementById('clearAudioBtn');
+        const categoryMaxAudioPlays = document.getElementById('categoryMaxAudioPlays');
+        const categoryAudioInstruction = document.getElementById('categoryAudioInstruction');
+        const categoryAudioInput = document.getElementById('categoryAudioInput');
+
+        let currentCategoryId = null;
+        let currentAudioUrl = '';
+
+        categorySelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const categoryId = this.value;
+            
+            if (!categoryId) {
+                audioSection.style.display = 'none';
+                return;
+            }
+            
+            audioSection.style.display = 'block';
+            currentCategoryId = categoryId;
+            
+            // Mavjud audio ma'lumotlarini olish
+            currentAudioUrl = selectedOption.dataset.audioUrl || '';
+            const audioPlays = selectedOption.dataset.audioPlays || '1';
+            const audioInstruction = selectedOption.dataset.audioInstruction || '';
+            
+            categoryMaxAudioPlays.value = audioPlays;
+            categoryAudioInstruction.value = audioInstruction;
+            
+            if (currentAudioUrl) {
+                existingAudioName.textContent = currentAudioUrl.split('/').pop();
+                existingAudioSource.src = currentAudioUrl;
+                existingAudioPlayer.load();
+                existingAudioInfo.classList.remove('hidden');
+                categoryAudioInput.style.display = 'block';
+            } else {
+                existingAudioInfo.classList.add('hidden');
+                categoryAudioInput.style.display = 'block';
+            }
+        });
+
+        // Audio faylni o'chirish
+        clearAudioBtn?.addEventListener('click', function() {
+            if (confirm('Audio faylni o\'chirishni xohlaysizmi?')) {
+                // O'chirish uchun hidden input yuboramiz
+                const clearInput = document.createElement('input');
+                clearInput.type = 'hidden';
+                clearInput.name = 'clear_category_audio';
+                clearInput.value = 'true';
+                document.getElementById('questionForm').appendChild(clearInput);
+                
+                existingAudioInfo.classList.add('hidden');
+                categoryAudioInput.value = '';
+                categoryAudioInput.style.display = 'block';
+            }
+        });
+
+        // ============================================================
+        // SAVOL TURI O'ZGARTIRISH
+        // ============================================================
+        document.querySelectorAll('input[name="question_type"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.querySelectorAll('[id$="Fields"]').forEach(el => el.style.display = 'none');
+                const id = this.value === 'fill_blank' ? 'fillBlankFields' :
+                        this.value === 'fill_blank_no_word' ? 'fillBlankNoWordFields' :
+                        this.value === 'sentence_arrangement' ? 'sentenceArrangementFields' :
+                        this.value === 'reading_comprehension' ? 'readingComprehensionFields' :
+                        this.value === 'true_false' ? 'trueFalseFields' :
+                        this.value === 'multiple_choice' ? 'multipleChoiceFields' :
+                        this.value === 'underline_correct' ? 'underlineCorrectFields' :
+                        this.value === 'matching' ? 'matchingFields' :
+                        this.value === 'cloze_multiple_blanks' ? 'clozeMultipleBlanksFields' :
+                        this.value === 'complete_the_words' ? 'completeTheWordsFields' :
+                        this.value === 'writing' ? 'writingFields' :
+                        this.value === 'speaking' ? 'speakingFields' : '';
+                if (id) document.getElementById(id).style.display = 'block';
+            });
+        });
+
+        // ============================================================
+        // READING COMPREHENSION MODE
+        // ============================================================
+        document.querySelectorAll('input[name="reading_mode"]').forEach(r => {
+            r.addEventListener('change', function() {
+                const newSection = document.getElementById('newTextSection');
+                const existingSection = document.getElementById('existingTextSection');
+                if (newSection) newSection.style.display = this.value === 'new' ? 'block' : 'none';
+                if (existingSection) existingSection.style.display = this.value === 'existing' ? 'block' : 'none';
+            });
+        });
+
+        // Add reading question
+        let qCount = 1;
+        const addReadingBtn = document.getElementById('addReadingQuestion');
+        if (addReadingBtn) {
+            addReadingBtn.addEventListener('click', () => {
+                const container = document.getElementById('readingQuestionsContainer');
+                const div = document.createElement('div');
+                div.className = 'border border-gray-200 p-3 mb-2 rounded';
+                div.innerHTML = `
+                    <input type="text" name="reading_question_${qCount}" class="w-full border border-gray-200 px-2 py-1 mb-2 text-sm" placeholder="Savol matni">
+                    <input type="text" name="reading_answer_${qCount}" class="w-full border border-gray-200 px-2 py-1 text-sm" placeholder="To'g'ri javob">
+                    <button type="button" class="remove-q text-red-400 text-xs mt-1">O'chirish</button>
+                `;
+                div.querySelector('.remove-q').onclick = () => div.remove();
+                container.appendChild(div);
+                qCount++;
+            });
+        }
+
+        // ============================================================
+        // MULTIPLE CHOICE OPTIONS
+        // ============================================================
+        let optCount = 4;
+        const addOptionBtn = document.getElementById('addOption');
+        if (addOptionBtn) {
+            addOptionBtn.addEventListener('click', () => {
+                const container = document.getElementById('optionsContainer');
+                const letter = String.fromCharCode(65 + optCount);
+                const div = document.createElement('div');
+                div.className = 'flex gap-2 mb-2';
+                div.innerHTML = `
+                    <input type="text" name="option_${optCount}" class="flex-1 border border-gray-200 px-3 py-2 text-sm rounded" placeholder="${letter}) Variant">
+                    <input type="radio" name="correct_option" value="${optCount}" class="w-4 h-4">
+                    <span class="text-xs text-gray-400 w-16">To'g'ri</span>
+                    <button type="button" class="remove-opt text-red-400 text-sm">✕</button>
+                `;
+                div.querySelector('.remove-opt').onclick = () => div.remove();
+                container.appendChild(div);
+                optCount++;
+            });
+        }
+
+        // Remove option handler for existing
+        document.querySelectorAll('.remove-opt').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.closest('.flex')?.remove();
+            });
+        });
+
+        // ============================================================
+        // MATCHING FUNKSIYALARI
+        // ============================================================
+        let leftCount = 2, rightCount = 2;
+
+        function updateSelects() {
+            const rightInputs = document.querySelectorAll('#rightItemsContainer input');
+            const opts = Array.from(rightInputs).map((inp, i) => {
+                const letter = String.fromCharCode(65 + i);
+                const label = inp.value.trim() || letter;
+                return `<option value="${letter}">${letter}. ${label}</option>`;
+            }).join('');
+            
+            document.querySelectorAll('#matchingAnswersContainer select').forEach(sel => { 
+                const val = sel.value; 
+                sel.innerHTML = `<option value="">-- Tanlang --</option>${opts}`; 
+                if (val && Array.from(sel.options).some(opt => opt.value === val)) {
+                    sel.value = val;
+                }
+            });
+        }
+
+        function updateMatches() {
+            const answers = document.getElementById('matchingAnswersContainer');
+            const lefts = document.querySelectorAll('#leftItemsContainer input');
+            const rights = document.querySelectorAll('#rightItemsContainer input');
+            
+            if (!answers) return;
+            
+            answers.innerHTML = '';
+            lefts.forEach((leftInput, i) => {
+                const leftLabel = leftInput.value.trim() || `${i+1}`;
+                const div = document.createElement('div');
+                div.className = 'flex gap-2 mb-2 items-center';
+                
+                let optionsHtml = '<option value="">-- Tanlang --</option>';
+                rights.forEach((rightInput, j) => {
+                    const letter = String.fromCharCode(65 + j);
+                    const rightLabel = rightInput.value.trim() || letter;
+                    optionsHtml += `<option value="${letter}">${letter}. ${rightLabel}</option>`;
+                });
+                
+                div.innerHTML = `
+                    <span class="w-10 text-sm">${i+1} →</span>
+                    <select name="match_answer_${i}" class="flex-1 border border-gray-200 px-3 py-2 text-sm rounded">
+                        ${optionsHtml}
+                    </select>
+                    <button type="button" class="remove-match text-red-400 text-sm">✕</button>
+                `;
+                const removeBtn = div.querySelector('.remove-match');
+                if (removeBtn) removeBtn.onclick = () => div.remove();
+                answers.appendChild(div);
+            });
+        }
+
+        const addLeftBtn = document.getElementById('addLeftItem');
+        if (addLeftBtn) {
+            addLeftBtn.addEventListener('click', () => {
+                const container = document.getElementById('leftItemsContainer');
+                const div = document.createElement('div');
+                div.className = 'flex gap-2 mb-2';
+                div.innerHTML = `
+                    <input type="text" name="left_item_${leftCount}" class="flex-1 border border-gray-200 px-3 py-2 text-sm rounded" placeholder="${leftCount+1}. ...">
+                    <button type="button" class="remove-left text-red-400 text-sm">✕</button>
+                `;
+                div.querySelector('.remove-left').onclick = () => { div.remove(); updateMatches(); };
+                container.appendChild(div);
+                updateMatches();
+                leftCount++;
+            });
+        }
+
+        const addRightBtn = document.getElementById('addRightItem');
+        if (addRightBtn) {
+            addRightBtn.addEventListener('click', () => {
+                const container = document.getElementById('rightItemsContainer');
+                const letter = String.fromCharCode(65 + rightCount);
+                const div = document.createElement('div');
+                div.className = 'flex gap-2 mb-2';
+                div.innerHTML = `
+                    <input type="text" name="right_item_${rightCount}" class="flex-1 border border-gray-200 px-3 py-2 text-sm rounded" placeholder="${letter}. ...">
+                    <button type="button" class="remove-right text-red-400 text-sm">✕</button>
+                `;
+                div.querySelector('.remove-right').onclick = () => { div.remove(); updateSelects(); updateMatches(); };
+                container.appendChild(div);
+                updateSelects();
+                updateMatches();
+                rightCount++;
+            });
+        }
+
+        // Initial matching setup
+        if (document.getElementById('matchingFields')) {
+            setTimeout(() => {
+                updateSelects();
+                updateMatches();
+            }, 100);
+        }
+
+        // Remove handlers for existing
+        document.querySelectorAll('.remove-left').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.closest('.flex')?.remove();
+                updateMatches();
+            });
+        });
+        document.querySelectorAll('.remove-right').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.closest('.flex')?.remove();
+                updateSelects();
+                updateMatches();
+            });
+        });
+
+        // ============================================================
+        // CLOZE MULTIPLE BLANKS FUNKSIYALARI
+        // ============================================================
+        function detectBlanks() {
+            const text = document.getElementById('clozeText').value;
+            if (!text.trim()) {
+                alert('Iltimos, avval matnni kiriting!');
+                return;
+            }
+            
+            const pattern = /___(\d+)___/g;
+            const blanks = new Set();
+            let match;
+            while ((match = pattern.exec(text)) !== null) {
+                blanks.add(match[1]);
+            }
+            
+            const blankNumbers = Array.from(blanks).sort((a, b) => parseInt(a) - parseInt(b));
+            
+            if (blankNumbers.length === 0) {
+                alert('Matn ichida ___1___, ___2___ shaklida bo\'sh joy belgisi topilmadi!');
+                return;
+            }
+            
+            const container = document.getElementById('blanksContainer');
+            container.innerHTML = '';
+            
+            blankNumbers.forEach(num => {
+                const div = document.createElement('div');
+                div.className = 'border border-gray-200 p-4 bg-gray-50 rounded';
+                div.innerHTML = `
+                    <div class="flex justify-between items-center mb-3">
+                        <label class="font-medium text-sm text-gray-700">___${num}___ bo'sh joy uchun variantlar</label>
+                        <span class="text-xs text-gray-400">To'g'ri javobni tanlang</span>
+                    </div>
+                    <div id="options_${num}" class="space-y-2">
+                        <div class="flex gap-2 items-center">
+                            <input type="text" class="option-input flex-1 border border-gray-300 px-3 py-2 text-sm rounded focus:border-black" data-blank="${num}" data-opt-index="0" placeholder="Variant 1">
+                            <input type="radio" name="correct_${num}" value="0" class="correct-radio w-4 h-4">
+                            <span class="text-xs text-gray-400 w-16">To'g'ri</span>
+                            <button type="button" class="remove-option text-red-400 text-sm hidden">✕</button>
+                        </div>
+                        <div class="flex gap-2 items-center">
+                            <input type="text" class="option-input flex-1 border border-gray-300 px-3 py-2 text-sm rounded focus:border-black" data-blank="${num}" data-opt-index="1" placeholder="Variant 2">
+                            <input type="radio" name="correct_${num}" value="1" class="correct-radio w-4 h-4">
+                            <span class="text-xs text-gray-400 w-16">To'g'ri</span>
+                            <button type="button" class="remove-option text-red-400 text-sm hidden">✕</button>
+                        </div>
+                    </div>
+                    <button type="button" class="add-option-btn text-sm text-gray-500 mt-2 hover:text-gray-700" data-blank="${num}">+ Variant qo'shish</button>
+                `;
+                
+                div.querySelector('.add-option-btn').addEventListener('click', function(e) {
+                    const blankNum = this.dataset.blank;
+                    const containerDiv = document.getElementById(`options_${blankNum}`);
+                    const currentCount = containerDiv.querySelectorAll('.option-input').length;
+                    
+                    const newDiv = document.createElement('div');
+                    newDiv.className = 'flex gap-2 items-center mt-2';
+                    newDiv.innerHTML = `
+                        <input type="text" class="option-input flex-1 border border-gray-300 px-3 py-2 text-sm rounded" data-blank="${blankNum}" data-opt-index="${currentCount}" placeholder="Variant ${currentCount+1}">
+                        <input type="radio" name="correct_${blankNum}" value="${currentCount}" class="correct-radio w-4 h-4">
+                        <span class="text-xs text-gray-400 w-16">To'g'ri</span>
+                        <button type="button" class="remove-option text-red-400 text-sm">✕</button>
+                    `;
+                    newDiv.querySelector('.remove-option').addEventListener('click', function() {
+                        newDiv.remove();
+                        reindexRadios(blankNum);
+                    });
+                    containerDiv.appendChild(newDiv);
+                });
+                
+                container.appendChild(div);
+            });
+            
+            setTimeout(() => {
+                blankNumbers.forEach(num => {
+                    const blankDiv = document.querySelector(`#options_${num}`);
+                    if (blankDiv) {
+                        const removeBtns = blankDiv.querySelectorAll('.remove-option');
+                        const optionCount = blankDiv.querySelectorAll('.option-input').length;
+                        removeBtns.forEach(btn => {
+                            if (optionCount > 2) {
+                                btn.classList.remove('hidden');
+                            }
+                        });
+                    }
+                });
+            }, 100);
+        }
+
+        function reindexRadios(blankNum) {
+            const container = document.getElementById(`options_${blankNum}`);
+            if (!container) return;
+            const rows = container.querySelectorAll('.flex.gap-2.items-center');
+            rows.forEach((row, idx) => {
+                const radio = row.querySelector('input[type="radio"]');
+                if (radio) {
+                    radio.value = idx;
+                    radio.name = `correct_${blankNum}`;
+                }
+                const optionInput = row.querySelector('.option-input');
+                if (optionInput) {
+                    optionInput.setAttribute('data-opt-index', idx);
+                }
+            });
+        }
+
+        const detectBtn = document.getElementById('detectBlanksBtn');
+        if (detectBtn) {
+            detectBtn.addEventListener('click', detectBlanks);
+        }
+
+        // ============================================================
+        // COMPLETE THE WORDS VALIDATION
+        // ============================================================
+        function validateCompleteWords() {
+            const sentenceText = document.getElementById('ctwSentenceText');
+            const correctAnswer = document.getElementById('ctwCorrectAnswer');
+            
+            if (!sentenceText || !correctAnswer) return true;
+            
+            const sentence = sentenceText.value;
+            const answer = correctAnswer.value;
+            
+            if (!sentence.trim()) {
+                alert('Gap matnini kiriting!');
+                return false;
+            }
+            if (!answer.trim()) {
+                alert('To\'g\'ri javobni kiriting!');
+                return false;
+            }
+            
+            const pattern = /([a-z]*_{3,})/gi;
+            const matches = sentence.match(pattern);
+            const blankCount = matches ? matches.length : 0;
+            
+            if (blankCount === 0) {
+                alert('Matn ichida bo\'sh joy topilmadi! ___ yoki w___ shaklida belgilang.');
+                return false;
+            }
+            
+            let answerCount = 1;
+            if (answer.includes(',')) {
+                answerCount = answer.split(',').filter(p => p.trim()).length;
+            } else if (answer.includes('|')) {
+                answerCount = 1;
+            }
+            
+            if (answerCount !== blankCount) {
+                let msg = `⚠️ Eslatma: Matnda ${blankCount} ta bo'sh joy bor, lekin siz ${answerCount} ta javob kiritdingiz.\n\n`;
+                if (answerCount === 1 && blankCount > 1) {
+                    msg += `Bu faqat 1-bo'sh joyga ishlatiladi. Davom etilsinmi?`;
+                } else {
+                    msg += `To'g'ri format: ${blankCount} ta javobni vergul bilan ajrating.\n`;
+                    msg += `Masalan: ${Array(blankCount).fill('soz').join(', ')}\n\nDavom etilsinmi?`;
+                }
+                if (!confirm(msg)) {
+                    return false;
+                }
+            }
+            
+            if (blankCount > 1 && !answer.includes(',')) {
+                const warnMsg = `⚠️ ${blankCount} ta bo'sh joy topildi!\n\nJavoblarni vergul bilan ajrating:\nMasalan: soz1, soz2, soz3\n\nDavom etilsinmi?`;
+                if (!confirm(warnMsg)) {
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+
+        // ============================================================
+        // FORM SUBMIT HANDLER
+        // ============================================================
+        document.getElementById('questionForm').addEventListener('submit', function(e) {
+            const selectedType = document.querySelector('input[name="question_type"]:checked');
+            
+            if (selectedType && selectedType.value === 'cloze_multiple_blanks') {
+                e.preventDefault();
+                
+                const clozeText = document.getElementById('clozeText').value;
+                if (!clozeText.trim()) {
+                    alert('Matnni kiriting!');
+                    return;
+                }
+                
+                const blankOptions = {};
+                const correctAnswers = {};
+                
+                document.querySelectorAll('#blanksContainer > div').forEach(blankDiv => {
+                    const addBtn = blankDiv.querySelector('.add-option-btn');
+                    if (addBtn) {
+                        const blankNum = addBtn.dataset.blank;
+                        const options = [];
+                        blankDiv.querySelectorAll('.option-input').forEach((input) => {
+                            if (input.value.trim()) {
+                                options.push(input.value.trim());
+                            }
+                        });
+                        
+                        const selectedRadio = blankDiv.querySelector(`input[name="correct_${blankNum}"]:checked`);
+                        let correctIndex = 0;
+                        if (selectedRadio) {
+                            correctIndex = parseInt(selectedRadio.value);
+                        }
+                        
+                        if (options.length >= 2) {
+                            blankOptions[blankNum] = options;
+                            if (options[correctIndex]) {
+                                correctAnswers[blankNum] = options[correctIndex];
+                            }
+                        }
+                    }
+                });
+                
+                if (Object.keys(blankOptions).length === 0) {
+                    alert('Hech qanday variant kiritilmadi! Iltimos, har bir bo\'sh joy uchun kamida 2 ta variant kiriting.');
+                    return;
+                }
+                
+                const hiddenText = document.createElement('input');
+                hiddenText.type = 'hidden';
+                hiddenText.name = 'cloze_question_text';
+                hiddenText.value = clozeText;
+                this.appendChild(hiddenText);
+                
+                const hiddenOptions = document.createElement('input');
+                hiddenOptions.type = 'hidden';
+                hiddenOptions.name = 'cloze_blank_options';
+                hiddenOptions.value = JSON.stringify(blankOptions);
+                this.appendChild(hiddenOptions);
+                
+                const hiddenAnswers = document.createElement('input');
+                hiddenAnswers.type = 'hidden';
+                hiddenAnswers.name = 'cloze_correct_answers';
+                hiddenAnswers.value = JSON.stringify(correctAnswers);
+                this.appendChild(hiddenAnswers);
+                
+                this.submit();
+            }
+            
+            if (selectedType && selectedType.value === 'complete_the_words') {
+                if (!validateCompleteWords()) {
+                    e.preventDefault();
+                }
+            }
+        });
+
+        // First radio select - default
+        if (!document.querySelector('input[name="question_type"]:checked')) {
+            const firstRadio = document.querySelector('input[name="question_type"]');
+            if (firstRadio) {
+                firstRadio.checked = true;
+                firstRadio.dispatchEvent(new Event('change'));
+            }
+        }
+        </script>
+        {% endblock %}

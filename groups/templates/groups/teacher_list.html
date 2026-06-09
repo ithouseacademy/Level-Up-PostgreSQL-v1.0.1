@@ -1,0 +1,95 @@
+{% extends 'groups/base.html' %}
+
+{% block title %}O'qituvchilar{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-white py-8">
+    <div class="max-w-5xl mx-auto px-4">
+        <div class="mb-8 flex items-center justify-between">
+            <div>
+                <a href="{% url 'admin_panel' %}" class="text-gray-500 hover:text-gray-700 text-sm inline-flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    Admin panelga qaytish
+                </a>
+                <h1 class="text-3xl font-light text-gray-900 mt-4 tracking-tight">O'qituvchilar</h1>
+                <p class="text-gray-500 text-sm mt-1 font-light">{{ teachers|length }} ta o'qituvchi</p>
+            </div>
+            <a href="{% url 'teacher_add' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 rounded-lg transition">
+                <i class="fas fa-plus"></i> Yangi o'qituvchi
+            </a>
+        </div>
+
+        {% if teachers %}
+        <div class="border border-gray-200">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="border-b border-gray-100 bg-gray-50">
+                        <tr class="text-left text-xs text-gray-500 uppercase tracking-wider">
+                            <th class="px-6 py-3 font-medium">#</th>
+                            <th class="px-6 py-3 font-medium">Ism</th>
+                            <th class="px-6 py-3 font-medium">Username</th>
+                            <th class="px-6 py-3 font-medium">Holat</th>
+                            <th class="px-6 py-3 font-medium">Guruhlar</th>
+                            <th class="px-6 py-3 font-medium">Qo'shilgan</th>
+                            <th class="px-6 py-3 font-medium"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for t in teachers %}
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-3 text-sm text-gray-500">{{ forloop.counter }}</td>
+                            <td class="px-6 py-3">
+                                <div class="font-medium text-gray-800">{{ t.user.get_full_name|default:'—' }}</div>
+                            </td>
+                            <td class="px-6 py-3 text-sm text-gray-500">{{ t.user.username }}</td>
+                            <td class="px-6 py-3">
+                                {% if t.is_active %}
+                                <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Faol</span>
+                                {% else %}
+                                <span class="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">Faol emas</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-3">
+                                <div class="flex flex-wrap gap-1">
+                                    {% if t.all_groups %}
+                                    <span class="text-xs bg-gray-900 text-white px-2 py-0.5 rounded">Barcha guruhlar</span>
+                                    {% else %}
+                                    {% for g in t.groups.all %}
+                                    <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">{{ g.name }}</span>
+                                    {% empty %}
+                                    <span class="text-xs text-gray-300">—</span>
+                                    {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="px-6 py-3 text-xs text-gray-400">{{ t.created_at|date:'d.m.Y' }}</td>
+                            <td class="px-6 py-3">
+                                <div class="flex items-center gap-2">
+                                    <a href="{% url 'teacher_edit' t.id %}" class="text-gray-400 hover:text-gray-600 transition text-sm">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'teacher_delete' t.id %}" class="text-gray-400 hover:text-red-500 transition text-sm" onclick="return confirm('{{ t.user.get_full_name|default:t.user.username }} o\'chirilsinmi?')">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-20">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-chalkboard-teacher text-gray-300 text-2xl"></i>
+            </div>
+            <h2 class="text-xl font-light text-gray-400">O'qituvchilar yo'q</h2>
+            <p class="text-sm text-gray-300 mt-2">Hali o'qituvchi qo'shilmagan.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

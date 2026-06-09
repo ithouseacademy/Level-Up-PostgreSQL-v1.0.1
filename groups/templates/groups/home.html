@@ -1,0 +1,49 @@
+{% extends 'groups/base.html' %}
+
+{% block title %}Bosh sahifa{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center px-4">
+    <div class="max-w-2xl w-full text-center">
+        <!-- Logo/Icon -->
+        <div class="inline-flex items-center justify-center w-20 h-20 bg-gray-900 rounded-2xl mb-6 shadow-sm">
+            <i class="fas fa-graduation-cap text-white text-3xl"></i>
+            
+        </div>
+        
+        <!-- Title -->
+        <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            IT House Academy
+        </h1>
+        
+        <!-- Description -->
+        <p class="text-lg text-gray-500 mb-8 max-w-md mx-auto">
+            Level up platformasi
+        </p>
+        
+        <!-- Buttons -->
+        <div class="flex justify-center items-center gap-3">
+            <a href="{% url 'login' %}" class="inline-flex items-center justify-center px-8 py-3.5 border border-transparent text-base font-semibold rounded-lg text-white bg-gray-900 hover:bg-gray-800 shadow-sm transition duration-200">
+                <i class="fas fa-sign-in-alt mr-2"></i>
+                Kirish
+            </a>
+              <a href="{% url 'register' %}" class="inline-flex items-center justify-center px-8 py-3.5 border border-transparent text-base font-semibold rounded-lg text-white bg-gray-900 hover:bg-gray-800 shadow-sm transition duration-200">
+                <i class="fas fa-user-plus mr-2"></i>
+                Ro'yxatdan o'tish
+            </a>
+              <a href="{% url 'sayt_haqida' %}" class="inline-flex items-center justify-center px-8 py-3.5 border border-transparent text-base font-semibold rounded-lg text-white bg-gray-900 hover:bg-gray-800 shadow-sm transition duration-200">
+                <i class="fas fa-info-circle mr-2"></i>
+                Sayt haqida
+            </a>
+           
+        </div>
+        
+        <!-- Footer -->
+        <div class="mt-12 pt-6 border-t border-gray-200">
+            <p class="text-xs text-gray-400">
+                © 2026 IT House Academy Level up . Barcha huquqlar himoyalangan.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

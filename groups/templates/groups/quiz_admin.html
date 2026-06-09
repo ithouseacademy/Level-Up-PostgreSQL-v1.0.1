@@ -1,0 +1,408 @@
+{% extends 'groups/base.html' %}
+
+{% block title %}Quiz Boshqaruvi{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Header -->
+        <div class="mb-6">
+            <a href="{% url 'admin_panel' %}" class="text-gray-500 hover:text-gray-700 text-sm">
+                <i class="fas fa-arrow-left mr-1"></i> Admin panelga qaytish
+            </a>
+            <h1 class="text-2xl font-bold text-gray-900 mt-2">
+                <i class="fas fa-question-circle text-purple-600 mr-2"></i> Quiz Boshqaruvi
+            </h1>
+            <p class="text-gray-500 mt-1">Savollar qo'shing, tahrirlang va guruhlar uchun testni boshqaring</p>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- QO'SHISH PANELI -->
+            <div class="bg-white rounded-lg border border-gray-200 shadow-sm">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-green-50 to-white">
+                    <h2 class="text-lg font-semibold text-gray-900">
+                        <i class="fas fa-plus-circle mr-2 text-green-600"></i> Yangi Savol Qo'shish
+                    </h2>
+                </div>
+                <div class="p-6">
+                    <form method="POST" action="{% url 'quiz_add_question' %}">
+                        {% csrf_token %}
+                        
+                        <!-- Kategoriya -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-tag mr-1 text-gray-500"></i> Kategoriya
+                            </label>
+                            <select name="category_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                <option value="">-- Kategoriya tanlang --</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <p class="text-xs text-gray-400 mt-1">Savolni qaysi kategoriyaga qo'shish kerak</p>
+                        </div>
+                        
+                        <!-- Savol turi -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-layer-group mr-1 text-gray-500"></i> Savol turi
+                            </label>
+                            <select name="question_type" id="questionTypeSelect" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                <option value="fill_blank">📝 Bo'sh joy to'ldirish (Fill Blank)</option>
+                                <option value="sentence_arrangement">🔀 So'zlarni tartibga solish (Sentence Arrangement)</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Fill Blank maydonlari -->
+                        <div id="fillBlankFields">
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-file-alt mr-1 text-gray-500"></i> Savol matni
+                                </label>
+                                <textarea name="question_text" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Masalan: I ___ to school every day. The cat is ___ the table."></textarea>
+                                <p class="text-xs text-gray-400 mt-1">⚠️ Bo'sh joy uchun <code class="bg-gray-100 px-1 rounded">___</code> (3 ta pastki chiziq) belgisini qo'ying</p>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-check-circle mr-1 text-gray-500"></i> To'g'ri javob
+                                </label>
+                                <input type="text" name="correct_answer" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Masalan: go, on">
+                            </div>
+                        </div>
+                        
+                        <!-- Sentence Arrangement maydonlari -->
+                        <div id="sentenceArrangementFields" style="display: none;">
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-random mr-1 text-gray-500"></i> Chalkashtirilgan so'zlar
+                                </label>
+                                <textarea name="scrambled_words" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 font-mono focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Masalan:&#10;he / go / school / I / to"></textarea>
+                                <p class="text-xs text-gray-400 mt-1">💡 So'zlarni <code class="bg-gray-100 px-1 rounded">/</code> bilan ajrating</p>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-check-circle mr-1 text-gray-500"></i> To'g'ri gap
+                                </label>
+                                <input type="text" name="correct_sentence" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Masalan: I go to school">
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition font-medium">
+                            <i class="fas fa-save mr-2"></i> Savol Qo'shish
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- QUIZ BOSHQARUV PANELI -->
+            <div class="bg-white rounded-lg border border-gray-200 shadow-sm">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
+                    <h2 class="text-lg font-semibold text-gray-900">
+                        <i class="fas fa-play-circle mr-2 text-blue-600"></i> Test Boshqaruvi
+                    </h2>
+                </div>
+                <div class="p-6">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-layer-group mr-1 text-gray-500"></i> Guruhni tanlang
+                        </label>
+                        <select id="quizGroupSelect" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">-- Guruh tanlang --</option>
+                            {% for group in groups %}
+                            <option value="{{ group.id }}" data-name="{{ group.name }}">{{ group.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div id="quizStatus" class="mb-4 p-3 rounded-lg text-center hidden"></div>
+                    
+                    <div class="flex gap-3">
+                        <button id="startQuizBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition font-medium">
+                            <i class="fas fa-play mr-2"></i> Testni Boshlash
+                        </button>
+                        <button id="stopQuizBtn" class="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition font-medium">
+                            <i class="fas fa-stop mr-2"></i> Testni To'xtatish
+                        </button>
+                    </div>
+                    
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <a href="#" id="viewResultsBtn" class="block text-center text-purple-600 hover:text-purple-700 transition">
+                            <i class="fas fa-chart-line mr-2"></i> Natijalarni ko'rish
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SAVOLLAR RO'YXATI -->
+        <div class="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h2 class="text-lg font-semibold text-gray-900">
+                    <i class="fas fa-list mr-2 text-gray-600"></i> Savollar Ro'yxati 
+                    <span class="text-sm font-normal text-gray-500">({{ questions|length }} ta)</span>
+                </h2>
+                <div class="flex gap-2">
+                    <input type="text" id="searchQuestion" placeholder="Qidirish..." class="px-3 py-1 border border-gray-300 rounded-lg text-sm">
+                    <select id="filterCategory" class="px-3 py-1 border border-gray-300 rounded-lg text-sm">
+                        <option value="">Barcha kategoriyalar</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full" id="questionsTable">
+                    <thead class="bg-gray-50">
+                        <tr class="text-left text-sm text-gray-500">
+                            <th class="px-6 py-3 w-16">#</th>
+                            <th class="px-6 py-3">Savol turi</th>
+                            <th class="px-6 py-3">Savol / Javob</th>
+                            <th class="px-6 py-3">Kategoriya</th>
+                            <th class="px-6 py-3 w-24">Amallar</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for q in questions %}
+                        <tr class="text-sm hover:bg-gray-50 transition" data-category="{{ q.category.id }}">
+                            <td class="px-6 py-3 text-gray-500">{{ forloop.counter }}</td>
+                            <td class="px-6 py-3">
+                                {% if q.question_type == 'fill_blank' %}
+                                <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs">📝 Bo'sh joy</span>
+                                {% else %}
+                                <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs">🔀 So'z tartibi</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-3 max-w-md">
+                                {% if q.question_type == 'fill_blank' %}
+                                    <div class="text-gray-900">{{ q.question_text|truncatechars:80 }}</div>
+                                    <div class="text-xs text-green-600 mt-1">✓ {{ q.correct_answer }}</div>
+                                {% else %}
+                                    <div class="text-gray-900">📌 {{ q.correct_sentence|truncatechars:60 }}</div>
+                                    <div class="text-xs text-gray-500 mt-1">🔀 {{ q.scrambled_words|truncatechars:50 }}</div>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-3">
+                                <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">{{ q.category.name }}</span>
+                            </td>
+                            <td class="px-6 py-3">
+                                <div class="flex items-center space-x-3">
+                                    <a href="{% url 'quiz_edit_question' q.id %}" class="text-blue-500 hover:text-blue-700" title="Tahrirlash">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'quiz_delete_question' q.id %}" class="text-red-500 hover:text-red-700" title="O'chirish" onclick="return confirm('Savolni o\'chirmoqchimisiz?')">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                                <i class="fas fa-inbox text-gray-300 text-4xl mb-3 block"></i>
+                                Hech qanday savol mavjud emas
+                                <p class="text-sm mt-2">Yuqoridagi formadan savol qo'shing</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Django Admin paneliga link -->
+        <div class="mt-4 text-center">
+            <a href="/admin/groups/quizquestion/" target="_blank" class="text-xs text-gray-400 hover:text-gray-600">
+                <i class="fas fa-external-link-alt mr-1"></i> Django Admin panelida savollarni boshqarish
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+let statusInterval;
+
+$(document).ready(function() {
+    // Savol turiga qarab maydonlarni ko'rsatish/yashirish
+    function toggleQuestionFields() {
+        var questionType = $('#questionTypeSelect').val();
+        if (questionType === 'fill_blank') {
+            $('#fillBlankFields').show();
+            $('#sentenceArrangementFields').hide();
+        } else {
+            $('#fillBlankFields').hide();
+            $('#sentenceArrangementFields').show();
+        }
+    }
+    
+    $('#questionTypeSelect').change(toggleQuestionFields);
+    toggleQuestionFields();
+    
+    // Qidirish va filter
+    $('#searchQuestion').on('keyup', filterTable);
+    $('#filterCategory').on('change', filterTable);
+    
+    function filterTable() {
+        var searchText = $('#searchQuestion').val().toLowerCase();
+        var categoryId = $('#filterCategory').val();
+        
+        $('#questionsTable tbody tr').each(function() {
+            var row = $(this);
+            var text = row.text().toLowerCase();
+            var showBySearch = searchText === '' || text.indexOf(searchText) > -1;
+            var showByCategory = categoryId === '' || row.data('category') == categoryId;
+            
+            if (showBySearch && showByCategory) {
+                row.show();
+            } else {
+                row.hide();
+            }
+        });
+    }
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    function checkQuizStatus() {
+        let groupId = $('#quizGroupSelect').val();
+        if (!groupId) {
+            $('#quizStatus').addClass('hidden');
+            return;
+        }
+        
+        $.ajax({
+            url: '/quiz/check-status/',
+            method: 'POST',
+            contentType: 'application/json',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') },
+            data: JSON.stringify({ group_id: groupId }),
+            success: function(data) {
+                if (data.success && data.is_active) {
+                    $('#quizStatus').removeClass('hidden bg-gray-100 text-gray-700').addClass('bg-green-100 text-green-800').html(`
+                        <i class="fas fa-circle text-green-600 text-xs mr-2"></i>
+                        <span class="font-medium">✅ TEST FAOL!</span> 
+                        ${data.started_at ? 'Boshlangan: ' + data.started_at : ''}
+                    `);
+                } else {
+                    $('#quizStatus').removeClass('hidden bg-green-100 text-green-800').addClass('bg-gray-100 text-gray-700').html(`
+                        <i class="fas fa-circle text-gray-400 text-xs mr-2"></i>
+                        <span class="font-medium">⏸ TEST FAOL EMAS</span>
+                    `);
+                }
+            },
+            error: function() {
+                $('#quizStatus').removeClass('hidden').addClass('bg-red-100 text-red-800').html(`
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    Holatni tekshirib bo'lmadi
+                `);
+            }
+        });
+    }
+    
+    $('#quizGroupSelect').change(function() {
+        let groupId = $(this).val();
+        let groupName = $(this).find('option:selected').data('name');
+        
+        if (groupId) {
+            checkQuizStatus();
+            if (statusInterval) clearInterval(statusInterval);
+            statusInterval = setInterval(checkQuizStatus, 5000);
+            $('#viewResultsBtn').attr('href', `/quiz/results/${groupId}/`);
+        } else {
+            $('#quizStatus').addClass('hidden');
+            if (statusInterval) clearInterval(statusInterval);
+            $('#viewResultsBtn').attr('href', '#');
+        }
+    });
+    
+    $('#startQuizBtn').click(function() {
+        let groupId = $('#quizGroupSelect').val();
+        let groupName = $('#quizGroupSelect option:selected').data('name');
+        
+        if (!groupId) {
+            alert('Iltimos, avval guruh tanlang!');
+            return;
+        }
+        
+        if (confirm(`"${groupName}" guruhi uchun TESTni boshlamoqchimisiz?\n\nStudentlar darhol javob yozishni boshlashi mumkin.`)) {
+            $.ajax({
+                url: '/quiz/start/',
+                method: 'POST',
+                contentType: 'application/json',
+                headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                data: JSON.stringify({ group_id: groupId }),
+                success: function(data) {
+                    if (data.success) {
+                        alert('✅ ' + data.message);
+                        checkQuizStatus();
+                    } else {
+                        alert('❌ Xato: ' + data.message);
+                    }
+                },
+                error: function(xhr) {
+                    alert('❌ Xatolik: ' + (xhr.responseJSON?.message || xhr.statusText));
+                }
+            });
+        }
+    });
+    
+    $('#stopQuizBtn').click(function() {
+        let groupId = $('#quizGroupSelect').val();
+        let groupName = $('#quizGroupSelect option:selected').data('name');
+        
+        if (!groupId) {
+            alert('Iltimos, avval guruh tanlang!');
+            return;
+        }
+        
+        if (confirm(`"${groupName}" guruhi uchun TESTni to'xtatmoqchimisiz?`)) {
+            $.ajax({
+                url: '/quiz/stop/',
+                method: 'POST',
+                contentType: 'application/json',
+                headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                data: JSON.stringify({ group_id: groupId }),
+                success: function(data) {
+                    if (data.success) {
+                        alert('⏸ ' + data.message);
+                        checkQuizStatus();
+                    } else {
+                        alert('❌ Xato: ' + data.message);
+                    }
+                },
+                error: function(xhr) {
+                    alert('❌ Xatolik: ' + (xhr.responseJSON?.message || xhr.statusText));
+                }
+            });
+        }
+    });
+});
+</script>
+
+<style>
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+</style>
+{% endblock %}

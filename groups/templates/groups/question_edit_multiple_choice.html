@@ -1,0 +1,52 @@
+<!-- Multiple Choice tahrirlash formasi -->
+<div class="mb-6">
+    <label class="block text-sm font-medium text-gray-700 mb-2">Savol matni</label>
+    <textarea name="mc_question_text" rows="3" required 
+              class="w-full border border-gray-200 rounded-lg px-4 py-2 focus:border-black focus:outline-none">{{ question.question_text }}</textarea>
+</div>
+
+<div class="mb-6">
+    <label class="block text-sm font-medium text-gray-700 mb-2">Variantlar</label>
+    <div id="options-container">
+        {% for option in question.options_list %}
+        <div class="flex gap-2 mb-2 option-item">
+            <input type="text" name="option_{{ forloop.counter0 }}" value="{{ option }}" 
+                   class="flex-1 border border-gray-200 rounded-lg px-4 py-2">
+            <button type="button" class="remove-option text-red-500 hover:text-red-700">🗑️</button>
+        </div>
+        {% endfor %}
+    </div>
+    <button type="button" id="add-option" class="mt-2 text-sm text-blue-600 hover:text-blue-800">+ Yangi variant</button>
+</div>
+
+<div class="mb-6">
+    <label class="block text-sm font-medium text-gray-700 mb-2">To'g'ri javob</label>
+    <select name="correct_option" required class="w-full border border-gray-200 rounded-lg px-4 py-2">
+        {% for option in question.options_list %}
+        <option value="{{ forloop.counter0 }}" {% if question.correct_answer == option %}selected{% endif %}>
+            {{ option }}
+        </option>
+        {% endfor %}
+    </select>
+</div>
+
+<script>
+document.getElementById('add-option').addEventListener('click', function() {
+    const container = document.getElementById('options-container');
+    const index = container.children.length;
+    const div = document.createElement('div');
+    div.className = 'flex gap-2 mb-2 option-item';
+    div.innerHTML = `
+        <input type="text" name="option_${index}" placeholder="Yangi variant" 
+               class="flex-1 border border-gray-200 rounded-lg px-4 py-2">
+        <button type="button" class="remove-option text-red-500 hover:text-red-700">🗑️</button>
+    `;
+    container.appendChild(div);
+});
+
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('remove-option')) {
+        e.target.closest('.option-item').remove();
+    }
+});
+</script>

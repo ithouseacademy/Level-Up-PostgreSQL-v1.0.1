@@ -1,0 +1,129 @@
+{% extends 'groups/base.html' %}
+{% block title %}Arxivlangan sertifikatlar{% endblock %}
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Arxivlangan sertifikatlar</h1>
+                <p class="text-gray-500 text-sm mt-1">Arxivga olingan sertifikatlar</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="{% url 'certificate_list' %}" class="text-gray-500 hover:text-gray-700 text-sm border border-gray-300 px-4 py-2 rounded-lg transition flex items-center gap-2">
+                    <i class="fas fa-arrow-left"></i> Orqaga
+                </a>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+                <form method="GET" class="flex items-center gap-4">
+                    <label class="text-sm text-gray-600">Guruh bo'yicha filtr:</label>
+                    <select name="group_id" onchange="this.form.submit()" class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm">
+                        <option value="">Barcha guruhlar</option>
+                        {% for group in groups %}
+                        <option value="{{ group.id }}" {% if selected_group_id == group.id %}selected{% endif %}>{{ group.name }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+                <span class="text-xs text-gray-400">{{ certificates|length }} ta sertifikat</span>
+            </div>
+
+            <form id="batchForm" method="POST">
+                {% csrf_token %}
+                <div id="batchBar" class="hidden px-6 py-3 border-b border-gray-200 bg-blue-50 flex items-center justify-between">
+                    <span class="text-sm text-gray-700 font-medium"><span id="selectedCount">0</span> ta tanlangan</span>
+                    <div class="flex items-center gap-2">
+                        <button type="submit" formaction="{% url 'certificate_archive' %}" name="action" value="unarchive" class="text-blue-600 hover:text-blue-800 text-sm border border-blue-300 px-4 py-1.5 rounded-lg transition flex items-center gap-1.5 bg-white">
+                            <i class="fas fa-box-open"></i> Arxivdan chiqarish
+                        </button>
+                        <button type="submit" formaction="{% url 'certificate_archive' %}" name="action" value="delete" class="text-red-600 hover:text-red-800 text-sm border border-red-300 px-4 py-1.5 rounded-lg transition flex items-center gap-1.5 bg-white">
+                            <i class="fas fa-trash"></i> O'chirish
+                        </button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-gray-50 border-b border-gray-200">
+                                <th class="px-4 py-3 text-left">
+                                    <input type="checkbox" id="selectAll" class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">#</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Student</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Guruh</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Ball</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Yaratilgan</th>
+                                <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Amallar</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            {% for cert in certificates %}
+                            <tr class="hover:bg-gray-50 transition">
+                                <td class="px-4 py-4">
+                                    <input type="checkbox" name="cert_ids" value="{{ cert.id }}" class="cert-checkbox rounded border-gray-300 text-gray-900 focus:ring-gray-900">
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-500">{{ forloop.counter }}</td>
+                                <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ cert.student_name }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-600">{{ cert.group_name }}</td>
+                                <td class="px-6 py-4">
+                                    <span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">{{ cert.score }}%</span>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-500">{{ cert.generated_at|date:"d.m.Y H:i" }}</td>
+                                <td class="px-6 py-4 text-right">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <a href="{% url 'view_certificate' cert.id %}" class="text-gray-400 hover:text-gray-600 transition" title="Ko'rish">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="px-6 py-12 text-center">
+                                    <div class="flex flex-col items-center">
+                                        <i class="fas fa-archive text-gray-300 text-4xl mb-3"></i>
+                                        <p class="text-gray-500 text-sm">Arxivda sertifikatlar mavjud emas</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+const selectAll = document.getElementById('selectAll');
+const checkboxes = document.querySelectorAll('.cert-checkbox');
+const batchBar = document.getElementById('batchBar');
+const selectedCount = document.getElementById('selectedCount');
+
+function updateBatchBar() {
+    const checked = document.querySelectorAll('.cert-checkbox:checked');
+    selectedCount.textContent = checked.length;
+    batchBar.classList.toggle('hidden', checked.length === 0);
+}
+
+selectAll.addEventListener('change', function() {
+    checkboxes.forEach(cb => cb.checked = this.checked);
+    updateBatchBar();
+});
+
+checkboxes.forEach(cb => {
+    cb.addEventListener('change', updateBatchBar);
+});
+
+document.getElementById('batchForm').addEventListener('submit', function(e) {
+    const action = e.submitter?.value;
+    const checked = document.querySelectorAll('.cert-checkbox:checked');
+    if (checked.length === 0) { e.preventDefault(); return; }
+    if (action === 'delete' && !confirm(`${checked.length} ta sertifikatni o'chirishga ishonchingiz komilmi?`)) {
+        e.preventDefault();
+    }
+});
+</script>
+{% endblock %}

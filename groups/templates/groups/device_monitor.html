@@ -1,0 +1,252 @@
+{% extends 'groups/base.html' %}
+{% load static %}
+
+{% block title %}Qurilma nazorati{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4">
+
+        <!-- Header -->
+        <div class="mb-8">
+            <a href="{% url 'admin_panel' %}" class="text-gray-500 hover:text-gray-700 text-sm inline-flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Admin panelga qaytish
+            </a>
+            <h1 class="text-3xl font-light text-gray-900 mt-4 tracking-tight">Qurilma nazorati</h1>
+            <p class="text-gray-500 text-sm mt-1 font-light">
+                <span class="inline-flex items-center gap-1">
+                    <span class="w-2 h-2 bg-green-500 rounded-full {% if total_active %}animate-pulse{% endif %}"></span>
+                    {{ total_active }} ta faol qurilma
+                </span>
+            </p>
+        </div>
+
+        {% if devices %}
+        <!-- Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div class="bg-white border border-gray-200 p-5 text-center">
+                <div class="text-3xl font-light text-gray-800">{{ total_active }}</div>
+                <div class="text-xs text-gray-500 uppercase tracking-wider mt-1">Online (2 daqiqa)</div>
+            </div>
+            <div class="bg-white border border-gray-200 p-5 text-center">
+                <div class="text-3xl font-light text-gray-800">{{ total_devices }}</div>
+                <div class="text-xs text-gray-500 uppercase tracking-wider mt-1">Jami</div>
+            </div>
+            <div class="bg-white border border-gray-200 p-5 text-center">
+                <div class="text-3xl font-light text-gray-800" id="liveCount">{{ total_active }}</div>
+                <div class="text-xs text-gray-500 uppercase tracking-wider mt-1">Jonli</div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="bg-white border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
+                <h3 class="text-sm font-medium text-gray-700 uppercase tracking-wider">
+                    <svg class="w-4 h-4 inline mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                    Qurilmalar
+                </h3>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs text-gray-400" id="refreshStatus">Avtomatik yangilanmoqda</span>
+                    <button onclick="refreshDevices()" class="text-xs text-gray-500 hover:text-gray-700 border border-gray-200 px-3 py-1.5 rounded transition">
+                        <i class="fas fa-sync-alt mr-1"></i> Yangilash
+                    </button>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="border-b border-gray-100">
+                        <tr class="text-left text-xs text-gray-500 uppercase tracking-wider">
+                            <th class="px-6 py-3 font-medium">#</th>
+                            <th class="px-6 py-3 font-medium">Status</th>
+                            <th class="px-6 py-3 font-medium">Nomi</th>
+                            <th class="px-6 py-3 font-medium">Student</th>
+                            <th class="px-6 py-3 font-medium">Guruh</th>
+                            <th class="px-6 py-3 font-medium">Platforma</th>
+                            <th class="px-6 py-3 font-medium">IP</th>
+                            <th class="px-6 py-3 font-medium">Oxirgi ko'rilgan</th>
+                            <th class="px-6 py-3 font-medium"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100" id="deviceTableBody">
+                        {% for d in devices %}
+                        <tr class="hover:bg-gray-50 transition-colors {% if not d.is_online %}opacity-50{% endif %}" data-device-id="{{ d.device_id }}">
+                            <td class="px-6 py-3 text-sm text-gray-500">{{ forloop.counter }}</td>
+                            <td class="px-6 py-3">
+                                <span class="inline-flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full {% if d.is_online %}bg-green-500{% else %}bg-gray-300{% endif %}"></span>
+                                    <span class="text-xs font-medium {% if d.is_online %}text-green-600{% else %}text-gray-400{% endif %}">
+                                        {% if d.is_online %}Online{% else %}Offline{% endif %}
+                                    </span>
+                                </span>
+                            </td>
+                            <td class="px-6 py-3">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                    </svg>
+                                    <span class="font-medium text-gray-800">{% if d.name %}{{ d.name }}{% else %}<span class="text-gray-400 italic">nomsiz</span>{% endif %}</span>
+                                    <button onclick="openRename('{{ d.device_id|escapejs }}')" class="text-gray-300 hover:text-gray-500 transition" title="Nom berish">
+                                        <i class="fas fa-pen text-xs"></i>
+                                    </button>
+                                </div>
+                            </td>
+                            <td class="px-6 py-3 text-sm text-gray-600">{% if d.student %}{{ d.student.full_name }}{% else %}<span class="text-gray-300">—</span>{% endif %}</td>
+                            <td class="px-6 py-3 text-sm text-gray-500">{% if d.group %}{{ d.group.name }}{% else %}<span class="text-gray-300">—</span>{% endif %}</td>
+                            <td class="px-6 py-3 text-xs text-gray-400">{{ d.platform|truncatechars:30 }}</td>
+                            <td class="px-6 py-3 text-xs font-mono text-gray-400">{{ d.ip_address }}</td>
+                            <td class="px-6 py-3 text-xs text-gray-400 font-mono">{{ d.last_seen|date:"H:i:s" }}</td>
+                            <td class="px-6 py-3">
+                                <button onclick="deleteDevice('{{ d.device_id|escapejs }}')" class="text-gray-300 hover:text-red-500 transition" title="O'chirish">
+                                    <i class="fas fa-trash-alt text-xs"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="px-6 py-3 border-t border-gray-100 bg-gray-50 text-xs text-gray-400 flex justify-between">
+                <span>{{ devices|length }} ta qurilma</span>
+                <span id="bottomTime"></span>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-20">
+            <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-microchip text-gray-300 text-3xl"></i>
+            </div>
+            <h2 class="text-xl font-light text-gray-400">Qurilmalar yo'q</h2>
+            <p class="text-sm text-gray-300 mt-2">Studentlar tizimga kirganda qurilmalari avtomatik ro'yxatga olinadi.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Rename Modal -->
+<div id="renameModal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white max-w-sm w-full rounded-xl shadow-xl">
+        <div class="px-6 py-4 border-b border-gray-100">
+            <h3 class="text-lg font-medium text-gray-800">Qurilma nomini o'zgartirish</h3>
+        </div>
+        <div class="p-6">
+            <input type="text" id="renameInput" placeholder="Yangi nom..." maxlength="100" autocomplete="off"
+                   class="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-800 focus:outline-none focus:border-gray-400 transition">
+        </div>
+        <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+            <button onclick="closeRename()" class="text-sm text-gray-500 hover:text-gray-700 px-4 py-2 transition">Bekor qilish</button>
+            <button onclick="saveRename()" class="text-sm bg-gray-900 text-white px-5 py-2 rounded-lg hover:bg-gray-800 transition">Saqlash</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    let renameDeviceId = null;
+    let pollTimer = null;
+
+    // Rename
+    window.openRename = function(deviceId) {
+        renameDeviceId = deviceId;
+        const row = document.querySelector(`tr[data-device-id="${deviceId}"]`);
+        const nameEl = row?.querySelector('.font-medium.text-gray-800');
+        document.getElementById('renameInput').value = nameEl ? (nameEl.textContent.trim() === 'nomsiz' ? '' : nameEl.textContent.trim()) : '';
+        document.getElementById('renameModal').classList.remove('hidden');
+        document.getElementById('renameModal').classList.add('flex');
+        setTimeout(() => document.getElementById('renameInput').focus(), 100);
+    };
+    window.closeRename = function() {
+        document.getElementById('renameModal').classList.remove('flex');
+        document.getElementById('renameModal').classList.add('hidden');
+        renameDeviceId = null;
+    };
+    window.saveRename = function() {
+        if (!renameDeviceId) return;
+        const name = document.getElementById('renameInput').value.trim();
+        if (!name) return;
+        fetch('/device/rename/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+            body: JSON.stringify({device_id: renameDeviceId, name: name})
+        }).then(r => r.json()).then(data => {
+            if (data.success) {
+                const row = document.querySelector(`tr[data-device-id="${renameDeviceId}"]`);
+                const nameEl = row?.querySelector('.font-medium.text-gray-800');
+                if (nameEl) nameEl.textContent = name;
+                closeRename();
+            }
+        });
+    };
+
+    // Delete
+    window.deleteDevice = function(deviceId) {
+        if (!confirm('Ushbu qurilma ro\'yxatdan o\'chirilsinmi?')) return;
+        fetch('/device/delete/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+            body: JSON.stringify({device_id: deviceId})
+        }).then(r => r.json()).then(data => {
+            if (data.success) {
+                const row = document.querySelector(`tr[data-device-id="${deviceId}"]`);
+                if (row) row.remove();
+            }
+        });
+    };
+
+    // Auto refresh
+    window.refreshDevices = function() {
+        document.getElementById('refreshStatus').textContent = 'Yangilanmoqda...';
+        fetch('/device/monitor/?ajax=1', {
+            headers: {'X-Requested-With': 'XMLHttpRequest'}
+        }).then(r => r.json()).then(data => {
+            if (!data.success) return;
+            const rows = {};
+            document.querySelectorAll('#deviceTableBody tr').forEach(r => { rows[r.dataset.deviceId] = r; });
+            data.devices.forEach(d => {
+                const row = rows[d.device_id];
+                if (!row) return;
+                const statusEl = row.querySelector('.text-xs.font-medium');
+                const led = row.querySelector('.w-2.h-2');
+                if (led) { led.className = 'w-2 h-2 rounded-full ' + (d.is_active ? 'bg-green-500' : 'bg-gray-300'); }
+                if (statusEl) { statusEl.textContent = d.is_active ? 'Online' : 'Offline'; statusEl.className = 'text-xs font-medium ' + (d.is_active ? 'text-green-600' : 'text-gray-400'); }
+                row.className = d.is_active ? 'hover:bg-gray-50 transition-colors' : 'hover:bg-gray-50 transition-colors opacity-50';
+            });
+            // Stat kartalarini yangilash
+            const onlineEls = document.querySelectorAll('.text-3xl');
+            if (onlineEls[0]) onlineEls[0].textContent = data.online_count;
+            if (document.getElementById('liveCount')) document.getElementById('liveCount').textContent = data.online_count;
+            document.getElementById('refreshStatus').textContent = 'Yangilandi ' + new Date().toLocaleTimeString('uz-UZ', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+        });
+    };
+
+    if (document.getElementById('deviceTableBody')) {
+        pollTimer = setInterval(refreshDevices, 5000);
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeRename();
+    });
+
+    window.addEventListener('beforeunload', function() {
+        if (pollTimer) clearInterval(pollTimer);
+    });
+
+    // Clock
+    function updateClock() {
+        const el = document.getElementById('bottomTime');
+        if (el) el.textContent = new Date().toLocaleTimeString('uz-UZ', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Modal backdrop click
+    document.getElementById('renameModal')?.addEventListener('click', function(e) {
+        if (e.target === this) closeRename();
+    });
+})();
+</script>
+{% endblock %}

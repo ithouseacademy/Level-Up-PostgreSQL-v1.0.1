@@ -1,0 +1,57 @@
+{% extends 'groups/base.html' %}
+{% block title %}Mening sertifikatlarim{% endblock %}
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-4xl mx-auto px-4 py-6">
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
+          <i class="fas fa-certificate text-white text-sm"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold text-gray-900">Sertifikatlarim</h1>
+          <p class="text-xs text-gray-400">{{ student.full_name }}</p>
+        </div>
+      </div>
+      <a href="{% url 'student_panel' %}" class="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg">
+        <i class="fas fa-arrow-left"></i> Orqaga
+      </a>
+    </div>
+
+    {% if certificates %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      {% for cert in certificates %}
+      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition">
+        <div class="aspect-[1.414/1] bg-gray-100 relative overflow-hidden">
+          <img src="{{ cert.certificate_file.url }}" alt="Sertifikat" class="w-full h-full object-contain">
+        </div>
+        <div class="p-4">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-sm font-semibold text-gray-900">{{ cert.group_name }}</h3>
+            <span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-[11px] font-medium">{{ cert.score }}%</span>
+          </div>
+          <p class="text-[11px] text-gray-400 mb-3">{{ cert.generated_at|date:"d.m.Y" }}</p>
+          <div class="flex gap-2">
+            <a href="{% url 'view_certificate' cert.id %}" class="flex-1 text-center bg-gray-900 hover:bg-gray-800 text-white text-xs py-2 rounded-lg transition font-medium">
+              <i class="fas fa-eye mr-1"></i> Ko'rish
+            </a>
+            <a href="{{ cert.certificate_file.url }}" download class="flex-1 text-center bg-emerald-700 hover:bg-emerald-800 text-white text-xs py-2 rounded-lg transition font-medium">
+              <i class="fas fa-download mr-1"></i> Yuklab olish
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-xl border border-gray-200 p-12 text-center">
+      <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <i class="fas fa-certificate text-gray-300 text-2xl"></i>
+      </div>
+      <h2 class="text-sm font-semibold text-gray-900 mb-1">Sertifikatlar mavjud emas</h2>
+      <p class="text-xs text-gray-400 max-w-xs mx-auto">Test topshirib, yuqori ball olganingizda sertifikat avtomatik yaratiladi</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

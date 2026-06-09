@@ -1,0 +1,357 @@
+{% extends 'groups/base.html' %}
+{% load static %}
+
+{% block title %}{{ category.name }} - Kategoriya guruh sozlamalari{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-5xl mx-auto px-4">
+        
+        <!-- Header -->
+        <div class="mb-6">
+            <a href="{% url 'category_list' %}" class="text-gray-500 hover:text-gray-700 text-sm inline-flex items-center mb-4">
+                <i class="fas fa-arrow-left mr-2"></i> Kategoriyalar ro'yxatiga qaytish
+            </a>
+            <div class="bg-white rounded-xl border border-gray-200 p-6">
+                <div class="flex items-center gap-4">
+                    <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-layer-group text-blue-600 text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">{{ category.name }}</h1>
+                        {% if category.description %}
+                            <p class="text-gray-500 text-sm mt-1">{{ category.description }}</p>
+                        {% endif %}
+                        <p class="text-xs text-gray-400 mt-1">
+                            <i class="fas fa-database mr-1"></i> Jami savollar: {{ total_questions }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- ============ 1-QISM: Guruhlar ro'yxati ============ -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+                    <div class="border-b border-gray-200 px-6 py-4 bg-gray-50 rounded-t-xl">
+                        <h2 class="text-lg font-semibold text-gray-900">
+                            <i class="fas fa-building text-blue-600 mr-2"></i> Guruh sozlamalari
+                        </h2>
+                        <p class="text-sm text-gray-500">Har bir guruh uchun ushbu kategoriyadan nechta savol tushishini belgilang</p>
+                    </div>
+                    
+                    <div class="divide-y divide-gray-200">
+                        {% for config in configs %}
+                        <div class="p-5 hover:bg-gray-50 transition" data-config-id="{{ config.id }}" data-category-id="{{ category.id }}" data-group-id="{{ config.group.id }}">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h3 class="font-semibold text-gray-900 flex items-center gap-2">
+                                        {{ config.group.name }}
+                                        {% if not config.is_active %}
+                                            <span class="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">Faol emas</span>
+                                        {% else %}
+                                            <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Faol</span>
+                                        {% endif %}
+                                    </h3>
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        O'qituvchi: {{ config.group.teacher }}
+                                    </p>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button onclick="editConfig('{{ config.id }}', '{{ config.group.id }}', '{{ config.questions_count }}', {{ config.random_order|lower }}, {{ config.is_active|lower }})" 
+                                            class="text-blue-600 hover:text-blue-800 text-sm">
+                                        <i class="fas fa-edit"></i> Tahrirlash
+                                    </button>
+                                    <button onclick="deleteConfig('{{ config.id }}', '{{ config.group.name }}')" 
+                                            class="text-red-500 hover:text-red-700 text-sm">
+                                        <i class="fas fa-trash"></i> O'chirish
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-gray-100">
+                                <div>
+                                    <div class="text-xs text-gray-500 mb-1">Tushadigan savollar soni</div>
+                                    <div class="text-xl font-bold text-gray-800">{{ config.questions_count }} <span class="text-sm font-normal text-gray-500">ta</span></div>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-gray-500 mb-1">Random tartib</div>
+                                    <div>
+                                        {% if config.random_order %}
+                                            <span class="text-green-600 text-sm"><i class="fas fa-check-circle mr-1"></i> Yoqilgan</span>
+                                        {% else %}
+                                            <span class="text-gray-400 text-sm"><i class="fas fa-times-circle mr-1"></i> O'chirilgan</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="p-12 text-center">
+                            <i class="fas fa-building text-gray-300 text-5xl mb-3"></i>
+                            <p class="text-gray-500 font-medium">Hech qanday guruh sozlamasi mavjud emas</p>
+                            <p class="text-sm text-gray-400 mt-1">Quyidagi formadan yangi guruh qo'shing</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ============ 2-QISM: Yangi guruh qo'shish formasi ============ -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm sticky top-4">
+                    <div class="border-b border-gray-200 px-5 py-4 bg-gray-50 rounded-t-xl">
+                        <h2 class="font-semibold text-gray-900">
+                            <i class="fas fa-plus-circle text-green-600 mr-2"></i> Guruh qo'shish
+                        </h2>
+                        <p class="text-xs text-gray-500 mt-1">Yangi guruh sozlamasi qo'shing</p>
+                    </div>
+                    
+                    <form method="POST" action="{% url 'category_group_config_add' category.id %}" class="p-5">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Guruh tanlang</label>
+                            <select name="group_id" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">-- Guruh tanlang --</option>
+                                {% for group in available_groups %}
+                                    <option value="{{ group.id }}">{{ group.name }} ({{ group.teacher }})</option>
+                                {% endfor %}
+                            </select>
+                            {% if not available_groups %}
+                                <p class="text-xs text-red-500 mt-1">Barcha guruhlar allaqachon qo'shilgan</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Savollar soni</label>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="changeCount(-1)" class="w-8 h-8 rounded bg-gray-200 hover:bg-gray-300">-</button>
+                                <input type="number" name="questions_count" id="newQuestionsCount" value="3" min="1" max="{{ total_questions }}" class="w-20 text-center border border-gray-300 rounded-lg py-1">
+                                <button type="button" onclick="changeCount(1)" class="w-8 h-8 rounded bg-gray-200 hover:bg-gray-300">+</button>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-1">Maksimal: {{ total_questions }} ta</p>
+                        </div>
+                        
+                        <div class="mb-5">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" name="random_order" checked class="w-4 h-4 rounded border-gray-300">
+                                <span class="text-sm text-gray-700">Savollarni random tartibda chiqarish</span>
+                            </label>
+                        </div>
+                        
+                        <button type="submit" {% if not available_groups %}disabled{% endif %} 
+                                class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fas fa-save mr-2"></i> Qo'shish
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Statistikalar -->
+                <div class="mt-4 bg-white rounded-xl border border-gray-200 p-4">
+                    <h3 class="font-semibold text-gray-800 text-sm mb-3">
+                        <i class="fas fa-chart-pie text-gray-500 mr-2"></i> Statistikalar
+                    </h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Jami guruhlar:</span>
+                            <span class="font-semibold">{{ configs|length }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Mavjud savollar:</span>
+                            <span class="font-semibold">{{ total_questions }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Faol sozlamalar:</span>
+                            <span class="font-semibold text-green-600">{{ configs|length }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ MODAL: TAHRIRLASH ============ -->
+<div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
+        <div class="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+            <h3 class="text-lg font-semibold text-gray-900">Guruh sozlamasini tahrirlash</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="editForm" method="POST" class="p-6">
+            {% csrf_token %}
+            <input type="hidden" name="config_id" id="editConfigId">
+            <input type="hidden" name="group_id" id="editGroupId">
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Guruh</label>
+                <input type="text" id="editGroupName" disabled class="w-full border border-gray-200 bg-gray-50 rounded-lg px-3 py-2">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Savollar soni</label>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="changeEditCount(-1)" class="w-8 h-8 rounded bg-gray-200 hover:bg-gray-300">-</button>
+                    <input type="number" name="questions_count" id="editQuestionsCount" value="3" min="1" max="{{ total_questions }}" class="w-20 text-center border border-gray-300 rounded-lg py-1">
+                    <button type="button" onclick="changeEditCount(1)" class="w-8 h-8 rounded bg-gray-200 hover:bg-gray-300">+</button>
+                </div>
+            </div>
+            
+            <div class="mb-5">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" name="random_order" id="editRandomOrder" class="w-4 h-4 rounded border-gray-300">
+                    <span class="text-sm text-gray-700">Savollarni random tartibda chiqarish</span>
+                </label>
+            </div>
+            
+            <div class="mb-5">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" name="is_active" id="editIsActive" class="w-4 h-4 rounded border-gray-300">
+                    <span class="text-sm text-gray-700">Faol</span>
+                </label>
+            </div>
+            
+            <div class="flex gap-3 pt-3">
+                <button type="button" onclick="closeModal()" class="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50">
+                    Bekor qilish
+                </button>
+                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg">
+                    Saqlash
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+const csrftoken = '{{ csrf_token }}';
+const categoryId = {{ category.id }};
+const totalQuestions = {{ total_questions }};
+
+// ============ YANGI QO'SHISH UCHUN ============
+function changeCount(delta) {
+    let input = document.getElementById('newQuestionsCount');
+    let newVal = parseInt(input.value) + delta;
+    if (newVal >= 1 && newVal <= totalQuestions) {
+        input.value = newVal;
+    }
+}
+
+function changeEditCount(delta) {
+    let input = document.getElementById('editQuestionsCount');
+    let newVal = parseInt(input.value) + delta;
+    if (newVal >= 1 && newVal <= totalQuestions) {
+        input.value = newVal;
+    }
+}
+
+// ============ TAHRIRLASH MODAL ============
+function editConfig(configId, groupId, questionsCount, randomOrder, isActive) {
+    document.getElementById('editConfigId').value = configId;
+    document.getElementById('editGroupId').value = groupId;
+    document.getElementById('editQuestionsCount').value = questionsCount;
+    document.getElementById('editRandomOrder').checked = randomOrder;
+    document.getElementById('editIsActive').checked = isActive;
+    
+    // Guruh nomini olish
+    fetch(`/groups/api/group/${groupId}/`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('editGroupName').value = data.name || 'Guruh';
+        })
+        .catch(() => {
+            document.getElementById('editGroupName').value = 'Guruh ID: ' + groupId;
+        });
+    
+    document.getElementById('editModal').classList.remove('hidden');
+    document.getElementById('editModal').classList.add('flex');
+}
+
+function closeModal() {
+    document.getElementById('editModal').classList.add('hidden');
+    document.getElementById('editModal').classList.remove('flex');
+}
+
+// ============ O'CHIRISH ============
+function deleteConfig(configId, groupName) {
+    if (confirm(`"${groupName}" guruhi sozlamasini o'chirmoqchimisiz?`)) {
+        fetch(`/groups/category-group-config/delete/${configId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ config_id: configId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Xatolik: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Xatolik yuz berdi!');
+        });
+    }
+}
+
+// ============ EDIT FORM SUBMIT ============
+document.getElementById('editForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const configId = document.getElementById('editConfigId').value;
+    const groupId = document.getElementById('editGroupId').value;
+    const questionsCount = document.getElementById('editQuestionsCount').value;
+    const randomOrder = document.getElementById('editRandomOrder').checked;
+    const isActive = document.getElementById('editIsActive').checked;
+    
+    fetch(`/groups/category-group-config/edit/${configId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            config_id: configId,
+            group_id: groupId,
+            category_id: categoryId,
+            questions_count: parseInt(questionsCount),
+            random_order: randomOrder,
+            is_active: isActive
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Xatolik: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Xatolik yuz berdi!');
+    });
+});
+
+// Modalni tashqariga bosganda yopish
+document.getElementById('editModal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeModal();
+    }
+});
+</script>
+
+<style>
+.sticky {
+    position: sticky;
+    top: 1rem;
+}
+</style>
+{% endblock %}

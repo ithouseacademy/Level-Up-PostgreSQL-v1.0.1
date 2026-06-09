@@ -1,0 +1,61 @@
+{% extends 'groups/base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-2xl mx-auto px-4">
+        <!-- Header -->
+        <div class="mb-6">
+            <a href="{% url 'category_list' %}" class="text-gray-500 hover:text-gray-700 text-sm mb-2 inline-block">
+                <i class="fas fa-arrow-left mr-1"></i> Orqaga
+            </a>
+            <h1 class="text-2xl font-bold text-gray-900">{{ title }}</h1>
+            <p class="text-gray-500 text-sm">Fan yoki bo'lim ma'lumotlarini kiriting</p>
+        </div>
+
+        <!-- Form -->
+        <div class="bg-white rounded-lg border border-gray-200">
+            <form method="POST" class="p-6">
+                {% csrf_token %}
+                
+                <!-- Nomi -->
+                <div class="mb-5">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Kategoriya nomi <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" 
+                           name="name" 
+                           value="{{ category.name|default:'' }}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-200 focus:border-gray-400 outline-none transition"
+                           placeholder="Masalan: Matematika, Fizika, Ingliz tili"
+                           required>
+                    <p class="text-xs text-gray-400 mt-1">Noyob va unikal nom kiriting</p>
+                </div>
+
+                <!-- Tavsif -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Tavsif
+                    </label>
+                    <textarea name="description" 
+                              rows="4"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-200 focus:border-gray-400 outline-none transition resize-none"
+                              placeholder="Kategoriya haqida qisqacha ma'lumot...">{{ category.description|default:'' }}</textarea>
+                    <p class="text-xs text-gray-400 mt-1">Ixtiyoriy, 200 belgigacha</p>
+                </div>
+
+                <!-- Tugmalar -->
+                <div class="flex items-center justify-end space-x-3 pt-4 border-t border-gray-100">
+                    <a href="{% url 'category_list' %}" class="px-4 py-2 text-gray-600 hover:text-gray-800 transition">
+                        Bekor qilish
+                    </a>
+                    <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white px-6 py-2 rounded-lg transition">
+                        <i class="fas fa-save mr-2"></i> Saqlash
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

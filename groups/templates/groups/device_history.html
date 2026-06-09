@@ -1,0 +1,100 @@
+{% extends 'groups/base.html' %}
+
+{% block title %}Qurilma tarixi - Device History{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-white py-8">
+    <div class="max-w-7xl mx-auto px-4">
+
+        <!-- Header -->
+        <div class="mb-8">
+            <a href="{% url 'admin_panel' %}" class="text-gray-500 hover:text-gray-700 text-sm inline-flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Admin panelga qaytish
+            </a>
+            <h1 class="text-3xl font-light text-gray-900 mt-4 tracking-tight">Qurilma foydalanish tarixi</h1>
+            <p class="text-gray-500 text-sm mt-1 font-light">{{ total_students }} ta student, {{ total_devices }} ta qurilma</p>
+        </div>
+
+        {% if students_map %}
+        <div class="space-y-6">
+            {% for sid, data in students_map.items %}
+            <div class="border border-gray-200 bg-white">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-800">
+                            <svg class="w-4 h-4 inline mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                            {{ data.student.full_name }}
+                        </h3>
+                        <p class="text-xs text-gray-400 mt-0.5">{{ data.student.user.username }} · {{ data.student.group.name|default:"Guruhsiz" }}</p>
+                    </div>
+                    <span class="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full">{{ data.devices|length }} ta qurilma</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="border-b border-gray-100">
+                            <tr class="text-left text-xs text-gray-500 uppercase tracking-wider">
+                                <th class="px-6 py-3 font-medium">#</th>
+                                <th class="px-6 py-3 font-medium">Qurilma nomi</th>
+                                <th class="px-6 py-3 font-medium">ID</th>
+                                <th class="px-6 py-3 font-medium">Platforma</th>
+                                <th class="px-6 py-3 font-medium">IP</th>
+                                <th class="px-6 py-3 font-medium">Birinchi ko'rilgan</th>
+                                <th class="px-6 py-3 font-medium">Oxirgi ko'rilgan</th>
+                                <th class="px-6 py-3 font-medium">Holat</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            {% for d in data.devices %}
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-3 text-sm text-gray-500">{{ forloop.counter }}</td>
+                                <td class="px-6 py-3">
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                        </svg>
+                                        <span class="font-medium text-gray-800">{% if d.name %}{{ d.name }}{% else %}<span class="text-gray-400 italic">nomsiz</span>{% endif %}</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-3 text-xs font-mono text-gray-400">{{ d.device_id|truncatechars:20 }}</td>
+                                <td class="px-6 py-3 text-xs text-gray-500">{{ d.platform|truncatechars:30 }}</td>
+                                <td class="px-6 py-3 text-xs font-mono text-gray-400">{{ d.ip_address }}</td>
+                                <td class="px-6 py-3 text-xs text-gray-500 font-mono">{{ d.first_seen|date:"H:i d.m.Y" }}</td>
+                                <td class="px-6 py-3 text-xs text-gray-500 font-mono">{{ d.last_seen|date:"H:i d.m.Y" }}</td>
+                                <td class="px-6 py-3">
+                                    {% if d.is_online %}
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                                        Online
+                                    </span>
+                                    {% else %}
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                                        <span class="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
+                                        Offline
+                                    </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-20">
+            <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            <h2 class="text-xl font-light text-gray-400">Qurilmalar yo'q</h2>
+            <p class="text-sm text-gray-300 mt-2">Studentlar tizimga kirganda qurilmalari avtomatik ro'yxatga olinadi.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,146 @@
+<!-- groups/templates/groups/student_exam.html -->
+{% extends 'groups/base.html' %}
+
+{% block title %}Imtihon - {{ group.name }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4">
+        <div class="bg-white rounded-lg border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
+                <h2 class="text-xl font-semibold text-gray-900">
+                    <i class="fas fa-pen-alt mr-2 text-blue-600"></i>
+                    Imtihon: {{ group.name }}
+                </h2>
+                <p class="text-sm text-gray-500 mt-1">Student: {{ student.full_name }}</p>
+            </div>
+            
+            <div class="p-6">
+                {% if active_session %}
+                    {% if result %}
+                    <div class="bg-green-100 border border-green-300 rounded-lg p-6 text-center">
+                        <i class="fas fa-check-circle text-green-600 text-4xl mb-3"></i>
+                        <h3 class="text-xl font-semibold text-green-800">Javoblaringiz qabul qilindi!</h3>
+                        <p class="text-green-600 mt-2">Imtihon tugagach natijalarni ko'rasiz.</p>
+                    </div>
+                    {% else %}
+                    <div class="bg-blue-100 border border-blue-300 rounded-lg p-4 mb-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                                <span class="text-blue-800">Imtihon faol! Savollarga javob bering.</span>
+                            </div>
+                            <div id="examTimer" class="text-xl font-bold text-blue-700"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Savollar formasi -->
+                    <form id="examForm">
+                        {% csrf_token %}
+                        <input type="hidden" name="group_id" value="{{ group.id }}">
+                        
+                        <!-- Misol savollar (o'zgartirishingiz mumkin) -->
+                        <div class="space-y-6">
+                            <div class="border border-gray-200 rounded-lg p-4">
+                                <p class="font-medium text-gray-900 mb-3">1. Django qaysi tilida yozilgan?</p>
+                                <div class="space-y-2 ml-4">
+                                    <label class="flex items-center">
+                                        <input type="radio" name="q1" value="python" class="mr-2"> Python
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="radio" name="q1" value="java" class="mr-2"> Java
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="radio" name="q1" value="php" class="mr-2"> PHP
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg p-4">
+                                <p class="font-medium text-gray-900 mb-3">2. Model yaratish uchun qaysi class dan meros olinadi?</p>
+                                <div class="space-y-2 ml-4">
+                                    <label class="flex items-center">
+                                        <input type="radio" name="q2" value="models.Model" class="mr-2"> models.Model
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="radio" name="q2" value="django.Model" class="mr-2"> django.Model
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="radio" name="q2" value="Model" class="mr-2"> Model
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg transition font-medium">
+                                <i class="fas fa-paper-plane mr-2"></i> Javoblarni Yuborish
+                            </button>
+                        </div>
+                    </form>
+                    {% endif %}
+                {% else %}
+                <div class="text-center py-12">
+                    <i class="fas fa-hourglass-half text-gray-400 text-5xl mb-4"></i>
+                    <h3 class="text-xl font-semibold text-gray-700">Hozircha imtihon faol emas</h3>
+                    <p class="text-gray-500 mt-2">Iltimos, o'qituvchi imtihonni boshlashini kuting.</p>
+                    <button onclick="location.reload()" class="mt-4 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-sync-alt mr-2"></i> Yangilash
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let timerInterval;
+
+$(document).ready(function() {
+    // Avtomatik yangilash (har 10 sekund)
+    setInterval(function() {
+        location.reload();
+    }, 10000);
+    
+    // Formani yuborish
+    $('#examForm').submit(function(e) {
+        e.preventDefault();
+        
+        let answers = {};
+        $('input[type="radio"]:checked').each(function() {
+            answers[$(this).attr('name')] = $(this).val();
+        });
+        
+        $.ajax({
+            url: '{% url "submit_answer" %}',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                'group_id': {{ group.id }},
+                'answers': answers
+            }),
+            success: function(data) {
+                if (data.success) {
+                    showNotification('Javoblaringiz qabul qilindi!', 'success');
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    showNotification(data.message, 'error');
+                }
+            }
+        });
+    });
+});
+
+function showNotification(message, type) {
+    const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+    const notification = $(`
+        <div class="fixed top-4 right-4 z-50 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg">
+            ${message}
+        </div>
+    `);
+    $('body').append(notification);
+    setTimeout(() => notification.fadeOut(() => notification.remove()), 3000);
+}
+</script>
+{% endblock %}

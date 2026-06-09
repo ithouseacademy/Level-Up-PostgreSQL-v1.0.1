@@ -1,0 +1,98 @@
+{% extends 'groups/base.html' %}
+
+{% block title %}Ro'yxatdan o'tish{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center px-4 py-8">
+    <div class="max-w-md w-full">
+        <!-- Title -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-12 h-12 bg-gray-900 rounded-lg mb-4">
+                <i class="fas fa-user-plus text-white text-xl"></i>
+            </div>
+            <h2 class="text-2xl font-semibold text-gray-900">Ro'yxatdan o'tish</h2>
+            <p class="text-gray-500 text-sm mt-1">Yangi akkaunt yarating</p>
+        </div>
+        
+        <!-- Register Form -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Ism</label>
+                        {{ form.first_name }}
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Familiya</label>
+                        {{ form.last_name }}
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                        {{ form.username }}
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+                        {{ form.phone }}
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Guruh</label>
+                        {{ form.group }}
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Parol</label>
+                        {{ form.password1 }}
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Parolni takrorlang</label>
+                        {{ form.password2 }}
+                    </div>
+                </div>
+                
+                <button type="submit" class="w-full bg-gray-900 hover:bg-gray-800 text-white font-medium py-2.5 px-4 rounded-lg transition duration-200 mt-6">
+                    Ro'yxatdan o'tish
+                </button>
+            </form>
+            
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-500">
+                    Hisobingiz bormi? 
+                    <a href="{% url 'login' %}" class="text-gray-900 hover:text-gray-700 font-medium">Kirish</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    input, select {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        background: white;
+        transition: all 0.2s;
+    }
+    input:focus, select:focus {
+        outline: none;
+        border-color: #94a3b8;
+        box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.1);
+    }
+    select {
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+        background-position: right 0.75rem center;
+        background-repeat: no-repeat;
+        background-size: 1.25rem;
+    }
+</style>
+{% endblock %}

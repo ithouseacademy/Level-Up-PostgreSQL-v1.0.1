@@ -1,0 +1,184 @@
+{% extends 'groups/base.html' %}
+
+{% block title %}Guruh Papkalari{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4">
+        <div class="mb-6">
+            <a href="{% url 'admin_panel' %}" class="text-gray-500 hover:text-gray-700 text-sm mb-2 inline-block">
+                <i class="fas fa-arrow-left mr-1"></i> Orqaga
+            </a>
+            <h1 class="text-2xl font-bold text-gray-900">{{ group.name }} - Papkalar</h1>
+            <p class="text-gray-500 text-sm">Guruhga biriktirilgan papkalar. Kategoriyalar random yoki tartib bilan taqsimlanadi.</p>
+        </div>
+
+        <div class="bg-white rounded-lg border border-gray-200 mb-6">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h2 class="font-semibold text-gray-900">
+                    <i class="fas fa-link mr-2 text-gray-500"></i> Biriktirilgan papkalar
+                    <span class="ml-2 text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full">{{ assigned_data|length }}</span>
+                </h2>
+            </div>
+            <div class="p-6">
+                {% if assigned_data %}
+                    <div class="space-y-4">
+                        {% for gf, fconfig, folder_cats in assigned_data %}
+                        <div class="border border-gray-200 rounded-lg overflow-hidden">
+                            <div class="flex items-center justify-between p-3 bg-gray-50">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center border border-gray-200">
+                                        <i class="fas fa-folder text-gray-500 text-sm"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-900">{{ gf.folder.name }}</p>
+                                        <p class="text-xs text-gray-400">{{ folder_cats|length }} ta kategoriya</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <div class="flex items-center space-x-1">
+                                        <span class="text-xs text-gray-500">Tanlanadi:</span>
+                                        <input type="number"
+                                               min="1"
+                                               max="{{ folder_cats|length }}"
+                                               value="{{ fconfig.categories_to_select }}"
+                                               data-config-id="{{ fconfig.id }}"
+                                               class="w-14 text-xs text-center border border-gray-300 rounded px-1 py-1 folder-config-input">
+                                        <span class="text-xs text-gray-400">ta</span>
+                                    </div>
+                                    <span class="text-xs text-gray-400">{% if fconfig.randomize_categories %}Random{% else %}Tartib bilan{% endif %}</span>
+                                    <a href="{% url 'folder_categories_manage' gf.folder.id %}"
+                                       class="text-indigo-400 hover:text-indigo-600 text-sm" title="Kategoriyalarni boshqarish">
+                                        <i class="fas fa-tags"></i>
+                                    </a>
+                                    <form method="POST" action="{% url 'group_folder_remove' gf.id %}" class="inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="text-red-400 hover:text-red-600 text-sm" onclick="return confirm('Olib tashlashni xohlaysizmi?')">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+
+                            {% if folder_cats %}
+                            <div class="border-t border-gray-100">
+                                <div class="px-4 py-2 bg-gray-50/50">
+                                    <span class="text-xs font-medium text-gray-500">Papka ichidagi kategoriyalar:</span>
+                                </div>
+                                <div class="divide-y divide-gray-50">
+                                    {% for fc in folder_cats %}
+                                    <div class="flex items-center justify-between px-4 py-2 hover:bg-gray-50">
+                                        <div class="flex items-center space-x-2">
+                                            <i class="fas fa-tag text-gray-400 text-xs"></i>
+                                            <span class="text-sm text-gray-700">{{ fc.category.name }}</span>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <a href="{% url 'category_questions_list' fc.category.id %}" class="text-blue-400 hover:text-blue-600 text-xs" title="Savollarni ko'rish">
+                                                <i class="fas fa-question-circle"></i>
+                                            </a>
+                                            <form method="POST" action="{% url 'folder_category_remove' fc.id %}" class="inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="text-orange-400 hover:text-orange-600 text-xs" title="Papkadan olib tashlash" onclick="return confirm('Olib tashlashni xohlaysizmi?')">
+                                                    <i class="fas fa-times-circle"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <div class="border-t border-gray-100 px-4 py-2 bg-gray-50/30">
+                                <form method="POST" action="{% url 'folder_category_add' gf.folder.id %}" class="flex items-center space-x-2">
+                                    {% csrf_token %}
+                                    <select name="category_id" class="text-xs border border-gray-300 rounded px-2 py-1 w-48">
+                                        <option value="">Kategoriya qo'shish...</option>
+                                        {% for cat in all_categories %}
+                                        <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1 rounded">
+                                        <i class="fas fa-plus mr-1"></i> Qo'shish
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-8">
+                        <i class="fas fa-folder-open text-gray-300 text-4xl mb-3 block"></i>
+                        <p class="text-gray-500">Hech qanday papka biriktirilmagan</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h2 class="font-semibold text-gray-900">
+                    <i class="fas fa-list mr-2 text-gray-500"></i> Mavjud papkalar
+                </h2>
+            </div>
+            <div class="p-6">
+                {% if available_folders %}
+                    <div class="grid gap-3">
+                        {% for folder in available_folders %}
+                        <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-folder text-gray-500 text-sm"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-900">{{ folder.name }}</p>
+                                    <p class="text-xs text-gray-400">{{ folder.folder_categories.count }} ta kategoriya</p>
+                                </div>
+                            </div>
+                            <form method="POST" action="{% url 'group_folder_add' group.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="folder_id" value="{{ folder.id }}">
+                                <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white text-xs px-3 py-1.5 rounded-lg transition">
+                                    <i class="fas fa-plus mr-1"></i> Qo'shish
+                                </button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-8">
+                        <i class="fas fa-check-circle text-green-400 text-4xl mb-3 block"></i>
+                        <p class="text-gray-500">Barcha papkalar biriktirilgan</p>
+                        <a href="{% url 'folder_add' %}" class="text-gray-600 text-sm mt-2 inline-block">
+                            <i class="fas fa-plus mr-1"></i> Yangi papka yaratish
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function saveFolderConfig(configId, data) {
+    fetch("{% url 'folder_group_config_edit_api' 0 %}".replace('0', configId), {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+        body: JSON.stringify(data)
+    })
+    .then(r => r.json())
+    .then(d => { if(!d.success) { alert('Xatolik: ' + d.message); } })
+    .catch(() => { alert('Xatolik yuz berdi'); });
+}
+
+document.querySelectorAll('.folder-config-input').forEach(input => {
+    input.addEventListener('change', function() {
+        const configId = this.dataset.configId;
+        const value = parseInt(this.value);
+        saveFolderConfig(configId, {categories_to_select: value});
+    });
+});
+
+
+</script>
+{% endblock %}

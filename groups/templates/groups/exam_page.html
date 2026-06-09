@@ -1,0 +1,176 @@
+<!-- groups/templates/groups/exam_page.html -->
+{% extends 'groups/base.html' %}
+
+{% block title %}Imtihon - {{ group.name }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div class="text-center">
+        <div id="waitingBox" class="bg-white rounded-lg border border-gray-200 p-8 max-w-md">
+            <i class="fas fa-hourglass-half text-gray-400 text-5xl mb-4 animate-pulse"></i>
+            <h2 class="text-xl font-semibold text-gray-700 mb-2">Imtihon boshlanishini kuting</h2>
+            <p class="text-gray-500 mb-4">O'qituvchi imtihonni boshlaganda siz avtomatik ravishda imtihonga o'tasiz</p>
+            <div class="flex items-center justify-center space-x-2 text-sm text-gray-400">
+                <i class="fas fa-circle text-green-500 text-xs"></i>
+                <span>Ulangan</span>
+            </div>
+        </div>
+        
+        <div id="examBox" class="bg-white rounded-lg border border-gray-200 p-8 max-w-2xl mx-auto" style="display: none;">
+            <div class="text-center mb-6">
+                <i class="fas fa-pen-alt text-blue-600 text-4xl mb-2"></i>
+                <h2 class="text-2xl font-bold text-gray-900">{{ group.name }} - Imtihon</h2>
+                <p class="text-gray-500">Student: {{ student.full_name }}</p>
+                <div id="timer" class="text-2xl font-bold text-blue-600 mt-2"></div>
+            </div>
+            
+            <form id="examForm">
+                {% csrf_token %}
+                <input type="hidden" name="group_id" value="{{ group.id }}">
+                
+                <!-- Savollar -->
+                <div class="space-y-6">
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <p class="font-medium text-gray-900 mb-3">1. Django qaysi tilida yozilgan?</p>
+                        <div class="space-y-2 ml-4">
+                            <label class="flex items-center">
+                                <input type="radio" name="q1" value="python" class="mr-2"> Python
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="q1" value="java" class="mr-2"> Java
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="q1" value="php" class="mr-2"> PHP
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <p class="font-medium text-gray-900 mb-3">2. Model yaratish uchun qaysi class dan meros olinadi?</p>
+                        <div class="space-y-2 ml-4">
+                            <label class="flex items-center">
+                                <input type="radio" name="q2" value="models.Model" class="mr-2"> models.Model
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="q2" value="django.Model" class="mr-2"> django.Model
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="q2" value="Model" class="mr-2"> Model
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium">
+                    <i class="fas fa-paper-plane mr-2"></i> Javoblarni Yuborish
+                </button>
+            </form>
+        </div>
+        
+        <div id="submittedBox" class="bg-white rounded-lg border border-gray-200 p-8 max-w-md mx-auto" style="display: none;">
+            <i class="fas fa-check-circle text-green-500 text-5xl mb-4"></i>
+            <h2 class="text-xl font-semibold text-gray-900 mb-2">Javoblaringiz qabul qilindi!</h2>
+            <p class="text-gray-500">Imtihon tugagach natijalarni ko'rasiz.</p>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+let checkInterval;
+
+$(document).ready(function() {
+    // Imtihon holatini tekshirish (real-time)
+    function checkExamStatus() {
+        $.ajax({
+            url: '{% url "check_exam_api" %}',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                'group_id': {{ group.id }}
+            }),
+            success: function(data) {
+                if (data.success && data.is_active) {
+                    // Imtihon faol - imtihon sahifasini ko'rsat
+                    $('#waitingBox').hide();
+                    $('#examBox').show();
+                    $('#submittedBox').hide();
+                    
+                    // Timerni yangilash
+                    if (data.started_at) {
+                        $('#timer').text(data.started_at);
+                    }
+                } else if (data.success && !data.is_active) {
+                    // Imtihon faol emas - kutish sahifasi
+                    if ($('#examBox').is(':visible') || $('#submittedBox').is(':visible')) {
+                        // Imtihon tugadi
+                        clearInterval(checkInterval);
+                        $('#examBox').hide();
+                        $('#submittedBox').show();
+                    } else {
+                        $('#waitingBox').show();
+                        $('#examBox').hide();
+                        $('#submittedBox').hide();
+                    }
+                }
+            }
+        });
+    }
+    
+    // Har 3 sekundda tekshirish
+    checkInterval = setInterval(checkExamStatus, 3000);
+    checkExamStatus(); // Darhol tekshirish
+    
+    // Formani yuborish
+    $('#examForm').submit(function(e) {
+        e.preventDefault();
+        
+        let answers = {};
+        $('input[type="radio"]:checked').each(function() {
+            answers[$(this).attr('name')] = $(this).val();
+        });
+        
+        $.ajax({
+            url: '{% url "submit_answer" %}',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                'group_id': {{ group.id }},
+                'answers': answers
+            }),
+            success: function(data) {
+                if (data.success) {
+                    showNotification('Javoblaringiz qabul qilindi!', 'success');
+                    $('#examBox').hide();
+                    $('#submittedBox').show();
+                    clearInterval(checkInterval);
+                } else {
+                    showNotification(data.message, 'error');
+                }
+            }
+        });
+    });
+});
+
+function showNotification(message, type) {
+    const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+    const notification = $(`
+        <div class="fixed top-4 right-4 z-50 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg">
+            ${message}
+        </div>
+    `);
+    $('body').append(notification);
+    setTimeout(() => notification.fadeOut(() => notification.remove()), 3000);
+}
+</script>
+
+<style>
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+</style>
+{% endblock %}

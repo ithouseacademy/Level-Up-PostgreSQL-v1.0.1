@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Debug Panel</h1>
+    <button id="checkBtn">Holatni tekshirish</button>
+    <pre id="result"></pre>
+    
+    <script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    $('#checkBtn').click(function() {
+        $.ajax({
+            url: '/quiz/check-status/',
+            method: 'POST',
+            contentType: 'application/json',
+            headers: {'X-CSRFToken': getCookie('csrftoken')},
+            data: JSON.stringify({group_id: {{ group.id }}}),
+            success: function(data) {
+                $('#result').text(JSON.stringify(data, null, 2));
+            },
+            error: function(xhr) {
+                $('#result').text('Error: ' + xhr.status + ' - ' + xhr.responseText);
+            }
+        });
+    });
+    </script>
+</body>
+</html>

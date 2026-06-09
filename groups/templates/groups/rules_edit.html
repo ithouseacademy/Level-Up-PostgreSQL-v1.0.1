@@ -1,0 +1,367 @@
+{% extends 'groups/base.html' %}
+
+{% block title %}Qonun va Qoidalarni boshqarish{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <!-- Navbar -->
+    <nav class="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-10 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-gray-900 to-gray-700 rounded-xl flex items-center justify-center shadow-md">
+                        <i class="fas fa-gavel text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-gray-900 text-lg">Qonun va Qoidalar</span>
+                        <p class="text-xs text-gray-500">Imtihon qoidalarini boshqarish</p>
+                    </div>
+                </div>
+                <a href="{% url 'admin_panel' %}" class="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition duration-200">
+                    <i class="fas fa-arrow-left text-sm"></i>
+                    <span class="text-sm font-medium">Orqaga</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- VIDEO KARTASI -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition duration-300">
+                <div class="px-6 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-video text-blue-600 text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">Video</h3>
+                            <p class="text-xs text-gray-500">YouTube link yoki video fayl yuklang</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6 space-y-5">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fab fa-youtube text-red-500 mr-1"></i> YouTube URL
+                        </label>
+                        <input type="url" name="video_url" value="{{ rules.video_url|default:'' }}" 
+                               class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-gray-50 hover:bg-white"
+                               placeholder="https://www.youtube.com/watch?v=...">
+                        <p class="text-xs text-gray-400 mt-1.5">YouTube video linkini kiriting, avtomatik ravishda embed bo'ladi</p>
+                    </div>
+                    
+                    <div class="relative">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-gray-200"></div>
+                        </div>
+                        <div class="relative flex justify-center text-sm">
+                            <span class="px-3 bg-white text-gray-500">yoki</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-upload text-green-500 mr-1"></i> Video fayl yuklash
+                        </label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-400 transition cursor-pointer" id="videoUploadArea">
+                            <input type="file" name="video_file" accept="video/*" id="videoFileInput" class="hidden">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i>
+                            <p class="text-sm text-gray-500">Video faylni tanlang yoki bu yerga tashlang</p>
+                            <p class="text-xs text-gray-400 mt-1">MP4, AVI, MOV formatlari qo'llab-quvvatlanadi</p>
+                        </div>
+                        {% if rules.video_file %}
+                        <div class="mt-3 flex items-center gap-2 text-sm text-green-600 bg-green-50 p-2 rounded-lg">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Joriy video: {{ rules.video_file.name|truncatechars:40 }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if rules.video_url or rules.video_file %}
+                    <div class="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                        <p class="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                            <i class="fas fa-eye text-blue-500"></i> Oldindan ko'rish
+                        </p>
+                        <div class="rounded-xl overflow-hidden bg-black">
+                            {% if rules.video_url %}
+                            <div class="relative pb-[56.25%]">
+                                <iframe src="{{ rules.get_video_url }}" class="absolute top-0 left-0 w-full h-full" frameborder="0" allowfullscreen></iframe>
+                            </div>
+                            {% elif rules.video_file %}
+                            <video src="{{ rules.video_file.url }}" controls class="w-full"></video>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- 2 TA RASM KARTASI -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition duration-300">
+                <div class="px-6 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-images text-green-600 text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">Vizual qo'llanma</h3>
+                            <p class="text-xs text-gray-500">2 ta rasm va ularning sarlavhalari</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6 space-y-6">
+                    <!-- Rasm 1 -->
+                    <div class="border border-gray-200 rounded-xl p-5 hover:border-blue-300 transition">
+                        <div class="flex items-center gap-2 mb-4">
+                            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <span class="text-blue-600 font-bold text-sm">1</span>
+                            </div>
+                            <h4 class="font-semibold text-gray-800">Birinchi rasm</h4>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-image text-purple-500 mr-1"></i> Rasm fayli
+                                </label>
+                                <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center hover:border-purple-400 transition cursor-pointer" id="image1UploadArea">
+                                    <input type="file" name="image1" accept="image/*" id="image1Input" class="hidden">
+                                    <i class="fas fa-cloud-upload-alt text-2xl text-gray-400 mb-1"></i>
+                                    <p class="text-xs text-gray-500">Rasm tanlang</p>
+                                </div>
+                                {% if rules.image1 %}
+                                <p class="text-xs text-green-600 mt-2 flex items-center gap-1">
+                                    <i class="fas fa-check-circle"></i> Joriy rasm mavjud
+                                </p>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-heading text-gray-500 mr-1"></i> Sarlavha
+                                </label>
+                                <input type="text" name="image1_title" value="{{ rules.image1_title|default:'Imtihon tartibi' }}" 
+                                       class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-align-left text-gray-500 mr-1"></i> Izoh
+                                </label>
+                                <textarea name="image1_description" rows="2" 
+                                          class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                          placeholder="Rasm haqida qisqacha ma'lumot...">{{ rules.image1_description|default:'' }}</textarea>
+                            </div>
+                        </div>
+                        {% if rules.image1 %}
+                        <div class="mt-4 p-3 bg-gray-50 rounded-xl">
+                            <img src="{{ rules.image1.url }}" class="h-40 object-cover rounded-lg shadow-sm mx-auto">
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Rasm 2 -->
+                    <div class="border border-gray-200 rounded-xl p-5 hover:border-blue-300 transition">
+                        <div class="flex items-center gap-2 mb-4">
+                            <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                                <span class="text-orange-600 font-bold text-sm">2</span>
+                            </div>
+                            <h4 class="font-semibold text-gray-800">Ikkinchi rasm</h4>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-image text-purple-500 mr-1"></i> Rasm fayli
+                                </label>
+                                <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center hover:border-purple-400 transition cursor-pointer" id="image2UploadArea">
+                                    <input type="file" name="image2" accept="image/*" id="image2Input" class="hidden">
+                                    <i class="fas fa-cloud-upload-alt text-2xl text-gray-400 mb-1"></i>
+                                    <p class="text-xs text-gray-500">Rasm tanlang</p>
+                                </div>
+                                {% if rules.image2 %}
+                                <p class="text-xs text-green-600 mt-2 flex items-center gap-1">
+                                    <i class="fas fa-check-circle"></i> Joriy rasm mavjud
+                                </p>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-heading text-gray-500 mr-1"></i> Sarlavha
+                                </label>
+                                <input type="text" name="image2_title" value="{{ rules.image2_title|default:'Baholash mezonlari' }}" 
+                                       class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-align-left text-gray-500 mr-1"></i> Izoh
+                                </label>
+                                <textarea name="image2_description" rows="2" 
+                                          class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                          placeholder="Rasm haqida qisqacha ma'lumot...">{{ rules.image2_description|default:'' }}</textarea>
+                            </div>
+                        </div>
+                        {% if rules.image2 %}
+                        <div class="mt-4 p-3 bg-gray-50 rounded-xl">
+                            <img src="{{ rules.image2.url }}" class="h-40 object-cover rounded-lg shadow-sm mx-auto">
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- MATN QOIDALAR KARTASI -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition duration-300">
+                <div class="px-6 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-file-alt text-red-600 text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">Qoidalar matni</h3>
+                            <p class="text-xs text-gray-500">Imtihon qoidalarini kiriting</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <textarea name="rules_text" rows="12" 
+                              class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm bg-gray-50 hover:bg-white transition"
+                              placeholder="1. Birinchi qoida&#10;2. Ikkinchi qoida&#10;3. Uchinchi qoida...">{{ rules.rules_text|default:'' }}</textarea>
+                    <div class="flex items-center gap-2 mt-3 text-xs text-gray-400">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Har bir qoidani yangi qatordan yozing. Qoidalar avtomatik ravishda raqamlanadi.</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Saqlash tugmasi -->
+            <div class="sticky bottom-6 flex justify-end">
+                <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-2 flex gap-3">
+                    <button type="reset" class="px-6 py-2.5 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition">
+                        <i class="fas fa-undo-alt mr-2"></i> Bekor qilish
+                    </button>
+                    <button type="submit" class="bg-gradient-to-r from-gray-900 to-gray-700 hover:from-gray-800 hover:to-gray-600 text-white px-8 py-2.5 rounded-xl transition duration-200 shadow-md hover:shadow-lg font-medium">
+                        <i class="fas fa-save mr-2"></i> Saqlash
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Video fayl upload area
+const videoUploadArea = document.getElementById('videoUploadArea');
+const videoFileInput = document.getElementById('videoFileInput');
+
+if (videoUploadArea) {
+    videoUploadArea.addEventListener('click', () => videoFileInput.click());
+    videoUploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        videoUploadArea.classList.add('border-blue-500', 'bg-blue-50');
+    });
+    videoUploadArea.addEventListener('dragleave', () => {
+        videoUploadArea.classList.remove('border-blue-500', 'bg-blue-50');
+    });
+    videoUploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        videoUploadArea.classList.remove('border-blue-500', 'bg-blue-50');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('video/')) {
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            videoFileInput.files = dt.files;
+        }
+    });
+}
+
+// Rasm 1 upload area
+const image1UploadArea = document.getElementById('image1UploadArea');
+const image1Input = document.getElementById('image1Input');
+
+if (image1UploadArea) {
+    image1UploadArea.addEventListener('click', () => image1Input.click());
+    image1UploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        image1UploadArea.classList.add('border-purple-500', 'bg-purple-50');
+    });
+    image1UploadArea.addEventListener('dragleave', () => {
+        image1UploadArea.classList.remove('border-purple-500', 'bg-purple-50');
+    });
+    image1UploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        image1UploadArea.classList.remove('border-purple-500', 'bg-purple-50');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            image1Input.files = dt.files;
+        }
+    });
+}
+
+// Rasm 2 upload area
+const image2UploadArea = document.getElementById('image2UploadArea');
+const image2Input = document.getElementById('image2Input');
+
+if (image2UploadArea) {
+    image2UploadArea.addEventListener('click', () => image2Input.click());
+    image2UploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        image2UploadArea.classList.add('border-purple-500', 'bg-purple-50');
+    });
+    image2UploadArea.addEventListener('dragleave', () => {
+        image2UploadArea.classList.remove('border-purple-500', 'bg-purple-50');
+    });
+    image2UploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        image2UploadArea.classList.remove('border-purple-500', 'bg-purple-50');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            image2Input.files = dt.files;
+        }
+    });
+}
+
+// Reset tugmasi
+document.querySelector('button[type="reset"]')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (confirm("Barcha o'zgarishlarni bekor qilmoqchimisiz?")) {
+        window.location.reload();
+    }
+});
+</script>
+
+<style>
+/* Smooth scroll */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Transition for all elements */
+* {
+    transition: all 0.2s ease;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,366 @@
+{% extends 'groups/base.html' %}
+
+{% block title %}{{ group.name }} - Guruh detali{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Header va qaytish tugmasi -->
+        <div class="mb-6">
+            <a href="{% url 'admin_panel' %}" class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4">
+                <i class="fas fa-arrow-left mr-2"></i> Admin panelga qaytish
+            </a>
+            
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <!-- Guruh header -->
+                <div class="bg-gradient-to-r from-gray-900 to-gray-800 px-6 py-5">
+                    <div class="flex justify-between items-start flex-wrap gap-4">
+                        <div class="flex items-center">
+                            <div class="w-14 h-14 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                                <i class="fas fa-users text-white text-2xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h1 class="text-2xl font-bold text-white">{{ group.name }}</h1>
+                                <p class="text-gray-300 text-sm mt-1">
+                                    <i class="fas fa-chalkboard-teacher mr-1"></i> O'qituvchi: {{ group.teacher }}
+                                </p>
+                                <p class="text-gray-400 text-xs mt-1">
+                                    <i class="far fa-calendar-alt mr-1"></i> Yaratilgan: {{ group.created_at|date:"d.m.Y H:i" }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <a href="{% url 'group_edit' group.pk %}" 
+                               class="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm transition flex items-center">
+                                <i class="fas fa-edit mr-2"></i> Tahrirlash
+                            </a>
+                            <a href="{% url 'group_delete' group.pk %}" 
+                               class="bg-red-500/20 hover:bg-red-500/30 text-red-200 px-4 py-2 rounded-lg text-sm transition flex items-center">
+                                <i class="fas fa-trash mr-2"></i> O'chirish
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Statistikalar -->
+                <div class="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-200">
+                    <div class="px-6 py-4 text-center">
+                        <div class="text-2xl font-bold text-gray-800">{{ students.count }}</div>
+                        <div class="text-xs text-gray-500 mt-1">Jami talabalar</div>
+                    </div>
+                    <div class="px-6 py-4 text-center">
+                        <div class="text-2xl font-bold text-gray-800">{{ group_categories.count }}</div>
+                        <div class="text-xs text-gray-500 mt-1">Kategoriyalar</div>
+                    </div>
+                    <div class="px-6 py-4 text-center">
+                        <div class="text-2xl font-bold text-gray-800">{{ total_questions }}</div>
+                        <div class="text-xs text-gray-500 mt-1">Jami savollar</div>
+                    </div>
+                    <div class="px-6 py-4 text-center">
+                        <div class="text-2xl font-bold text-gray-800">{{ completed_exams }}</div>
+                        <div class="text-xs text-gray-500 mt-1">Tugatilgan testlar</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- ============ 1-QISM: Tezkor boshqaruv ============ -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Tezkor tugmalar -->
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+                    <div class="px-5 py-4 border-b border-gray-200">
+                        <h3 class="font-semibold text-gray-900">
+                            <i class="fas fa-bolt text-yellow-500 mr-2"></i> Tezkor boshqaruv
+                        </h3>
+                    </div>
+                    <div class="p-4 space-y-2">
+                        <a href="{% url 'exam_control' group.id %}" 
+                           class="flex items-center justify-between p-3 bg-green-50 hover:bg-green-100 rounded-lg transition group">
+                            <div class="flex items-center">
+                                <i class="fas fa-play-circle text-green-600 w-5"></i>
+                                <span class="ml-3 text-sm font-medium text-green-700">Testni boshlash</span>
+                            </div>
+                            <i class="fas fa-arrow-right text-green-400 text-sm group-hover:translate-x-1 transition"></i>
+                        </a>
+                        
+                        <a href="{% url 'group_exam_config' group.id %}" 
+                           class="flex items-center justify-between p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition group">
+                            <div class="flex items-center">
+                                <i class="fas fa-sliders-h text-blue-600 w-5"></i>
+                                <span class="ml-3 text-sm font-medium text-blue-700">Test sozlamalari</span>
+                            </div>
+                            <i class="fas fa-arrow-right text-blue-400 text-sm group-hover:translate-x-1 transition"></i>
+                        </a>
+                        
+                        <a href="{% url 'group_categories_manage' group.id %}" 
+                           class="flex items-center justify-between p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition group">
+                            <div class="flex items-center">
+                                <i class="fas fa-tags text-purple-600 w-5"></i>
+                                <span class="ml-3 text-sm font-medium text-purple-700">Kategoriyalar</span>
+                            </div>
+                            <i class="fas fa-arrow-right text-purple-400 text-sm group-hover:translate-x-1 transition"></i>
+                        </a>
+                        
+                        <a href="{% url 'quiz_results' group.id %}" 
+                           class="flex items-center justify-between p-3 bg-orange-50 hover:bg-orange-100 rounded-lg transition group">
+                            <div class="flex items-center">
+                                <i class="fas fa-chart-line text-orange-600 w-5"></i>
+                                <span class="ml-3 text-sm font-medium text-orange-700">Natijalar</span>
+                            </div>
+                            <i class="fas fa-arrow-right text-orange-400 text-sm group-hover:translate-x-1 transition"></i>
+                        </a>
+
+                        <a href="{% url 'speaking_review' group.id %}" 
+                           class="flex items-center justify-between p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition group">
+                            <div class="flex items-center">
+                                <i class="fas fa-microphone text-purple-600 w-5"></i>
+                                <span class="ml-3 text-sm font-medium text-purple-700">Speaking baholash</span>
+                            </div>
+                            <i class="fas fa-arrow-right text-purple-400 text-sm group-hover:translate-x-1 transition"></i>
+                        </a>
+
+                        <a href="{% url 'quiz_statistics' group.id %}" 
+                           class="flex items-center justify-between p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition group">
+                            <div class="flex items-center">
+                                <i class="fas fa-chart-bar text-blue-600 w-5"></i>
+                                <span class="ml-3 text-sm font-medium text-blue-700">Statistika</span>
+                            </div>
+                            <i class="fas fa-arrow-right text-blue-400 text-sm group-hover:translate-x-1 transition"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Test holati -->
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+                    <div class="px-5 py-4 border-b border-gray-200">
+                        <h3 class="font-semibold text-gray-900">
+                            <i class="fas fa-info-circle text-blue-500 mr-2"></i> Test holati
+                        </h3>
+                    </div>
+                    <div class="p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-sm text-gray-600">Hozirgi holat:</span>
+                            {% if exam_control.is_active %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <i class="fas fa-circle text-green-500 text-xs mr-1"></i> FAOL
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                                    <i class="fas fa-circle text-gray-400 text-xs mr-1"></i> FAOL EMAS
+                                </span>
+                            {% endif %}
+                        </div>
+                        
+                        {% if exam_control.started_at %}
+                        <div class="text-xs text-gray-400 mt-2">
+                            <i class="far fa-clock mr-1"></i> Oxirgi boshlangan: {{ exam_control.started_at|date:"H:i:s d.m.Y" }}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mt-4 pt-3 border-t border-gray-100">
+                            <div class="flex justify-between text-xs text-gray-500 mb-1">
+                                <span>Sozlamadagi savollar:</span>
+                                <span class="font-semibold">{{ config.questions_per_student|default:5 }} ta</span>
+                            </div>
+                            <div class="flex justify-between text-xs text-gray-500">
+                                <span>Maksimal urinishlar:</span>
+                                <span class="font-semibold">{{ config.max_attempts|default:1 }} marta</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sozlamalar haqida -->
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+                    <div class="px-5 py-4 border-b border-gray-200">
+                        <h3 class="font-semibold text-gray-900">
+                            <i class="fas fa-cog text-gray-500 mr-2"></i> Sozlamalar
+                        </h3>
+                    </div>
+                    <div class="p-4 space-y-2 text-sm">
+                        <div class="flex justify-between py-1">
+                            <span class="text-gray-500">Random tartib:</span>
+                            <span class="{% if config.random_order %}text-green-600{% else %}text-gray-400{% endif %}">
+                                {% if config.random_order %}<i class="fas fa-check-circle"></i> Yoqilgan{% else %}<i class="fas fa-times-circle"></i> O'chirilgan{% endif %}
+                            </span>
+                        </div>
+                        <div class="flex justify-between py-1">
+                            <span class="text-gray-500">To'g'ri javobni ko'rsatish:</span>
+                            <span class="{% if config.show_correct_answer %}text-green-600{% else %}text-gray-400{% endif %}">
+                                {% if config.show_correct_answer %}<i class="fas fa-check-circle"></i> Ha{% else %}<i class="fas fa-times-circle"></i> Yo'q{% endif %}
+                            </span>
+                        </div>
+                        <div class="flex justify-between py-1">
+                            <span class="text-gray-500">Vaqt limiti:</span>
+                            <span class="text-gray-700">
+                                {% if config.time_limit > 0 %}{{ config.time_limit }} daqiqa{% else %}Cheksiz{% endif %}
+                            </span>
+                        </div>
+                        <div class="flex justify-between py-1">
+                            <span class="text-gray-500">Kategoriya sozlamalari:</span>
+                            <span class="{% if config.use_category_configs %}text-green-600{% else %}text-gray-400{% endif %}">
+                                {% if config.use_category_configs %}<i class="fas fa-check-circle"></i> Faol{% else %}<i class="fas fa-times-circle"></i> Faol emas{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============ 2-QISM: Talabalar ro'yxati ============ -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+                    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center flex-wrap gap-3">
+                        <div>
+                            <h3 class="font-semibold text-gray-900">
+                                <i class="fas fa-user-graduate text-gray-600 mr-2"></i> Talabalar ro'yxati
+                                <span class="ml-2 text-sm text-gray-500 font-normal">({{ students.count }} ta)</span>
+                            </h3>
+                            <p class="text-xs text-gray-400 mt-1">Guruhdagi barcha talabalar</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <a href="{% url 'student_add' %}" 
+                               class="bg-gray-900 hover:bg-gray-800 text-white px-3 py-1.5 rounded-lg text-sm transition flex items-center">
+                                <i class="fas fa-plus mr-1"></i> Talaba qo'shish
+                            </a>
+                            <a href="{% url 'student_list' %}" 
+                               class="border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded-lg text-sm transition">
+                                <i class="fas fa-list mr-1"></i> Barcha talabalar
+                            </a>
+                        </div>
+                    </div>
+                    
+                    {% if students %}
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr class="text-left text-xs text-gray-500 uppercase tracking-wider">
+                                    <th class="px-6 py-3 w-12">#</th>
+                                    <th class="px-6 py-3">Ism</th>
+                                    <th class="px-6 py-3">Familiya</th>
+                                    <th class="px-6 py-3">Username</th>
+                                    <th class="px-6 py-3">To'liq ism</th>
+                                    <th class="px-6 py-3 w-24">Harakat</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                {% for student in students %}
+                                <tr class="text-sm hover:bg-gray-50 transition">
+                                    <td class="px-6 py-3 text-gray-500">{{ forloop.counter }}</td>
+                                    <td class="px-6 py-3 font-medium text-gray-900">
+                                        {{ student.user.first_name|default:"-" }}
+                                    </td>
+                                    <td class="px-6 py-3 text-gray-700">
+                                        {{ student.user.last_name|default:"-" }}
+                                    </td>
+                                    <td class="px-6 py-3">
+                                        <span class="text-gray-600">{{ student.user.username }}</span>
+                                    </td>
+                                    <td class="px-6 py-3 text-gray-500">
+                                        {{ student.full_name }}
+                                    </td>
+                                    <td class="px-6 py-3">
+                                        <div class="flex gap-2">
+                                            <a href="{% url 'student_edit' student.pk %}" 
+                                               class="text-blue-600 hover:text-blue-800" title="Tahrirlash">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'student_delete' student.pk %}" 
+                                               class="text-red-500 hover:text-red-700" title="O'chirish">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Talabalar statistikasi -->
+                    <div class="px-6 py-3 border-t border-gray-200 bg-gray-50 flex justify-between items-center text-xs">
+                        <span class="text-gray-500">Jami: {{ students.count }} ta talaba</span>
+                        <div class="flex gap-4">
+                            <span class="text-gray-500">
+                                <i class="fas fa-check-circle text-green-500 mr-1"></i> Aktiv: {{ students.count }}
+                            </span>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-12">
+                        <i class="fas fa-users-slash text-gray-300 text-5xl mb-3"></i>
+                        <p class="text-gray-500 font-medium">Bu guruhda hali talabalar yo'q</p>
+                        <p class="text-sm text-gray-400 mt-1">Yangi talaba qo'shish orqali guruhni to'ldiring</p>
+                        <div class="mt-4">
+                            <a href="{% url 'student_add' %}" class="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm">
+                                <i class="fas fa-plus mr-1"></i> Talaba qo'shish
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Kategoriyalar ro'yxati -->
+                <div class="mt-6 bg-white rounded-xl border border-gray-200 shadow-sm">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="font-semibold text-gray-900">
+                            <i class="fas fa-layer-group text-blue-500 mr-2"></i> Guruh kategoriyalari
+                            <span class="ml-2 text-sm text-gray-500 font-normal">({{ group_categories.count }} ta)</span>
+                        </h3>
+                    </div>
+                    
+                    {% if group_categories %}
+                    <div class="divide-y divide-gray-200">
+                        {% for gc in group_categories %}
+                        <div class="px-6 py-4 hover:bg-gray-50 transition">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="font-medium text-gray-900">{{ gc.category.name }}</span>
+                                        {% if gc.is_active %}
+                                            <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Faol</span>
+                                        {% endif %}
+                                        <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                                            {{ gc.category.quiz_questions.count }} ta savol
+                                        </span>
+                                    </div>
+                                    {% if gc.category.description %}
+                                        <p class="text-xs text-gray-500 mt-1">{{ gc.category.description|truncatewords:20 }}</p>
+                                    {% endif %}
+                                </div>
+                                <div class="flex gap-2 ml-4">
+                                    <a href="{% url 'category_questions_list' gc.category.id %}" 
+                                       class="text-gray-400 hover:text-blue-600 text-sm" title="Savollarni ko'rish">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-8">
+                        <i class="fas fa-folder-open text-gray-300 text-4xl mb-2"></i>
+                        <p class="text-gray-500 text-sm">Hech qanday kategoriya biriktirilmagan</p>
+                        <a href="{% url 'group_categories_manage' group.id %}" class="text-blue-600 hover:text-blue-800 text-sm mt-2 inline-block">
+                            <i class="fas fa-plus mr-1"></i> Kategoriya qo'shish
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hover\:translate-x-1:hover {
+        transform: translateX(4px);
+    }
+    .transition {
+        transition: all 0.2s ease;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,285 @@
+{% extends 'groups/base.html' %}
+
+{% block title %}{{ group.name }} - Imtihon boshqaruvi{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-5xl mx-auto px-4">
+        <div class="mb-6">
+            <a href="{% url 'admin_panel' %}" class="text-gray-500 hover:text-gray-700 text-sm">
+                ← Admin panelga qaytish
+            </a>
+            <h1 class="text-2xl font-bold text-gray-900 mt-2">{{ group.name }}</h1>
+            <p class="text-gray-500 text-sm">Imtihon boshqaruvi</p>
+        </div>
+
+        <!-- Test holati -->
+        <div class="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                    <h3 class="font-semibold text-gray-900">Test holati</h3>
+                    <p class="text-sm mt-1">
+                        Status: 
+                        <span id="examStatus" class="font-medium">
+                            {% if exam_control.is_active %}
+                            <span class="text-green-600">✅ TEST FAOL</span>
+                            {% elif exam_control.is_paused %}
+                            <span class="text-yellow-600">⏸ PAUZADA</span>
+                            {% else %}
+                            <span class="text-red-600">⛔ TEST TO'XTATILGAN</span>
+                            {% endif %}
+                        </span>
+                    </p>
+                    <p id="startedTime" class="text-xs text-gray-400 mt-1">
+                        {% if exam_control.started_at %}
+                        Boshlangan vaqt: {{ exam_control.started_at|date:"H:i:s d.m.Y" }}
+                        {% endif %}
+                    </p>
+                    <p id="remainingTime" class="text-xs text-gray-400 mt-1">
+                        {% if config.time_limit > 0 %}
+                        Vaqt limiti: {{ config.time_limit }} daqiqa
+                        {% endif %}
+                    </p>
+                    {% if exam_control.is_paused %}
+                    <p id="pausedInfo" class="text-xs text-yellow-600 mt-2">
+                        ⏸ Pauzada: {{ exam_control.elapsed_time|divisibleby:60 }} minut o'tgan
+                    </p>
+                    {% endif %}
+                </div>
+                <div class="flex space-x-3">
+                    <!-- START tugmasi -->
+                    <button id="startBtn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition flex items-center">
+                        ▶ START
+                    </button>
+                    
+                    <!-- PAUZA tugmasi -->
+                    <button id="pauseBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-2 rounded-lg transition flex items-center">
+                        ⏸ PAUZA
+                    </button>
+                    
+                    <!-- RESUME tugmasi (PAUZADAN OCHISH) -->
+                    <button id="resumeBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition flex items-center">
+                        ▶ RESUME (Pauzadan ochish)
+                    </button>
+                    
+                    <!-- STOP tugmasi -->
+                    <button id="stopBtn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition flex items-center">
+                        ⏹ STOP
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Pauza holati haqida ma'lumot -->
+            <div id="pauseInfo" class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg {% if not exam_control.is_paused %}hidden{% endif %}">
+                <div class="flex items-center gap-2">
+                    <span class="text-yellow-600">⏸</span>
+                    <span class="text-sm text-yellow-700">
+                        Test pauzada. "RESUME" tugmasini bosing - test qolgan vaqtdan davom etadi.
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Studentlar -->
+        <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                <h3 class="font-semibold text-gray-900">
+                    👥 Guruhdagi Studentlar ({{ students|length }})
+                </h3>
+                <div class="text-sm text-gray-500">
+                    <i class="fas fa-save mr-1"></i> Javoblar avtomatik saqlanadi
+                </div>
+            </div>
+            <div class="divide-y divide-gray-100">
+                {% for student in students %}
+                <div class="p-4 flex justify-between items-center">
+                    <div>
+                        <p class="font-medium text-gray-900">{{ student.full_name }}</p>
+                        <p class="text-xs text-gray-500">{{ student.user.username }}</p>
+                    </div>
+                    <div class="text-sm">
+                        {% if exam_control.is_active %}
+                        <span class="text-green-500">🟢 Testda</span>
+                        {% elif exam_control.is_paused %}
+                        <span class="text-yellow-500">⏸ Pauzada</span>
+                        {% else %}
+                        <span class="text-gray-400">⚪ Kutmoqda</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="p-8 text-center text-gray-500">
+                    Hech qanday student mavjud emas
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Studentlar uchun link -->
+        <div class="mt-6 bg-gray-50 rounded-lg p-4">
+            <p class="text-sm text-gray-600">Studentlar uchun test linki:</p>
+            <div class="bg-white p-2 rounded border mt-2">
+                <code class="text-xs break-all">{{ request.build_absolute_uri }}{% url 'quiz_take' group.id %}</code>
+            </div>
+            <button onclick="copyLink()" class="mt-2 text-gray-500 hover:text-gray-700 text-xs">
+                📋 Linkni nusxalash
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+const csrftoken = '{{ csrf_token }}';
+const groupId = {{ group.id }};
+
+function copyLink() {
+    const link = '{{ request.build_absolute_uri }}{% url "quiz_take" group.id %}';
+    navigator.clipboard.writeText(link);
+    alert('✅ Link nusxalandi!');
+}
+
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-5 right-5 z-50 px-4 py-3 rounded-lg shadow-lg text-white ${type === 'success' ? 'bg-green-500' : type === 'warning' ? 'bg-yellow-500' : 'bg-red-500'}`;
+    notification.innerHTML = message;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// START
+document.getElementById('startBtn').addEventListener('click', function() {
+    const btn = this;
+    btn.innerHTML = '⏳ Boshlanmoqda...';
+    btn.disabled = true;
+    
+    fetch('/quiz/start/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+        },
+        body: JSON.stringify({ group_id: groupId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('✅ Test boshlandi!', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification('❌ ' + data.message, 'error');
+            btn.innerHTML = '▶ START';
+            btn.disabled = false;
+        }
+    })
+    .catch(error => {
+        showNotification('❌ Xatolik: ' + error, 'error');
+        btn.innerHTML = '▶ START';
+        btn.disabled = false;
+    });
+});
+
+// PAUZA
+document.getElementById('pauseBtn').addEventListener('click', function() {
+    const btn = this;
+    btn.innerHTML = '⏸ Pauzalanmoqda...';
+    btn.disabled = true;
+    
+    fetch('/quiz/pause/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+        },
+        body: JSON.stringify({ group_id: groupId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('⏸ Test pauzaga qo\'yildi!', 'warning');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification('❌ ' + data.message, 'error');
+            btn.innerHTML = '⏸ PAUZA';
+            btn.disabled = false;
+        }
+    })
+    .catch(error => {
+        showNotification('❌ Xatolik: ' + error, 'error');
+        btn.innerHTML = '⏸ PAUZA';
+        btn.disabled = false;
+    });
+});
+
+// RESUME (PAUZADAN OCHISH)
+document.getElementById('resumeBtn').addEventListener('click', function() {
+    const btn = this;
+    btn.innerHTML = '⏳ Qayta boshlanmoqda...';
+    btn.disabled = true;
+    
+    fetch('/quiz/resume/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+        },
+        body: JSON.stringify({ group_id: groupId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('✅ Test qayta boshlandi! ' + data.message, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification('❌ ' + data.message, 'error');
+            btn.innerHTML = '▶ RESUME';
+            btn.disabled = false;
+        }
+    })
+    .catch(error => {
+        showNotification('❌ Xatolik: ' + error, 'error');
+        btn.innerHTML = '▶ RESUME';
+        btn.disabled = false;
+    });
+});
+
+// STOP
+document.getElementById('stopBtn').addEventListener('click', function() {
+    const btn = this;
+    btn.innerHTML = '⏹ To\'xtatilmoqda...';
+    btn.disabled = true;
+    
+    if (confirm('⚠️ Testni butunlay to\'xtatmoqchimisiz? Barcha studentlarning javoblari saqlanadi va test yopiladi.')) {
+        fetch('/quiz/stop/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify({ group_id: groupId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('⏹ Test to\'xtatildi!', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showNotification('❌ ' + data.message, 'error');
+                btn.innerHTML = '⏹ STOP';
+                btn.disabled = false;
+            }
+        })
+        .catch(error => {
+            showNotification('❌ Xatolik: ' + error, 'error');
+            btn.innerHTML = '⏹ STOP';
+            btn.disabled = false;
+        });
+    } else {
+        btn.innerHTML = '⏹ STOP';
+        btn.disabled = false;
+    }
+});
+</script>
+{% endblock %}
