@@ -515,7 +515,7 @@ class QuizSession(models.Model):
         verbose_name_plural = "Quiz sessiyalari"
 
     def __str__(self):
-        return f"{self.group.name if self.group else 'O\'chirilgan'} - {'Faol' if self.is_active else 'Tugagan'}"
+        return f"{self.group.name if self.group else 'Ochirilgan'} - {'Faol' if self.is_active else 'Tugagan'}"
 
 
 class QuizResult(models.Model):
@@ -611,7 +611,7 @@ class ExamSession(models.Model):
         verbose_name_plural = "Imtihon sessiyalari"
 
     def __str__(self):
-        return f"{self.group.name if self.group else 'O\'chirilgan'} - {'Faol' if self.is_active else 'Tugagan'}"
+        return f"{self.group.name if self.group else 'Ochirilgan'} - {'Faol' if self.is_active else 'Tugagan'}"
 
 
 class ExamResult(models.Model):
