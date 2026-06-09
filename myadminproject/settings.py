@@ -68,9 +68,10 @@ TEMPLATES = [
     },
 ]
 
-if os.environ.get('DATABASE_URL'):
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if DATABASE_URL:
     import re
-    match = re.match(r'postgres://(.+):(.+)@(.+):(\d+)/(.+)', os.environ['DATABASE_URL'])
+    match = re.match(r'postgres(?:ql)?://(.+):(.+)@(.+):(\d+)/(.+)', DATABASE_URL)
     if match:
         DATABASES = {
             'default': {
