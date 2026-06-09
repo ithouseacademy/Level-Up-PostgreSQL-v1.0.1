@@ -1763,7 +1763,6 @@ document.getElementById('quizForm')?.addEventListener('submit', async (e) => {
         if (data.success) {
             localStorage.removeItem(STORAGE_KEY);
             localStorage.removeItem(CURRENT_PAGE_KEY);
-            alert(`✅ Natijangiz: ${data.score}/100`);
             window.location.href = '/student-panel/';
         } else {
             alert('❌ Xatolik: ' + data.message);

@@ -1462,7 +1462,9 @@ def quiz_submit(request):
             defaults={
                 'score': final_score,
                 'total_questions': total_possible,
-                'answers': question_results
+                'answers': question_results,
+                'student_name_saved': student.full_name or student.user.get_full_name(),
+                'group_name_saved': group.name if group else '',
             }
         )
         
@@ -1480,13 +1482,23 @@ def quiz_submit(request):
             result.score = final_score
             result.total_questions = total_possible
             result.answers = question_results
+            if not result.student_name_saved:
+                result.student_name_saved = student.full_name or student.user.get_full_name()
+            if not result.group_name_saved:
+                result.group_name_saved = group.name if group else ''
             result.save()
             print(f"Updated existing QuizResult with score: {final_score}")
         else:
             print(f"Created new QuizResult with score: {final_score}")
 
+        cert_data = None
         try:
-            generate_student_certificate(result)
+            cert = generate_student_certificate(result)
+            if cert:
+                cert_data = {
+                    'id': cert.id,
+                    'url': cert.certificate_file.url if cert.certificate_file else None,
+                }
         except Exception as cert_err:
             print(f"Certificate generation error: {cert_err}")
 
@@ -1497,7 +1509,8 @@ def quiz_submit(request):
             'total': 100,
             'raw_score': total_score,
             'raw_total': total_possible,
-            'already_submitted': False
+            'already_submitted': False,
+            'certificate': cert_data,
         })
 
     except Student.DoesNotExist:
@@ -4658,6 +4671,8 @@ def generate_student_certificate(result):
     if not student_name and result.student:
         student_name = result.student.full_name
     group_name = result.group_name_saved
+    if not group_name and result.student and result.student.group:
+        group_name = result.student.group.name
     if not student_name or not group_name:
         return None
 
