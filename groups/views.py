@@ -4643,12 +4643,10 @@ def certificate_archive(request):
 
 def generate_student_certificate(result):
     from .certificate_utils import save_certificate_pdf
+    import os
 
     setting = CertificateSetting.objects.filter(is_active=True).first()
-    if not setting or not setting.background_image:
-        return None
-
-    threshold = setting.threshold_percentage
+    threshold = setting.threshold_percentage if setting else 50
     if result.score < threshold:
         return None
 
@@ -4660,7 +4658,6 @@ def generate_student_certificate(result):
     if not student_name and result.student:
         student_name = result.student.full_name
     group_name = result.group_name_saved
-
     if not student_name or not group_name:
         return None
 
@@ -4674,9 +4671,13 @@ def generate_student_certificate(result):
         except:
             pass
 
-    import os
-    bg_path = setting.background_image.path
-    if not os.path.exists(bg_path):
+    bg_path = None
+    if setting and setting.background_image:
+        bg_path = setting.background_image.path
+        if not os.path.exists(bg_path):
+            bg_path = None
+
+    if not bg_path:
         fallback = os.path.join(settings.BASE_DIR, 'static', 'sertifikat.png')
         if os.path.exists(fallback):
             bg_path = fallback
