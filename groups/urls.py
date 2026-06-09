@@ -1,7 +1,13 @@
 from django.urls import path
 from . import views
+from django.urls import path
+from .views import google_verification
 
 urlpatterns = [
+      path(
+        "google503f1d0f4a7d9466.html",
+        google_verification
+    ),
     # SEO
     path('robots.txt', views.robots_txt, name='robots_txt'),
     path('sitemap.xml', views.sitemap_xml, name='sitemap_xml'),

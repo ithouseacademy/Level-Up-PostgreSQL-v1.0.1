@@ -28,7 +28,13 @@ from .models import (
     Folder, FolderCategory, GroupFolder, FolderGroupConfig
 )
 from .forms import GroupForm, RegisterForm, LoginForm
+from django.http import HttpResponse
 
+def google_verification(request):
+    return HttpResponse(
+        "google-site-verification: google503f1d0f4a7d9466.html",
+        content_type="text/html"
+    )
 
 def is_admin_user(user):
     return user.is_authenticated and (user.is_staff or user.is_superuser)
