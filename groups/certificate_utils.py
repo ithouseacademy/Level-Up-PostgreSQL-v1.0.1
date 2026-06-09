@@ -66,8 +66,8 @@ def generate_certificate_image(student_name, group_name, teacher_name, level, sc
     student_name = student_name.title()
 
     name_font = _get_font('Parisienne-Regular.ttf', int(img_w * 0.068))
-    level_font = _get_font('arial.ttf', int(img_w * 0.022))
-    teacher_font = _get_font('arial.ttf', int(img_w * 0.016))
+    level_font = _get_font('arial.ttf', 14)
+    teacher_font = _get_font('arial.ttf', 16)
 
     draw.text(
         (img_w / 2, img_h * 0.52),
