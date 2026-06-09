@@ -183,6 +183,5 @@ urlpatterns = [
     path('certificate/my-certificates/', views.my_certificates, name='my_certificates'),
     path('sertivkat/', views.sertivkat_view, name='sertivkat_view'),
     path('certificate/archive/', views.certificate_archive, name='certificate_archive'),
-    path('certificate/issue/', views.issue_certificates, name='issue_certificates'),
     path('certificate/bulk-generate/', views.bulk_generate_certificates_api, name='bulk_generate_certificates_api'),
 ]
