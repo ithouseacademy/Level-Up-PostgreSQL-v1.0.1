@@ -9,17 +9,23 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dev-key-change-in-production')
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 't')
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
+ALLOWED_HOSTS = [x.strip() for x in os.environ.get('ALLOWED_HOSTS', '*').split(',') if x.strip()]
 railway_domain = os.environ.get('RAILWAY_PUBLIC_DOMAIN', '')
 if railway_domain and railway_domain not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(railway_domain)
 
-CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if os.environ.get('CSRF_TRUSTED_ORIGINS') else []
+CSRF_TRUSTED_ORIGINS = [x.strip() for x in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if x.strip()]
 railway_url = os.environ.get('RAILWAY_STATIC_URL', '')
-if railway_url and railway_url not in CSRF_TRUSTED_ORIGINS:
-    CSRF_TRUSTED_ORIGINS.append(railway_url)
-if railway_domain and f'https://{railway_domain}' not in CSRF_TRUSTED_ORIGINS:
-    CSRF_TRUSTED_ORIGINS.append(f'https://{railway_domain}')
+if railway_url:
+    railway_url = railway_url.strip()
+    if not railway_url.startswith('http'):
+        railway_url = f'https://{railway_url}'
+    if railway_url not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(railway_url)
+if railway_domain:
+    url = f'https://{railway_domain.strip()}'
+    if url not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(url)
 
 LOGGING = {
     'version': 1,
