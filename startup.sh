@@ -3,6 +3,7 @@ set -e
 
 echo "Migrating database..."
 python manage.py migrate --noinput
+python manage.py createcachetable --noinput 2>/dev/null || true
 
 echo "Collecting static files..."
 python manage.py collectstatic --noinput --clear
