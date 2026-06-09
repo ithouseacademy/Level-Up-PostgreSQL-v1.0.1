@@ -4651,17 +4651,6 @@ def generate_student_certificate(result):
     if result.score < threshold:
         return None
 
-    group_enabled = False
-    if result.quiz_session and result.quiz_session.group:
-        try:
-            config = result.quiz_session.group.exam_config
-            group_enabled = config.certificate_enabled
-        except:
-            pass
-
-    if not group_enabled:
-        return None
-
     existing = Certificate.objects.filter(quiz_result=result).first()
     if existing:
         return existing
@@ -4673,14 +4662,26 @@ def generate_student_certificate(result):
 
     teacher_name = None
     level = None
-    if result.quiz_session and result.quiz_session.group:
-        group = result.quiz_session.group
+    group_obj = None
+    if result.quiz_session and result.quiz_session.group_id:
+        group_obj = result.quiz_session.group
+    else:
+        group_obj = Group.objects.filter(name=group_name).first()
+
+    if group_obj:
         try:
-            config = group.exam_config
-            teacher_name = config.certificate_teacher or group.teacher
+            config = group_obj.exam_config
+            if not config.certificate_enabled:
+                return None
+            teacher_name = config.certificate_teacher or group_obj.teacher
             level = config.certificate_level
         except:
-            teacher_name = group.teacher if group.teacher else None
+            teacher_name = group_obj.teacher if group_obj.teacher else None
+
+    if not student_name:
+        return None
+    if not group_name:
+        return None
 
     bg_path = setting.background_image.path
 
@@ -4778,7 +4779,11 @@ def sertivkat_view(request):
     setting = CertificateSetting.objects.filter(is_active=True).first()
     bg_image = None
     if setting and setting.background_image:
-        bg_image = setting.background_image.url
+        try:
+            if setting.background_image.storage.exists(setting.background_image.name):
+                bg_image = setting.background_image.url
+        except:
+            bg_image = None
     context = {'bg_image': bg_image}
     return render(request, 'groups/sertivkat.html', context)
 
@@ -4789,8 +4794,13 @@ def issue_certificates(request):
     setting = CertificateSetting.objects.filter(is_active=True).first()
     threshold = setting.threshold_percentage if setting else 50
 
+    group_id = request.GET.get('group_id')
+    specific_group = Group.objects.filter(id=group_id).first() if group_id else None
+
     existing_group_names = set(Group.objects.values_list('name', flat=True))
     all_results = QuizResult.objects.all().order_by('-submitted_at')
+    if specific_group:
+        all_results = all_results.filter(group_name_saved=specific_group.name)
 
     group_results_map = {}
     for r in all_results:
