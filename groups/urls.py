@@ -179,7 +179,7 @@ urlpatterns = [
     path('certificate/settings/', views.certificate_settings, name='certificate_settings'),
     path('certificate/list/', views.certificate_list, name='certificate_list'),
     path('certificate/view/<int:cert_id>/', views.view_certificate, name='view_certificate'),
-    path('certificate/generate-api/', views.generate_certificate_api, name='generate_certificate_api'),
+
     path('certificate/my-certificates/', views.my_certificates, name='my_certificates'),
     path('sertivkat/', views.sertivkat_view, name='sertivkat_view'),
     path('certificate/archive/', views.certificate_archive, name='certificate_archive'),

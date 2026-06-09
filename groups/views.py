@@ -4669,8 +4669,6 @@ def generate_student_certificate(result):
     if result.quiz_session and result.quiz_session.group_id:
         try:
             config = result.quiz_session.group.exam_config
-            if not config.certificate_enabled:
-                return None
             teacher_name = config.certificate_teacher or result.quiz_session.group.teacher
             level = config.certificate_level
         except:
@@ -4716,38 +4714,6 @@ def view_certificate(request, cert_id):
         'threshold': threshold,
     }
     return render(request, 'groups/view_certificate.html', context)
-
-
-@login_required
-@user_passes_test(is_admin_user)
-def generate_certificate_api(request):
-    if request.method != 'POST':
-        return JsonResponse({'success': False, 'message': 'Faqat POST so\'rov!'})
-
-    try:
-        data = json.loads(request.body)
-        result_id = data.get('result_id')
-
-        result = get_object_or_404(QuizResult, id=result_id)
-        cert = generate_student_certificate(result)
-
-        if cert:
-            return JsonResponse({
-                'success': True,
-                'message': 'Sertifikat yaratildi!',
-                'cert_id': cert.id,
-                'cert_url': cert.certificate_file.url,
-            })
-        else:
-            return JsonResponse({
-                'success': False,
-                'message': 'Sertifikat yaratilmadi. Sertifikat sozlamalarini tekshiring yoki ball yetarli emas.'
-            })
-
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return JsonResponse({'success': False, 'message': str(e)})
 
 
 @login_required
