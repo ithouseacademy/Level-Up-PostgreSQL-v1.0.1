@@ -48,10 +48,10 @@
                         <p class="text-sm text-gray-500">{{ gd.total_students }} ta student</p>
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="text-sm text-gray-500" id="eligibleCount{{ forloop.counter }}">0 ta sertifikat</span>
-                        <button onclick="generateGroupCertificates('{{ gd.group_name|escapejs }}', {{ forloop.counter }})" 
-                                class="bg-gray-900 hover:bg-gray-800 text-white text-sm px-4 py-2 rounded-lg transition flex items-center gap-1"
-                                {% if not has_background %}disabled{% endif %}>
+                        <span class="text-sm text-gray-500" id="eligibleCount{{ forloop.counter }}">Hisoblanmoqda...</span>
+                        <button onclick="generateGroupCertificates(this, '{{ gd.group_name|escapejs }}')" 
+                                class="generate-btn bg-gray-900 hover:bg-gray-800 text-white text-sm px-4 py-2 rounded-lg transition flex items-center gap-1"
+                                {% if not has_background %}disabled title="Avval sertifikat fon rasmini yuklang!"{% endif %}>
                             <i class="fas fa-certificate text-xs"></i>
                             <span>Sertifikatlarni chiqarish</span>
                         </button>
@@ -158,8 +158,9 @@ function updateEligibleCounts() {
     });
 }
 
-function generateGroupCertificates(groupName, idx) {
-    const rows = document.querySelectorAll(`.group-card[data-group="${groupName}"] .student-row`);
+function generateGroupCertificates(btn, groupName) {
+    const card = btn.closest('.group-card');
+    const rows = card.querySelectorAll('.student-row');
     let count = 0;
     rows.forEach(row => {
         if (row.dataset.eligible === 'true') {
@@ -179,7 +180,6 @@ function generateGroupCertificates(groupName, idx) {
         return;
     }
 
-    const btn = event.target.closest('button');
     const originalHtml = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Chiqarilmoqda...';
     btn.disabled = true;
@@ -192,7 +192,7 @@ function generateGroupCertificates(groupName, idx) {
     .then(r => r.json())
     .then(data => {
         if (data.success) {
-            showNotification(`${data.count} ta sertifikat yaratildi!`, 'success');
+            showNotification(data.count + ' ta sertifikat yaratildi!', 'success');
             setTimeout(() => location.reload(), 1500);
         } else {
             showNotification('Xatolik: ' + data.message, 'error');
