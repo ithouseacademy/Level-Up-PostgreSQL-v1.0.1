@@ -8,12 +8,60 @@
     <meta name="theme-color" content="#1e293b" media="(prefers-color-scheme: dark)">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="IT House">
-    <meta name="description" content="IT House Level Up - Guruhlar boshqaruvi va professional IT platforma">
-    <meta name="keywords" content="IT, guruhlar, boshqaruv, level up">
-    <meta name="author" content="IT House Level Up">
+    <meta name="apple-mobile-web-app-title" content="IT House Level Up">
     
-    <title>{% block title %}IT House Level Up - Guruhlar Boshqaruvi{% endblock %}</title>
+    <!-- SEO Meta -->
+    <meta name="description" content="IT House Level Up - IT ta'lim platformasi. Onlayn test, imtihon, sertifikat va guruhlar boshqaruvi. Ingliz tili va IT fanlarini o'rganish uchun zamonaviy platforma.">
+    <meta name="keywords" content="IT house, level up, it house level up, english house academy, online test, imtihon, sertifikat, ingliz tili, IT ta'lim, guruh boshqaruvi, online learning, o'quv platformasi">
+    <meta name="author" content="IT House Level Up">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="{% block canonical_url %}{{ request.build_absolute_uri }}{% endblock %}">
+    
+    <!-- Google Search Console -->
+    <meta name="google-site-verification" content="{% block google_verification %}YOUR_GOOGLE_VERIFICATION_CODE{% endblock %}">
+    
+    <!-- Yandex Verification -->
+    <meta name="yandex-verification" content="{% block yandex_verification %}YOUR_YANDEX_VERIFICATION_CODE{% endblock %}">
+    
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="IT House Level Up">
+    <meta property="og:title" content="{% block og_title %}IT House Level Up - IT ta'lim platformasi{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}IT House Level Up - Onlayn test, imtihon va sertifikat tizimi. Ingliz tili va IT fanlarini o'rganing.{% endblock %}">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:image" content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'icons/icon-512.png' %}{% endblock %}">
+    <meta property="og:image:width" content="512">
+    <meta property="og:image:height" content="512">
+    <meta property="og:locale" content="uz_UZ">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}IT House Level Up - IT ta'lim platformasi{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}IT House Level Up - Onlayn test, imtihon va sertifikat tizimi.{% endblock %}">
+    <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'icons/icon-512.png' %}">
+    
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "EducationalOrganization",
+        "name": "IT House Level Up",
+        "alternateName": "english House Academy",
+        "description": "IT ta'lim platformasi - Onlayn test, imtihon va sertifikat tizimi",
+        "url": "{{ request.scheme }}://{{ request.get_host }}",
+        "logo": "{{ request.scheme }}://{{ request.get_host }}{% static 'icons/icon-512.png' %}",
+        "address": {
+            "@type": "PostalAddress",
+            "addressCountry": "UZ"
+        },
+        "areaServed": "UZ",
+        "inLanguage": "uz",
+        "teaches": ["IT", "English Language", "Programming"],
+        "educationalLevel": "Beginner to Advanced"
+    }
+    </script>
+    
+    <title>{% block title %}IT House Level Up - IT ta'lim platformasi{% endblock %}</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com/3.4.16"></script>

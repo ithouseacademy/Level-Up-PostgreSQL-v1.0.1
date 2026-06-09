@@ -2,6 +2,10 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    # SEO
+    path('robots.txt', views.robots_txt, name='robots_txt'),
+    path('sitemap.xml', views.sitemap_xml, name='sitemap_xml'),
+
     # ASOSIY SAHIFALAR
     path('', views.home, name='home'),
     path('sayt-haqida/', views.sayt_haqida, name='sayt_haqida'),

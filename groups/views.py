@@ -120,6 +120,45 @@ def sayt_haqida(request):
     return render(request, 'groups/sayt_haqida.html')
 
 
+from django.http import HttpResponse
+from django.urls import reverse
+
+def robots_txt(request):
+    domain = request.get_host()
+    lines = [
+        "User-agent: *",
+        "Disallow: /admin/",
+        "Disallow: /login/",
+        "Disallow: /logout/",
+        "Disallow: /register/",
+        f"Sitemap: {request.scheme}://{domain}/sitemap.xml",
+    ]
+    return HttpResponse("\n".join(lines), content_type="text/plain")
+
+
+def sitemap_xml(request):
+    domain = request.get_host()
+    scheme = request.scheme
+    urls = [
+        {"loc": reverse("home"), "priority": "1.0", "changefreq": "weekly"},
+        {"loc": reverse("sayt_haqida"), "priority": "0.8", "changefreq": "monthly"},
+        {"loc": reverse("login"), "priority": "0.5", "changefreq": "monthly"},
+        {"loc": reverse("register"), "priority": "0.5", "changefreq": "monthly"},
+    ]
+    xml_parts = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ]
+    for u in urls:
+        xml_parts.append(f"  <url>")
+        xml_parts.append(f"    <loc>{scheme}://{domain}{u['loc']}</loc>")
+        xml_parts.append(f"    <priority>{u['priority']}</priority>")
+        xml_parts.append(f"    <changefreq>{u['changefreq']}</changefreq>")
+        xml_parts.append(f"  </url>")
+    xml_parts.append("</urlset>")
+    return HttpResponse("\n".join(xml_parts), content_type="application/xml")
+
+
 def user_login(request):
     if request.user.is_authenticated:
         if is_admin_user(request.user):
