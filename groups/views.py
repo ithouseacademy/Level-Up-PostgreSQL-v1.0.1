@@ -4687,7 +4687,8 @@ def generate_student_certificate(result):
     import os
     bg_path = setting.background_image.path
     if not os.path.exists(bg_path):
-        fallback = os.path.join(settings.STATIC_ROOT or os.path.join(settings.BASE_DIR, 'static'), 'sertifikat.png')
+        static_dir = os.path.join(settings.BASE_DIR, 'static')
+        fallback = os.path.join(static_dir, 'sertifikat.png')
         if os.path.exists(fallback):
             bg_path = fallback
         else:
@@ -4874,7 +4875,15 @@ def issue_certificates(request):
             'total_students': len(students_data),
         })
 
-    has_bg = setting and setting.background_image and setting.background_image.name
+    has_bg = False
+    if setting and setting.background_image and setting.background_image.name:
+        import os
+        bg_path = setting.background_image.path
+        if os.path.exists(bg_path):
+            has_bg = True
+        else:
+            static_fallback = os.path.join(settings.BASE_DIR, 'static', 'sertifikat.png')
+            has_bg = os.path.exists(static_fallback)
 
     return render(request, 'groups/issue_certificates.html', {
         'groups_data': groups_data,
@@ -4914,18 +4923,20 @@ def bulk_generate_certificates_api(request):
         errors = []
         for sname, r in best_results.items():
             if r.score < setting.threshold_percentage:
+                errors.append(f"{sname} (ball yetarli emas: {r.score}% < {setting.threshold_percentage}%)")
                 continue
             existing = Certificate.objects.filter(
                 student_name__iexact=sname, group_name__iexact=group_name
             ).first() if group_name else Certificate.objects.filter(student_name__iexact=sname).first()
             if existing:
+                errors.append(f"{sname} (sertifikat mavjud)")
                 continue
 
             cert = generate_student_certificate(r)
             if cert:
                 generated.append({'student_name': sname, 'cert_id': cert.id})
             else:
-                errors.append(sname)
+                errors.append(f"{sname} (sertifikat yaratilmadi — sozlamalarni tekshiring)")
 
         return JsonResponse({
             'success': True,
