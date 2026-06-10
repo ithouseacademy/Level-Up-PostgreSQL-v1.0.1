@@ -1009,27 +1009,28 @@ def quiz_take(request, group_id):
 
         # 1. Folder orqali kategoriyalarni olish
         group_folders = GroupFolder.objects.filter(group=group, is_active=True).select_related('folder')
-        if group_folders.exists():
-            for gf in group_folders:
-                folder = gf.folder
-                try:
-                    folder_config = FolderGroupConfig.objects.get(folder=folder, group=group, is_active=True)
-                    cats_to_select = folder_config.categories_to_select
-                except FolderGroupConfig.DoesNotExist:
-                    cats_to_select = 1
+        for gf in group_folders:
+            folder = gf.folder
+            try:
+                folder_config = FolderGroupConfig.objects.get(folder=folder, group=group, is_active=True)
+                cats_to_select = folder_config.categories_to_select
+                randomize = folder_config.randomize_categories
+            except FolderGroupConfig.DoesNotExist:
+                cats_to_select = 1
+                randomize = True
 
-                folder_cats = list(FolderCategory.objects.filter(folder=folder).select_related('category'))
-                folder_category_objs = [fc.category for fc in folder_cats]
-                if folder_config.randomize_categories:
-                    random.shuffle(folder_category_objs)
-                take_count = min(cats_to_select, len(folder_category_objs))
-                for cat in folder_category_objs[:take_count]:
-                    selected_category_ids.add(cat.id)
-        else:
-            # 2. Agar papka bo'lmasa, eski usul: GroupCategory
-            group_categories = GroupCategory.objects.filter(group=group, is_active=True).select_related('category')
-            for gc in group_categories:
-                selected_category_ids.add(gc.category.id)
+            folder_cats = list(FolderCategory.objects.filter(folder=folder).select_related('category'))
+            folder_category_objs = [fc.category for fc in folder_cats]
+            if randomize:
+                random.shuffle(folder_category_objs)
+            take_count = min(cats_to_select, len(folder_category_objs))
+            for cat in folder_category_objs[:take_count]:
+                selected_category_ids.add(cat.id)
+
+        # 2. To'g'ridan-to'g'ri biriktirilgan kategoriyalar
+        group_categories = GroupCategory.objects.filter(group=group, is_active=True).select_related('category')
+        for gc in group_categories:
+            selected_category_ids.add(gc.category.id)
 
         # Har bir tanlangan kategoriyadan savol olish
         for cat_id in selected_category_ids:
@@ -1200,18 +1201,21 @@ def quiz_submit(request):
         student = Student.objects.get(user=request.user)
         group = Group.objects.get(id=group_id)
 
-        # Guruhdagi barcha savollarni olish (folder yoki direct category)
+        # Guruhdagi barcha savollarni olish (folder + direct category)
         group_folders = GroupFolder.objects.filter(group=group, is_active=True)
         all_questions = []
-        if group_folders.exists():
-            for gf in group_folders:
-                folder_cats = FolderCategory.objects.filter(folder=gf.folder).values_list('category_id', flat=True)
-                for cat_id in folder_cats:
+        seen_cat_ids = set()
+        for gf in group_folders:
+            folder_cats = FolderCategory.objects.filter(folder=gf.folder).values_list('category_id', flat=True)
+            for cat_id in folder_cats:
+                if cat_id not in seen_cat_ids:
+                    seen_cat_ids.add(cat_id)
                     questions = list(QuizQuestion.objects.filter(category_id=cat_id))
                     all_questions.extend(questions)
-        else:
-            group_categories = GroupCategory.objects.filter(group=group, is_active=True)
-            for gc in group_categories:
+        group_categories = GroupCategory.objects.filter(group=group, is_active=True)
+        for gc in group_categories:
+            if gc.category.id not in seen_cat_ids:
+                seen_cat_ids.add(gc.category.id)
                 questions = list(QuizQuestion.objects.filter(category=gc.category))
                 all_questions.extend(questions)
         
@@ -2137,15 +2141,18 @@ def stop_exam_api(request):
         # Guruhdagi barcha savollarni olish (ball hisoblash uchun)
         group_folders = GroupFolder.objects.filter(group=group, is_active=True)
         all_questions = []
-        if group_folders.exists():
-            for gf in group_folders:
-                folder_cats = FolderCategory.objects.filter(folder=gf.folder).values_list('category_id', flat=True)
-                for cat_id in folder_cats:
+        seen_cat_ids = set()
+        for gf in group_folders:
+            folder_cats = FolderCategory.objects.filter(folder=gf.folder).values_list('category_id', flat=True)
+            for cat_id in folder_cats:
+                if cat_id not in seen_cat_ids:
+                    seen_cat_ids.add(cat_id)
                     cat_questions = list(QuizQuestion.objects.filter(category_id=cat_id))
                     all_questions.extend(cat_questions)
-        else:
-            group_categories = GroupCategory.objects.filter(group=group, is_active=True)
-            for gc in group_categories:
+        group_categories = GroupCategory.objects.filter(group=group, is_active=True)
+        for gc in group_categories:
+            if gc.category.id not in seen_cat_ids:
+                seen_cat_ids.add(gc.category.id)
                 cat_questions = list(QuizQuestion.objects.filter(category=gc.category))
                 all_questions.extend(cat_questions)
         
@@ -2801,16 +2808,15 @@ def group_questions_preview(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     config, _ = GroupExamConfig.objects.get_or_create(group=group)
     group_folders = GroupFolder.objects.filter(group=group, is_active=True)
-    if group_folders.exists():
-        cat_ids = set()
-        for gf in group_folders:
-            folder_cats = FolderCategory.objects.filter(folder=gf.folder).values_list('category_id', flat=True)
-            for cid in folder_cats:
-                cat_ids.add(cid)
-        all_questions = list(QuizQuestion.objects.filter(category_id__in=list(cat_ids)))
-    else:
-        group_categories = GroupCategory.objects.filter(group=group).values_list('category_id', flat=True)
-        all_questions = list(QuizQuestion.objects.filter(category_id__in=group_categories))
+    cat_ids = set()
+    for gf in group_folders:
+        folder_cats = FolderCategory.objects.filter(folder=gf.folder).values_list('category_id', flat=True)
+        for cid in folder_cats:
+            cat_ids.add(cid)
+    group_categories = GroupCategory.objects.filter(group=group).values_list('category_id', flat=True)
+    for cid in group_categories:
+        cat_ids.add(cid)
+    all_questions = list(QuizQuestion.objects.filter(category_id__in=list(cat_ids)))
     question_count = min(config.questions_per_student, len(all_questions))
     random_questions = random.sample(all_questions, question_count) if question_count > 0 else []
 
