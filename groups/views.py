@@ -4161,16 +4161,26 @@ def quiz_check_status(request):
         if is_paused is None:
             is_paused = False
         
-        # MUHIM: Cache is_paused=True bo'lsa ham DB dan tekshir
-        # (workerlar orasida eski cache qolib ketmasligi uchun)
-        if is_paused is True:
+        # MUHIM: Cache holatini DB bilan tekshir — workerlar orasida
+        # LocMemCache eskirib qolishi mumkin (bir worker o'zgartirsa,
+        # boshqa worker buni ko'rmaydi)
+        if (is_paused is True) or (is_active is False and is_paused is False):
             try:
                 db_control = ExamControl.objects.get(group_id=group_id)
-                if not db_control.is_paused:
-                    is_paused = False
-                    cache.set(f'exam_paused_{group_id}', False, timeout=86400)
+                if db_control.is_paused != is_paused:
+                    is_paused = db_control.is_paused
+                    cache.set(f'exam_paused_{group_id}', is_paused, timeout=86400)
+                if db_control.is_active != is_active:
+                    is_active = db_control.is_active
+                    cache.set(f'exam_active_{group_id}', is_active, timeout=86400)
+                if db_control.started_at:
+                    start_time_str = db_control.started_at.isoformat()
+                    cache.set(f'exam_start_time_{group_id}', start_time_str, timeout=86400)
+                elapsed_time = db_control.elapsed_time
+                cache.set(f'exam_elapsed_time_{group_id}', elapsed_time, timeout=86400)
             except ExamControl.DoesNotExist:
-                is_paused = False
+                if is_paused is True:
+                    is_paused = False
         
         remaining_time = None
         total_time = config.time_limit * 60 if config.time_limit > 0 else 0
