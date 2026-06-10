@@ -1067,7 +1067,8 @@ def quiz_take(request, group_id):
             attempt_number=completed_attempts + 1, is_completed=False
         )
 
-    TOTAL_QUESTIONS = len(questions)
+    # Oddiy matn (plain_text) savollarini hisobga olmagan holda total
+    TOTAL_QUESTIONS = len([q for q in questions if q.question_type != 'plain_text'])
 
     # Reading comprehension data
     for question in questions:
@@ -1127,6 +1128,9 @@ def quiz_take(request, group_id):
                         if q.correct_answer.strip() not in seen:
                             seen.add(q.correct_answer.strip())
                             cat_fill_blank_words.append(q.correct_answer.strip())
+        
+        # Plain text (oddiy matn) doim eng tepada
+        cat_questions.sort(key=lambda q: (0 if q.question_type == 'plain_text' else 1))
         
         category_list.append({
             'grouper': category,
@@ -1526,6 +1530,12 @@ def quiz_submit(request):
                     'graded': False,
                     'earned_points': 0,
                     'max_points': question.points
+                }
+
+            elif question.question_type == 'plain_text':
+                question_results[qid] = {
+                    'type': 'plain_text',
+                    'text': question.question_text,
                 }
 
         final_score = 0
@@ -3924,6 +3934,19 @@ def admin_question_add(request):
                         points=points
                     )
                     messages.success(request, "✅ Og'zaki (Speaking) savoli qo'shildi!")
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
+
+            elif question_type == 'plain_text':
+                text = request.POST.get('pt_text', '').strip()
+                if not text:
+                    messages.error(request, "Matnni kiriting!")
+                else:
+                    QuizQuestion.objects.create(
+                        category=category, question_type='plain_text',
+                        question_text=text, correct_answer='',
+                        points=0
+                    )
+                    messages.success(request, "✅ Oddiy matn qo'shildi!")
                     return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
 
             else:

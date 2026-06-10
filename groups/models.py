@@ -19,6 +19,7 @@ class QuestionType(models.TextChoices):
     MATCH_FILL = 'match_fill', "So'zlarni matnga mos qo'yish"
     WRITING = 'writing', "Yozma ish (Writing)"
     SPEAKING = 'speaking', "Og'zaki (Speaking)"
+    PLAIN_TEXT = 'plain_text', "Oddiy matn"
 
 
 class Group(models.Model):

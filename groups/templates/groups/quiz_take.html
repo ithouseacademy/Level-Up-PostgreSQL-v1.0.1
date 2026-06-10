@@ -174,11 +174,14 @@
                                                         {% elif q.question_type == 'match_fill' %}🧩 So'zlarni mos qo'yish
                                                         {% elif q.question_type == 'writing' %}✍️ Yozma ish
                                                         {% elif q.question_type == 'speaking' %}🎤 Og'zaki
+                                                        {% elif q.question_type == 'plain_text' %}📄 Oddiy matn
                                                         {% endif %}
                                                     </span>
+                                                    {% if q.question_type != 'plain_text' %}
                                                     <span class="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full font-medium">
                                                         {{ q.points }} ball
                                                     </span>
+                                                    {% endif %}
                                                 </div>
                                                 <div class="question-status">
                                                     <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -373,6 +376,13 @@
                                                     <p class="text-sm text-gray-500 italic">🎤 Ushbu savolga og'zaki javob bering. O'qituvchingiz ball qo'yadi.</p>
                                                     <input type="hidden" name="q_{{ q.id }}" value="spoken">
                                                 </div>
+
+                                            <!-- 13. PLAIN TEXT -->
+                                            {% elif q.question_type == 'plain_text' %}
+                                                <div class="mb-4 py-4 px-5 bg-gray-50 border border-gray-100 rounded-lg">
+                                                    <p class="text-gray-700 leading-relaxed">{{ q.question_text|linebreaksbr }}</p>
+                                                </div>
+                                                <input type="hidden" name="q_{{ q.id }}" value="">
 
                                             {% else %}
                                                 <p class="text-gray-500 text-sm">⚠️ Noma'lum savol turi</p>
@@ -1046,6 +1056,10 @@ function updateProgress() {
     let total = {{ total_questions }};
     
     document.querySelectorAll('.question-card').forEach(card => {
+        const qType = card.dataset.questionType;
+        // Plain text questions don't count toward progress
+        if (qType === 'plain_text') return;
+        
         let hasAnswer = false;
         
         card.querySelectorAll('.inline-blank-input').forEach(input => {

@@ -146,6 +146,10 @@
                                 <input type="radio" name="question_type" value="speaking" class="mr-1" {% if selected_type == 'speaking' %}checked{% endif %}>
                                 <span class="text-sm">🎤 Og'zaki (Speaking)</span>
                             </label>
+                            <label class="flex items-center gap-2 p-3 border border-gray-200 cursor-pointer hover:bg-gray-50">
+                                <input type="radio" name="question_type" value="plain_text" class="mr-1" {% if selected_type == 'plain_text' %}checked{% endif %}>
+                                <span class="text-sm">📄 Oddiy matn</span>
+                            </label>
                         </div>
                     </div>
 
@@ -432,6 +436,17 @@
                     </div>
 
                     <!-- ============================================================ -->
+                    <!-- PLAIN TEXT (Oddiy matn) -->
+                    <!-- ============================================================ -->
+                    <div id="plainTextField" class="px-6 py-5 border-b border-gray-100" style="display: none;">
+                        <div class="mb-5">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Matn <span class="text-red-500">*</span></label>
+                            <textarea name="pt_text" rows="6" class="w-full border border-gray-200 px-3 py-2 text-gray-700 focus:border-black focus:outline-none text-sm" placeholder="Studentlarga ko'rinadigan matnni kiriting..."></textarea>
+                            <p class="text-xs text-gray-400 mt-1">📌 Bu matn kategoriya boshida (eng tepada) ko'rinadi. Ball berilmaydi.</p>
+                        </div>
+                    </div>
+
+                    <!-- ============================================================ -->
                     <!-- 11. WRITING (Yozma ish) -->
                     <!-- ============================================================ -->
                     <div id="writingFields" class="px-6 py-5 border-b border-gray-100" style="display: none;">
@@ -620,7 +635,8 @@
                         this.value === 'complete_the_words' ? 'completeTheWordsFields' :
                         this.value === 'match_fill' ? 'matchFillFields' :
                         this.value === 'writing' ? 'writingFields' :
-                        this.value === 'speaking' ? 'speakingFields' : '';
+                        this.value === 'speaking' ? 'speakingFields' :
+                        this.value === 'plain_text' ? 'plainTextField' : '';
                 if (id) document.getElementById(id).style.display = 'block';
                 if (this.value === 'match_fill') {
                     setTimeout(detectMfBlanks, 100);
