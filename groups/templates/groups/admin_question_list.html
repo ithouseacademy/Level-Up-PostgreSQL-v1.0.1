@@ -257,7 +257,11 @@
                                 {% endif %}
                              </td>
                             <td class="px-4 py-3">
+                                {% if question.question_type == 'plain_text' %}
+                                <span class="text-sm text-gray-400">—</span>
+                                {% else %}
                                 <span class="text-sm font-semibold text-gray-800">{{ question.points }}</span>
+                                {% endif %}
                              </td>
                             <td class="px-4 py-3 text-xs text-gray-400">
                                 {{ question.created_at|date:"d.m.Y H:i" }}
