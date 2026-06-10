@@ -10,7 +10,7 @@ urlpatterns = [
     ),
     # SEO
     path('robots.txt', views.robots_txt, name='robots_txt'),
-    path('sitemap.xml', views.sitemap_xml, name='sitemap_xml'),
+    path('sitemap 32.xml', views.sitemap_xml, name='sitemap_xml'),
 
     # ASOSIY SAHIFALAR
     path('', views.home, name='home'),
@@ -31,7 +31,7 @@ urlpatterns = [
     # KATEGORIYALAR
     path('categories/', views.category_list, name='category_list'),
     path('categories/add/', views.category_add, name='category_add'),
-    path('categories/<int:pk>/edit/', views.category_edit, name='category_edit'),
+    path('categories/-/<int:pk>/edit/', views.category_edit, name='category_edit'),
     path('categories/<int:pk>/delete/', views.category_delete, name='category_delete'),
 
     # PAPKALAR (FOLDERS)
@@ -97,7 +97,7 @@ urlpatterns = [
     # ADMIN BOSHQARUVI
     path('make-admin/', views.make_admin, name='make_admin'),
     path('admin-list/', views.admin_list, name='admin_list'),
-    path('admin-add/', views.admin_add, name='admin_add'),
+    path('admin-add/',  views.admin_add, name='admin_add'),
     path('admin-edit/<int:admin_id>/', views.admin_edit, name='admin_edit'),
     path('admin-delete/<int:user_id>/', views.admin_delete, name='admin_delete'),
 

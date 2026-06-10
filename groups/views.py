@@ -4157,6 +4157,10 @@ def quiz_check_status(request):
             # Cache da bo'lsa, elapsed_time ni ham olish
             elapsed_time = cache.get(f'exam_elapsed_time_{group_id}', 0)
         
+        # Cache is_paused=None bo'lsa (delete qilingan bo'lsa), False deb hisobla
+        if is_paused is None:
+            is_paused = False
+        
         remaining_time = None
         total_time = config.time_limit * 60 if config.time_limit > 0 else 0
         
@@ -4273,7 +4277,8 @@ def resume_exam_api(request):
         
         # Cache ni yangilash
         cache.set(f'exam_active_{group_id}', True, timeout=86400)
-        cache.delete(f'exam_paused_{group_id}')
+        cache.set(f'exam_paused_{group_id}', False, timeout=86400)
+        cache.set(f'exam_elapsed_time_{group_id}', elapsed_time, timeout=86400)
         cache.set(f'exam_start_time_{group_id}', new_started_at.isoformat(), timeout=86400)
         
         # Tugash vaqtini hisoblash
