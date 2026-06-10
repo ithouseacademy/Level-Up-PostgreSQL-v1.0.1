@@ -2665,10 +2665,22 @@ def quiz_result_details_api(request, result_id):
 def group_exam_config(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     config, created = GroupExamConfig.objects.get_or_create(group=group)
+    # ========== BARCHA KATEGORIYALARNI YIG'ISH (to'g'ridan-to'g'ri + papka) ==========
     group_categories = GroupCategory.objects.filter(group=group, is_active=True).select_related('category')
-    category_ids = [gc.category.id for gc in group_categories]
-    cat_ids_from_folders = set()
     group_folders = GroupFolder.objects.filter(group=group, is_active=True).select_related('folder')
+
+    all_category_data = []  # list of dicts: {category, source, folder_name?}
+    seen_cat_ids = set()
+
+    # To'g'ridan-to'g'ri biriktirilgan kategoriyalar
+    for gc in group_categories:
+        seen_cat_ids.add(gc.category.id)
+        all_category_data.append({
+            'category': gc.category,
+            'source': 'direct',
+        })
+
+    # Papka orqali biriktirilgan kategoriyalar
     folder_configs = {}
     for gf in group_folders:
         folder = gf.folder
@@ -2677,28 +2689,36 @@ def group_exam_config(request, group_id):
             defaults={'categories_to_select': 1, 'randomize_categories': True, 'is_active': True}
         )
         folder_configs[str(folder.id)] = fconfig
-        folder_cats = FolderCategory.objects.filter(folder=folder).values_list('category_id', flat=True)
-        for cid in folder_cats:
-            cat_ids_from_folders.add(cid)
-    all_cat_ids = list(set(category_ids) | cat_ids_from_folders)
-    total_questions = QuizQuestion.objects.filter(category_id__in=all_cat_ids).count()
+        folder_cats = FolderCategory.objects.filter(folder=folder).select_related('category')
+        for fc in folder_cats:
+            if fc.category.id not in seen_cat_ids:
+                seen_cat_ids.add(fc.category.id)
+                all_category_data.append({
+                    'category': fc.category,
+                    'source': 'folder',
+                    'folder_name': folder.name,
+                })
 
+    # Kategoriya sozlamalarini yaratish/olish
     category_configs = {}
-    for gc in group_categories:
+    for item in all_category_data:
+        cat = item['category']
         cat_config, _ = CategoryGroupConfig.objects.get_or_create(
-            category=gc.category, group=group,
+            category=cat, group=group,
             defaults={'questions_count': 3, 'random_order': True, 'is_active': True}
         )
-        category_configs[gc.category.id] = cat_config
+        category_configs[cat.id] = cat_config
+
+    total_questions = QuizQuestion.objects.filter(
+        category_id__in=seen_cat_ids
+    ).exclude(question_type='plain_text').count()
 
     if request.method == 'POST':
         try:
-            questions_per_student = int(request.POST.get('questions_per_student', 5))
             random_order = request.POST.get('random_order') == 'on'
             show_correct_answer = request.POST.get('show_correct_answer') == 'on'
             time_limit = int(request.POST.get('time_limit', 0))
             max_attempts = int(request.POST.get('max_attempts', 1))
-            use_category_configs = request.POST.get('use_category_configs') == 'on'
 
             # Baholash tizimi sozlamalari
             grading_enabled = request.POST.get('grading_enabled') == 'on'
@@ -2708,19 +2728,15 @@ def group_exam_config(request, group_id):
             label_medium = request.POST.get('label_medium', "O'rta").strip()
             label_high = request.POST.get('label_high', 'Yuqori').strip()
 
-            if questions_per_student <= 0:
-                messages.error(request, 'Savollar soni 0 dan katta bo\'lishi kerak!')
-                return redirect('group_exam_config', group_id=group.id)
             if max_attempts <= 0:
                 messages.error(request, 'Urinishlar soni 0 dan katta bo\'lishi kerak!')
                 return redirect('group_exam_config', group_id=group.id)
 
-            config.questions_per_student = questions_per_student
             config.random_order = random_order
             config.show_correct_answer = show_correct_answer
             config.time_limit = time_limit
             config.max_attempts = max_attempts
-            config.use_category_configs = use_category_configs
+            config.use_category_configs = True
             config.grading_enabled = grading_enabled
             config.low_threshold = low_threshold
             config.high_threshold = high_threshold
@@ -2747,7 +2763,7 @@ def group_exam_config(request, group_id):
         'group': group,
         'config': config,
         'total_questions': total_questions,
-        'group_categories': group_categories,
+        'all_category_data': all_category_data,
         'category_configs': category_configs,
         'level_choices': LEVEL_CHOICES,
         'group_folders': group_folders,

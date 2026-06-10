@@ -41,24 +41,7 @@
                 <form method="POST" class="p-6" id="mainConfigForm">
                     {% csrf_token %}
                     
-                    <div class="mb-6">
-                        <label class="block text-sm font-semibold text-gray-700 mb-3">
-                            <i class="fas fa-user-graduate mr-2"></i> Har bir talabaga savollar soni
-                        </label>
-                        <div class="flex items-center gap-3">
-                            <div class="flex items-center border border-gray-300 rounded-lg overflow-hidden">
-                                <button type="button" onclick="changeCount(-1)" class="px-3 py-2 bg-gray-50 hover:bg-gray-100">-</button>
-                                <input type="number" id="questionCount" name="questions_per_student" 
-                                       value="{{ config.questions_per_student|default:5 }}" min="1" max="{{ total_questions }}"
-                                       class="w-20 text-center py-2 border-0 focus:ring-0">
-                                <button type="button" onclick="changeCount(1)" class="px-3 py-2 bg-gray-50 hover:bg-gray-100">+</button>
-                            </div>
-                            <span class="text-sm text-gray-500">Mavjud savollar: <strong>{{ total_questions }}</strong> ta</span>
-                        </div>
-                        <p class="text-xs text-gray-400 mt-2">Har bir talaba {{ total_questions }} ta savoldan random ravishda shuncha savol oladi</p>
-                    </div>
-
-                    <div class="mb-4 py-2 border-t border-gray-100 pt-4">
+                    <div class="mb-4 py-2">
                         <label class="flex items-center space-x-3 cursor-pointer">
                             <input type="checkbox" name="random_order" {% if config.random_order %}checked{% endif %} class="w-4 h-4 rounded border-gray-300">
                             <span class="text-sm text-gray-700">Savollarni random tartibda chiqarish</span>
@@ -70,17 +53,6 @@
                             <input type="checkbox" name="show_correct_answer" {% if config.show_correct_answer %}checked{% endif %} class="w-4 h-4 rounded border-gray-300">
                             <span class="text-sm text-gray-700">Test tugagandan so'ng to'g'ri javoblarni ko'rsatish</span>
                         </label>
-                    </div>
-
-                    <div class="mb-6">
-                        <label class="flex items-center space-x-3 cursor-pointer">
-                            <input type="checkbox" name="use_category_configs" id="useCategoryConfigs" 
-                                   {% if config.use_category_configs %}checked{% endif %} class="w-4 h-4 rounded border-gray-300">
-                            <span class="text-sm font-semibold text-gray-700">Har bir kategoriya sozlamalaridan foydalanish</span>
-                        </label>
-                        <p class="text-xs text-gray-400 mt-1 ml-7">
-                            Yoqilganda, quyidagi kategoriya sozlamalari ishlaydi. O'chirilganda, yuqoridagi "Savollar soni" ishlaydi.
-                        </p>
                     </div>
 
                     <div class="mb-6">
@@ -225,24 +197,26 @@
                 </div>
                 
                 <div class="p-6">
-                    {% if group_categories %}
+                    {% if all_category_data %}
                         <div class="space-y-4">
-                            {% for gc in group_categories %}
-                            {% with config=category_configs|get_item:gc.category.id %}
-                            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition" data-category-id="{{ gc.category.id }}">
+                            {% for item in all_category_data %}
+                            {% with cat=item.category config=category_configs|get_item:cat.id %}
+                            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition" data-category-id="{{ cat.id }}">
                                 <div class="flex justify-between items-start mb-3">
                                     <div>
                                         <h3 class="font-semibold text-gray-900">
-                                            {{ gc.category.name }}
-                                            {% if gc.is_active %}
+                                            {{ cat.name }}
+                                            {% if item.source == 'folder' %}
+                                                <span class="ml-2 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">📁 {{ item.folder_name }}</span>
+                                            {% else %}
                                                 <span class="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Faol</span>
                                             {% endif %}
                                         </h3>
-                                        {% if gc.category.description %}
-                                            <p class="text-xs text-gray-500 mt-1">{{ gc.category.description|truncatewords:15 }}</p>
+                                        {% if cat.description %}
+                                            <p class="text-xs text-gray-500 mt-1">{{ cat.description|truncatewords:15 }}</p>
                                         {% endif %}
                                     </div>
-                                    <a href="{% url 'category_questions_list' gc.category.id %}" 
+                                    <a href="{% url 'category_questions_list' cat.id %}" 
                                        class="text-blue-600 hover:text-blue-800 text-sm">
                                         <i class="fas fa-eye"></i>
                                     </a>
@@ -252,28 +226,28 @@
                                     <div>
                                         <label class="text-xs text-gray-500 block mb-1">Jami savollar</label>
                                         <div class="text-lg font-bold text-gray-800">
-                                            {{ gc.category.quiz_questions.count }}
+                                            {{ cat.quiz_questions.all.count }}
                                             <span class="text-sm font-normal text-gray-500">ta</span>
                                         </div>
                                     </div>
                                     <div>
                                         <label class="text-xs text-gray-500 block mb-1">Tushadigan savol soni</label>
                                         <div class="flex items-center gap-2">
-                                            <button type="button" onclick="updateCategoryCount('{{ gc.category.id }}', -1)" 
+                                            <button type="button" onclick="updateCategoryCount('{{ cat.id }}', -1)" 
                                                     class="w-6 h-6 rounded bg-gray-200 hover:bg-gray-300 text-gray-700">-</button>
-                                            <span id="cat-count-{{ gc.category.id }}" class="category-count font-bold text-lg min-w-[40px] text-center">
+                                            <span id="cat-count-{{ cat.id }}" class="category-count font-bold text-lg min-w-[40px] text-center">
                                                 {{ config.questions_count|default:3 }}
                                             </span>
-                                            <button type="button" onclick="updateCategoryCount('{{ gc.category.id }}', 1)" 
+                                            <button type="button" onclick="updateCategoryCount('{{ cat.id }}', 1)" 
                                                     class="w-6 h-6 rounded bg-gray-200 hover:bg-gray-300 text-gray-700">+</button>
                                         </div>
-                                        <p class="text-xs text-gray-400 mt-1">Maks: {{ gc.category.quiz_questions.count }}</p>
+                                        <p class="text-xs text-gray-400 mt-1">Maks: {{ cat.quiz_questions.all.count }}</p>
                                     </div>
                                 </div>
                                 
                                 <div class="mt-3 pt-3 border-t border-gray-100">
                                     <label class="flex items-center space-x-2 cursor-pointer">
-                                        <input type="checkbox" id="cat-random-{{ gc.category.id }}" 
+                                        <input type="checkbox" id="cat-random-{{ cat.id }}" 
                                                class="category-random w-3 h-3 rounded border-gray-300"
                                                {% if config.random_order %}checked{% endif %}>
                                         <span class="text-xs text-gray-600">Bu kategoriya savollarini random tartibda chiqarish</span>
@@ -391,16 +365,6 @@
 </div>
 
 <script>
-// Umumiy sozlamalar uchun funksiyalar
-function changeCount(delta) {
-    let input = document.getElementById('questionCount');
-    let newVal = parseInt(input.value) + delta;
-    let min = 1, max = {{ total_questions }};
-    if (newVal >= min && newVal <= max) {
-        input.value = newVal;
-    }
-}
-
 function changeTime(delta) {
     let input = document.getElementById('timeLimit');
     let newVal = parseInt(input.value) + delta;
@@ -580,16 +544,6 @@ function updateGradePreview() {
     }
 }
 
-// Form submit qilganda
-document.getElementById('mainConfigForm')?.addEventListener('submit', function(e) {
-    let useCategoryConfigs = document.getElementById('useCategoryConfigs');
-    if (useCategoryConfigs && useCategoryConfigs.checked) {
-        // Agar kategoriya sozlamalari ishlatilsa, umumiy savol sonini yubormaymiz
-        document.getElementById('questionCount').disabled = true;
-    } else {
-        document.getElementById('questionCount').disabled = false;
-    }
-});
 </script>
 
 <style>
