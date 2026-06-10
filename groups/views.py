@@ -4136,51 +4136,24 @@ def quiz_check_status(request):
         group = Group.objects.get(id=group_id)
         config, _ = GroupExamConfig.objects.get_or_create(group=group)
         
-        # Cache dan tezroq olish
-        is_active = cache.get(f'exam_active_{group_id}')
-        is_paused = cache.get(f'exam_paused_{group_id}')
-        start_time_str = cache.get(f'exam_start_time_{group_id}')
-        
-        # Agar cache da bo'lmasa, database dan olish
-        if is_active is None:
-            try:
-                exam_control = ExamControl.objects.get(group_id=group_id)
-                is_active = exam_control.is_active
-                is_paused = exam_control.is_paused
-                start_time_str = exam_control.started_at.isoformat() if exam_control.started_at else None
-                elapsed_time = exam_control.elapsed_time
-            except ExamControl.DoesNotExist:
-                is_active = False
-                is_paused = False
-                elapsed_time = 0
-        else:
-            # Cache da bo'lsa, elapsed_time ni ham olish
-            elapsed_time = cache.get(f'exam_elapsed_time_{group_id}', 0)
-        
-        # Cache is_paused=None bo'lsa (delete qilingan bo'lsa), False deb hisobla
-        if is_paused is None:
+        # PAUZA HOLATI — doim DB dan o'qiladi (LocMemCache workerlar orasida
+        # sinxronlashmaydi, shuning uchun cache ishlatilsa eskirib qoladi va
+        # studentda miltillash (flicker) paydo bo'ladi)
+        try:
+            exam_control = ExamControl.objects.get(group_id=group_id)
+            is_active = exam_control.is_active
+            is_paused = exam_control.is_paused
+            start_time_str = exam_control.started_at.isoformat() if exam_control.started_at else None
+            elapsed_time = exam_control.elapsed_time
+            # Cache ni ham yangilab qo'yish (boshqa sohalar uchun foyda)
+            cache.set(f'exam_active_{group_id}', is_active, timeout=86400)
+            cache.set(f'exam_paused_{group_id}', is_paused, timeout=86400)
+            cache.set(f'exam_start_time_{group_id}', start_time_str, timeout=86400)
+            cache.set(f'exam_elapsed_time_{group_id}', elapsed_time, timeout=86400)
+        except ExamControl.DoesNotExist:
+            is_active = False
             is_paused = False
-        
-        # MUHIM: Cache holatini DB bilan tekshir — workerlar orasida
-        # LocMemCache eskirib qolishi mumkin (bir worker o'zgartirsa,
-        # boshqa worker buni ko'rmaydi)
-        if (is_paused is True) or (is_active is False and is_paused is False):
-            try:
-                db_control = ExamControl.objects.get(group_id=group_id)
-                if db_control.is_paused != is_paused:
-                    is_paused = db_control.is_paused
-                    cache.set(f'exam_paused_{group_id}', is_paused, timeout=86400)
-                if db_control.is_active != is_active:
-                    is_active = db_control.is_active
-                    cache.set(f'exam_active_{group_id}', is_active, timeout=86400)
-                if db_control.started_at:
-                    start_time_str = db_control.started_at.isoformat()
-                    cache.set(f'exam_start_time_{group_id}', start_time_str, timeout=86400)
-                elapsed_time = db_control.elapsed_time
-                cache.set(f'exam_elapsed_time_{group_id}', elapsed_time, timeout=86400)
-            except ExamControl.DoesNotExist:
-                if is_paused is True:
-                    is_paused = False
+            elapsed_time = 0
         
         remaining_time = None
         total_time = config.time_limit * 60 if config.time_limit > 0 else 0
