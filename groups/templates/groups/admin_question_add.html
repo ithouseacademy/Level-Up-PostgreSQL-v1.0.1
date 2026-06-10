@@ -24,7 +24,7 @@
                         <select name="category" id="categorySelect" required class="w-full border border-gray-200 px-3 py-2 text-gray-700 focus:border-black focus:outline-none text-sm">
                             <option value="">-- Kategoriya tanlang --</option>
                             {% for cat in categories %}
-                            <option value="{{ cat.id }}" 
+                            <option value="{{ cat.id }}" {% if cat.id|slugify == selected_category %}selected{% endif %}
                                     data-audio-url="{% if cat.audio_file %}{{ cat.audio_file.url }}{% endif %}"
                                     data-audio-plays="{{ cat.max_audio_plays|default:1 }}"
                                     data-audio-instruction="{{ cat.audio_instruction|default:''|escapejs }}">
@@ -95,51 +95,55 @@
                         <label class="block text-sm font-medium text-gray-700 mb-3">Savol turi <span class="text-red-500">*</span></label>
                         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                             <label class="flex items-center gap-2 p-3 border border-gray-200 cursor-pointer hover:bg-gray-50">
-                                <input type="radio" name="question_type" value="fill_blank" class="mr-1" required>
+                                <input type="radio" name="question_type" value="fill_blank" class="mr-1" required {% if selected_type == 'fill_blank' %}checked{% endif %}>
                                 <span class="text-sm">📝 Bo'sh joy (Word Bank)</span>
                             </label>
                             <label class="flex items-center gap-2 p-3 border border-gray-200 cursor-pointer hover:bg-gray-50">
-                                <input type="radio" name="question_type" value="fill_blank_no_word" class="mr-1">
+                                <input type="radio" name="question_type" value="fill_blank_no_word" class="mr-1" {% if selected_type == 'fill_blank_no_word' %}checked{% endif %}>
                                 <span class="text-sm">📝 Bo'sh joy (Variantlarsiz)</span>
                             </label>
                             <label class="flex items-center gap-2 p-3 border border-gray-200 cursor-pointer hover:bg-gray-50">
-                                <input type="radio" name="question_type" value="sentence_arrangement" class="mr-1">
+                                <input type="radio" name="question_type" value="sentence_arrangement" class="mr-1" {% if selected_type == 'sentence_arrangement' %}checked{% endif %}>
                                 <span class="text-sm">🔀 So'z tartib</span>
                             </label>
                             <label class="flex items-center gap-2 p-3 border border-gray-200 cursor-pointer hover:bg-gray-50">
-                                <input type="radio" name="question_type" value="reading_comprehension" class="mr-1">
+                                <input type="radio" name="question_type" value="reading_comprehension" class="mr-1" {% if selected_type == 'reading_comprehension' %}checked{% endif %}>
                                 <span class="text-sm">📖 Matnli</span>
                             </label>
                             <label class="flex items-center gap-2 p-3 border border-gray-200 cursor-pointer hover:bg-gray-50">
-                                <input type="radio" name="question_type" value="true_false" class="mr-1">
+                                <input type="radio" name="question_type" value="true_false" class="mr-1" {% if selected_type == 'true_false' %}checked{% endif %}>
                                 <span class="text-sm">✓✗ True/False</span>
                             </label>
                             <label class="flex items-center gap-2 p-3 border border-gray-200 cursor-pointer hover:bg-gray-50">
-                                <input type="radio" name="question_type" value="multiple_choice" class="mr-1">
+                                <input type="radio" name="question_type" value="multiple_choice" class="mr-1" {% if selected_type == 'multiple_choice' %}checked{% endif %}>
                                 <span class="text-sm">🔘 Test</span>
                             </label>
                             <label class="flex items-center gap-2 p-3 border border-gray-200 cursor-pointer hover:bg-gray-50">
-                                <input type="radio" name="question_type" value="underline_correct" class="mr-1">
+                                <input type="radio" name="question_type" value="underline_correct" class="mr-1" {% if selected_type == 'underline_correct' %}checked{% endif %}>
                                 <span class="text-sm">✏️ To'g'ri so'z</span>
                             </label>
                             <label class="flex items-center gap-2 p-3 border border-gray-200 cursor-pointer hover:bg-gray-50">
-                                <input type="radio" name="question_type" value="matching" class="mr-1">
+                                <input type="radio" name="question_type" value="matching" class="mr-1" {% if selected_type == 'matching' %}checked{% endif %}>
                                 <span class="text-sm">🔗 Moslashtirish</span>
                             </label>
                             <label class="flex items-center gap-2 p-3 border border-gray-200 cursor-pointer hover:bg-gray-50">
-                                <input type="radio" name="question_type" value="cloze_multiple_blanks" class="mr-1">
+                                <input type="radio" name="question_type" value="cloze_multiple_blanks" class="mr-1" {% if selected_type == 'cloze_multiple_blanks' %}checked{% endif %}>
                                 <span class="text-sm">📄 Matn ichidagi bo'sh joylar</span>
                             </label>
                             <label class="flex items-center gap-2 p-3 border border-gray-200 cursor-pointer hover:bg-gray-50">
-                                <input type="radio" name="question_type" value="complete_the_words" class="mr-1">
+                                <input type="radio" name="question_type" value="complete_the_words" class="mr-1" {% if selected_type == 'complete_the_words' %}checked{% endif %}>
                                 <span class="text-sm">🔤 So'zlarni to'ldirish</span>
                             </label>
                             <label class="flex items-center gap-2 p-3 border border-gray-200 cursor-pointer hover:bg-gray-50">
-                                <input type="radio" name="question_type" value="writing" class="mr-1">
+                                <input type="radio" name="question_type" value="match_fill" class="mr-1" {% if selected_type == 'match_fill' %}checked{% endif %}>
+                                <span class="text-sm">🧩 So'zlarni matnga mos qo'yish</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-3 border border-gray-200 cursor-pointer hover:bg-gray-50">
+                                <input type="radio" name="question_type" value="writing" class="mr-1" {% if selected_type == 'writing' %}checked{% endif %}>
                                 <span class="text-sm">✍️ Yozma ish (Writing)</span>
                             </label>
                             <label class="flex items-center gap-2 p-3 border border-gray-200 cursor-pointer hover:bg-gray-50">
-                                <input type="radio" name="question_type" value="speaking" class="mr-1">
+                                <input type="radio" name="question_type" value="speaking" class="mr-1" {% if selected_type == 'speaking' %}checked{% endif %}>
                                 <span class="text-sm">🎤 Og'zaki (Speaking)</span>
                             </label>
                         </div>
@@ -442,6 +446,41 @@
                     </div>
 
                     <!-- ============================================================ -->
+                    <!-- MATCH FILL - So'zlarni matnga mos qo'yish -->
+                    <!-- ============================================================ -->
+                    <div id="matchFillFields" class="px-6 py-5 border-b border-gray-100" style="display: none;">
+                        <div class="mb-5">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Matn (___1___, ___2___ bilan belgilang) <span class="text-red-500">*</span></label>
+                            <textarea name="mf_text" id="mfText" rows="5" class="w-full border border-gray-200 px-3 py-2 font-mono text-sm" placeholder="Masalan:
+        She got ___1___ . She was ___2___ . She visited ___3___ for ___4___ ."></textarea>
+                            <p class="text-xs text-gray-400 mt-1">💡 Bo'sh joylarni <code class="bg-gray-100 px-1">___1___</code>, <code class="bg-gray-100 px-1">___2___</code> shaklida belgilang</p>
+                        </div>
+                        <div class="mb-5">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">So'zlar banki (variantlar) <span class="text-red-500">*</span></label>
+                            <div id="mfWordsContainer">
+                                <div class="flex gap-2 mb-2">
+                                    <input type="text" name="mf_word_0" class="flex-1 border border-gray-200 px-3 py-2 text-sm rounded" placeholder="1. a new job">
+                                    <button type="button" class="remove-mf-word text-red-400 text-sm">✕</button>
+                                </div>
+                                <div class="flex gap-2 mb-2">
+                                    <input type="text" name="mf_word_1" class="flex-1 border border-gray-200 px-3 py-2 text-sm rounded" placeholder="2. very happy">
+                                    <button type="button" class="remove-mf-word text-red-400 text-sm">✕</button>
+                                </div>
+                            </div>
+                            <button type="button" id="addMfWord" class="text-sm text-gray-500 hover:text-gray-700 mt-1">+ So'z qo'shish</button>
+                            <p class="text-xs text-gray-400 mt-1">📌 Har bir bo'sh joyga mos keladigan so'z/iboralarni kiriting</p>
+                        </div>
+                        <div class="border-t pt-4">
+                            <h4 class="text-sm font-medium mb-3">To'g'ri javoblar <span class="text-red-500">*</span></h4>
+                            <p class="text-xs text-gray-400 mb-3">👇 Har bir bo'sh joyga mos so'zni tanlang:</p>
+                            <div id="mfAnswersContainer"></div>
+                            <button type="button" id="detectMfBlanks" class="bg-gray-100 text-gray-700 px-4 py-2 text-sm mt-2 hover:bg-gray-200 transition rounded">
+                                🔍 Bo'sh joylarni aniqlash
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ============================================================ -->
                     <!-- BALL (PASTKI QISM) -->
                     <!-- ============================================================ -->
                     <div class="px-6 py-5 border-b border-gray-100">
@@ -483,6 +522,21 @@
         </style>
 
         <script>
+        // ============================================================
+        // SAHIFA YUKLANGANDA TANLANGAN QIYMATLARNI ISHGA TUSHIRISH
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            // Kategoriya tanlangan bo'lsa, change eventini trigger qilish
+            if (categorySelect.value) {
+                categorySelect.dispatchEvent(new Event('change'));
+            }
+            // Savol turi tanlangan bo'lsa, change eventini trigger qilish
+            const checkedRadio = document.querySelector('input[name="question_type"]:checked');
+            if (checkedRadio) {
+                checkedRadio.dispatchEvent(new Event('change'));
+            }
+        });
+
         // ============================================================
         // AUDIO SOZLAMALARI - KATEGORIYA TANLANGANDA
         // ============================================================
@@ -564,9 +618,13 @@
                         this.value === 'matching' ? 'matchingFields' :
                         this.value === 'cloze_multiple_blanks' ? 'clozeMultipleBlanksFields' :
                         this.value === 'complete_the_words' ? 'completeTheWordsFields' :
+                        this.value === 'match_fill' ? 'matchFillFields' :
                         this.value === 'writing' ? 'writingFields' :
                         this.value === 'speaking' ? 'speakingFields' : '';
                 if (id) document.getElementById(id).style.display = 'block';
+                if (this.value === 'match_fill') {
+                    setTimeout(detectMfBlanks, 100);
+                }
             });
         });
 
@@ -919,6 +977,102 @@
         }
 
         // ============================================================
+        // MATCH FILL FUNKSIYALARI
+        // ============================================================
+        let mfWordCount = 2;
+
+        document.getElementById('addMfWord')?.addEventListener('click', function() {
+            const container = document.getElementById('mfWordsContainer');
+            const div = document.createElement('div');
+            div.className = 'flex gap-2 mb-2';
+            div.innerHTML = `
+                <input type="text" name="mf_word_${mfWordCount}" class="flex-1 border border-gray-200 px-3 py-2 text-sm rounded" placeholder="${mfWordCount+1}. ...">
+                <button type="button" class="remove-mf-word text-red-400 text-sm">✕</button>
+            `;
+            div.querySelector('.remove-mf-word').onclick = function() {
+                div.remove();
+                updateMfAnswers();
+            };
+            container.appendChild(div);
+            mfWordCount++;
+            updateMfAnswers();
+        });
+
+        document.querySelectorAll('.remove-mf-word').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.closest('.flex')?.remove();
+                updateMfAnswers();
+            });
+        });
+
+        function getMfWords() {
+            const words = [];
+            document.querySelectorAll('#mfWordsContainer input').forEach(inp => {
+                if (inp.value.trim()) words.push(inp.value.trim());
+            });
+            return words;
+        }
+
+        function getMfBlankNumbers() {
+            const text = document.getElementById('mfText')?.value || '';
+            const pattern = /___(\d+)___/g;
+            const blanks = new Set();
+            let m;
+            while ((m = pattern.exec(text)) !== null) blanks.add(m[1]);
+            return Array.from(blanks).sort((a, b) => parseInt(a) - parseInt(b));
+        }
+
+        function updateMfAnswers() {
+            const words = getMfWords();
+            const blankNums = getMfBlankNumbers();
+            const container = document.getElementById('mfAnswersContainer');
+            if (!container) return;
+            
+            if (blankNums.length === 0) {
+                container.innerHTML = '<div class="text-gray-400 text-sm py-2">⚠️ Matnga ___1___, ___2___ shaklida bo\'sh joy belgilang</div>';
+                return;
+            }
+
+            container.innerHTML = '';
+            blankNums.forEach(num => {
+                const div = document.createElement('div');
+                div.className = 'flex gap-2 mb-2 items-center';
+                let optionsHtml = '<option value="">-- Tanlang --</option>';
+                words.forEach((word, i) => {
+                    optionsHtml += `<option value="${word}">${word}</option>`;
+                });
+                div.innerHTML = `
+                    <span class="w-10 text-sm font-medium">${num} →</span>
+                    <select name="mf_answer_${num}" class="flex-1 border border-gray-200 px-3 py-2 text-sm rounded">
+                        ${optionsHtml}
+                    </select>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function detectMfBlanks() {
+            const container = document.getElementById('mfAnswersContainer');
+            if (!container) return;
+            updateMfAnswers();
+        }
+
+        document.getElementById('detectMfBlanks')?.addEventListener('click', detectMfBlanks);
+
+        document.getElementById('mfText')?.addEventListener('input', function() {
+            if (document.querySelector('input[name="question_type"]:checked')?.value === 'match_fill') {
+                updateMfAnswers();
+            }
+        });
+
+        // So'zlar o'zgarishini kuzatish
+        document.getElementById('mfWordsContainer')?.addEventListener('input', function() {
+            if (document.querySelector('input[name="question_type"]:checked')?.value === 'match_fill') {
+                updateMfAnswers();
+            }
+        });
+
+        // ============================================================
         // FORM SUBMIT HANDLER
         // ============================================================
         document.getElementById('questionForm').addEventListener('submit', function(e) {
@@ -992,6 +1146,69 @@
                 if (!validateCompleteWords()) {
                     e.preventDefault();
                 }
+            }
+
+            if (selectedType && selectedType.value === 'match_fill') {
+                e.preventDefault();
+
+                const mfText = document.getElementById('mfText').value;
+                if (!mfText.trim()) {
+                    alert('Matnni kiriting!');
+                    return;
+                }
+
+                const words = getMfWords();
+                if (words.length < 2) {
+                    alert('Kamida 2 ta so\'z kiriting!');
+                    return;
+                }
+
+                const blankNums = getMfBlankNumbers();
+                if (blankNums.length === 0) {
+                    alert('Matn ichida ___1___, ___2___ shaklida bo\'sh joy belgilang!');
+                    return;
+                }
+
+                if (blankNums.length > words.length) {
+                    alert(`⚠️ ${blankNums.length} ta bo'sh joy bor, lekin siz ${words.length} ta so'z kiritdingiz. Barcha bo'sh joylarni to'ldirish uchun yetarli so'z bo'lishi kerak.`);
+                    return;
+                }
+
+                const correctAnswers = {};
+                let allFilled = true;
+                blankNums.forEach(num => {
+                    const sel = document.querySelector(`select[name="mf_answer_${num}"]`);
+                    if (sel && sel.value) {
+                        correctAnswers[num] = sel.value;
+                    } else {
+                        allFilled = false;
+                    }
+                });
+
+                if (!allFilled) {
+                    alert('Iltimos, har bir bo\'sh joy uchun to\'g\'ri javobni tanlang!');
+                    return;
+                }
+
+                const hiddenText = document.createElement('input');
+                hiddenText.type = 'hidden';
+                hiddenText.name = 'mf_question_text';
+                hiddenText.value = mfText;
+                this.appendChild(hiddenText);
+
+                const hiddenWords = document.createElement('input');
+                hiddenWords.type = 'hidden';
+                hiddenWords.name = 'mf_words';
+                hiddenWords.value = JSON.stringify(words);
+                this.appendChild(hiddenWords);
+
+                const hiddenAnswers = document.createElement('input');
+                hiddenAnswers.type = 'hidden';
+                hiddenAnswers.name = 'mf_correct_answers';
+                hiddenAnswers.value = JSON.stringify(correctAnswers);
+                this.appendChild(hiddenAnswers);
+
+                this.submit();
             }
         });
 

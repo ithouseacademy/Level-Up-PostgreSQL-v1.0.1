@@ -171,6 +171,7 @@
                                                         {% elif q.question_type == 'matching' %}🔗 Moslashtirish
                                                         {% elif q.question_type == 'cloze_multiple_blanks' %}📄 Ko'p bo'sh joy
                                                         {% elif q.question_type == 'complete_the_words' %}🔤 So'zlarni to'ldirish
+                                                        {% elif q.question_type == 'match_fill' %}🧩 So'zlarni mos qo'yish
                                                         {% elif q.question_type == 'writing' %}✍️ Yozma ish
                                                         {% elif q.question_type == 'speaking' %}🎤 Og'zaki
                                                         {% endif %}
@@ -317,7 +318,21 @@
                                                     </div>
                                                 </div>
 
-                                            <!-- 8. READING COMPREHENSION -->
+                                            <!-- 8. MATCH FILL -->
+                                            {% elif q.question_type == 'match_fill' %}
+                                                <div class="mb-4">
+                                                    <p class="text-gray-500 text-sm mb-3">👉 Quyidagi so'zlarni matndagi mos joyga qo'ying:</p>
+                                                    <div class="flex flex-wrap gap-2 mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                                        {% for word in q.get_match_fill_words %}
+                                                            <span class="bg-white border border-gray-300 px-3 py-1.5 text-sm rounded-full shadow-sm">{{ word }}</span>
+                                                        {% endfor %}
+                                                    </div>
+                                                    <div class="bg-white rounded-lg p-4 border border-gray-100 text-gray-800 leading-relaxed match-fill-text">
+                                                        {{ q.get_question_text_with_match_fill_selects|safe }}
+                                                    </div>
+                                                </div>
+
+                                            <!-- 9. READING COMPREHENSION -->
                                             {% elif q.question_type == 'reading_comprehension' and q.reading_data %}
                                                 <div class="bg-gray-50 rounded-lg p-4 mb-4 border-l-4 border-black">
                                                     <h4 class="font-bold text-gray-800">{{ q.reading_data.title }}</h4>
@@ -563,6 +578,15 @@
     img, video {
         -webkit-touch-callout: none;
         pointer-events: none;
+    }
+    
+    /* Ekran miltillashi - signalizatsiya vaqtida */
+    @keyframes screenFlash {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.2; }
+    }
+    .alarm-flash-active .security-alarm-overlay-inner {
+        animation: screenFlash 0.5s ease-in-out infinite;
     }
     
     @media (max-width: 768px) {
@@ -1042,6 +1066,10 @@ function updateProgress() {
             if (select.value && select.value !== '') hasAnswer = true;
         });
         
+        card.querySelectorAll('.match-fill-select').forEach(select => {
+            if (select.value && select.value !== '') hasAnswer = true;
+        });
+        
         if (hasAnswer) answered++;
     });
     
@@ -1260,7 +1288,7 @@ async function autoSubmitOnStop() {
     }
     
     saveAnswersToLocalStorage();
-    
+
     // Pauza overlayini yopish (agar pauza holatida bo'lsa)
     const pauseOverlay = document.getElementById('pauseOverlay');
     if (pauseOverlay) pauseOverlay.classList.add('hidden');
@@ -1328,6 +1356,12 @@ function collectAllAnswers() {
     });
     
     document.querySelectorAll('select').forEach(s => {
+        if (s.name && s.value) {
+            answers[s.name] = s.value;
+        }
+    });
+    
+    document.querySelectorAll('.match-fill-select').forEach(s => {
         if (s.name && s.value) {
             answers[s.name] = s.value;
         }
@@ -1533,12 +1567,24 @@ function playAlarm() {
     if (!alarmAudio) initAlarm();
     alarmAudio.currentTime = 0;
     alarmAudio.play().catch(function() {});
+    // Vibratsiya - telefon jim rejimda bo'lsa ham sezish uchun
+    if (navigator.vibrate) {
+        navigator.vibrate([500, 200, 500, 200, 1000, 300, 1000]);
+    }
 }
 
 function stopAlarm() {
     if (alarmAudio) {
         alarmAudio.pause();
         alarmAudio.currentTime = 0;
+    }
+    if (navigator.vibrate) {
+        navigator.vibrate(0);
+    }
+    if (window._alarmFlash) {
+        clearInterval(window._alarmFlash);
+        window._alarmFlash = null;
+        document.body.style.backgroundColor = '';
     }
     isAlarmPlaying = false;
     const overlay = document.getElementById('securityAlarmOverlay');
@@ -1549,6 +1595,18 @@ function showAlarmOverlay() {
     if (isSubmitting || isBlocked) return;
     const overlay = document.getElementById('securityAlarmOverlay');
     if (overlay) overlay.classList.remove('hidden');
+    // Ekranni yoritish - ovoz 0 bo'lsa ham ko'rinishi uchun
+    document.body.style.transition = 'background-color 0.1s';
+    let flashCount = 0;
+    window._alarmFlash = setInterval(() => {
+        if (!isAlarmPlaying) {
+            clearInterval(window._alarmFlash);
+            document.body.style.backgroundColor = '';
+            return;
+        }
+        document.body.style.backgroundColor = flashCount % 2 === 0 ? '#ff0000' : '#000000';
+        flashCount++;
+    }, 500);
 }
 
 if ({{ is_exam_active|yesno:"true,false" }} && !{{ has_completed|yesno:"true,false" }}) {
@@ -1680,8 +1738,23 @@ if (!{{ has_completed|yesno:"true,false" }} && {{ is_exam_active|yesno:"true,fal
     
     document.addEventListener('input', function(e) {
         if (e.target.closest('.question-card') && 
-            (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+            (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
             debouncedSaveToServer();
+        }
+    });
+
+    // match_fill select o'zgarishlarini serverga saqlash
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('match-fill-select')) {
+            const name = e.target.name;
+            const val = e.target.value;
+            if (name && val) {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                let answers = saved ? JSON.parse(saved) : {};
+                answers[name] = val;
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(answers));
+                updateProgress();
+            }
         }
     });
 }

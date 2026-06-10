@@ -54,6 +54,13 @@
             </div>
         </div>
 
+        {% if folder_category_ids %}
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 text-sm text-amber-700">
+            <i class="fas fa-info-circle mr-1"></i>
+            Ba'zi kategoriyalar papka orqali biriktirilgani uchun yuqorida ko'rsatilmaydi.
+        </div>
+        {% endif %}
+
         <!-- Mavjud kategoriyalar -->
         <div class="bg-white rounded-lg border border-gray-200">
             <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">

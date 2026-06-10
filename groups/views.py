@@ -102,6 +102,19 @@ def check_answer_correctness(question, user_answer):
             pass
         return False
 
+    elif question.question_type == 'match_fill':
+        try:
+            correct = json.loads(question.correct_answer)
+            if isinstance(user_answer, dict):
+                for k, v in correct.items():
+                    user_val = user_answer.get(k, '')
+                    if str(user_val).strip().lower() != str(v).strip().lower():
+                        return False
+                return True
+        except:
+            pass
+        return False
+
     else:
         return user_clean == question.correct_answer.strip().lower()
 
@@ -1382,6 +1395,33 @@ def quiz_submit(request):
                 total_possible += question.points
                 question_results[qid] = {
                     'type': 'matching',
+                    'blanks_correct': blanks_correct,
+                    'blanks_total': blanks_total,
+                    'blanks': blank_scores
+                }
+            elif question.question_type == 'match_fill':
+                correct_answers = question.get_match_fill_correct_answers()
+                blanks_total = len(correct_answers)
+                blanks_correct = 0
+                blank_scores = {}
+                
+                pts_per_blank = round(question.points / blanks_total, 2)
+                for blank_num, correct_val in correct_answers.items():
+                    user_val = answers.get(f'q_{question.id}_{blank_num}', '')
+                    is_correct = str(user_val).strip().lower() == str(correct_val).strip().lower()
+                    if is_correct:
+                        blanks_correct += 1
+                        total_score += pts_per_blank
+                    
+                    blank_scores[blank_num] = {
+                        'user_answer': user_val if user_val else 'Javob berilmagan',
+                        'is_correct': is_correct,
+                        'correct_answer': correct_val
+                    }
+                
+                total_possible += question.points
+                question_results[qid] = {
+                    'type': 'match_fill',
                     'blanks_correct': blanks_correct,
                     'blanks_total': blanks_total,
                     'blanks': blank_scores
@@ -2995,11 +3035,21 @@ def group_categories_manage(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     assigned_categories = GroupCategory.objects.filter(group=group).select_related('category')
     assigned_ids = [gc.category.id for gc in assigned_categories]
-    available_categories = Category.objects.exclude(id__in=assigned_ids)
+
+    # Papka orqali biriktirilgan kategoriyalarni ham chiqarib tashlash
+    folder_category_ids = []
+    group_folders = GroupFolder.objects.filter(group=group).select_related('folder')
+    for gf in group_folders:
+        fc_ids = FolderCategory.objects.filter(folder=gf.folder).values_list('category_id', flat=True)
+        folder_category_ids.extend(fc_ids)
+
+    excluded_ids = set(assigned_ids + list(folder_category_ids))
+    available_categories = Category.objects.exclude(id__in=excluded_ids)
     return render(request, 'groups/group_categories_manage.html', {
         'group': group,
         'assigned_categories': assigned_categories,
         'available_categories': available_categories,
+        'folder_category_ids': list(folder_category_ids),
     })
 
 
@@ -3016,11 +3066,20 @@ def group_category_add(request, group_id):
             messages.error(request, 'Kategoriya tanlanmagan!')
             return redirect('group_categories_manage', group_id=group_id)
         category = get_object_or_404(Category, id=category_id)
-        if not GroupCategory.objects.filter(group=group, category=category).exists():
-            GroupCategory.objects.create(group=group, category=category)
-            messages.success(request, f'✅ "{category.name}" kategoriyasi qo\'shildi!')
-        else:
+
+        # To'g'ridan-to'g'ri biriktirilganligini tekshirish
+        if GroupCategory.objects.filter(group=group, category=category).exists():
             messages.warning(request, f'"{category.name}" allaqachon mavjud!')
+            return redirect('group_categories_manage', group_id=group_id)
+
+        # Papka orqali biriktirilganligini tekshirish
+        folder_ids = GroupFolder.objects.filter(group=group).values_list('folder_id', flat=True)
+        if FolderCategory.objects.filter(folder_id__in=folder_ids, category=category).exists():
+            messages.warning(request, f'"{category.name}" allaqachon papka orqali biriktirilgan!')
+            return redirect('group_categories_manage', group_id=group_id)
+
+        GroupCategory.objects.create(group=group, category=category)
+        messages.success(request, f'✅ "{category.name}" kategoriyasi qo\'shildi!')
     except Exception as e:
         messages.error(request, f'Xatolik: {str(e)}')
     return redirect('group_categories_manage', group_id=group_id)
@@ -3116,7 +3175,16 @@ def folder_categories_manage(request, folder_id):
     folder = get_object_or_404(Folder, id=folder_id)
     assigned_categories = FolderCategory.objects.filter(folder=folder).select_related('category')
     assigned_ids = [fc.category.id for fc in assigned_categories]
-    available_categories = Category.objects.exclude(id__in=assigned_ids)
+
+    # Bu papka biriktirilgan guruhlarga to'g'ridan-to'g'ri biriktirilgan kategoriyalarni chiqarish
+    group_direct_ids = []
+    group_ids = GroupFolder.objects.filter(folder=folder).values_list('group_id', flat=True)
+    if group_ids:
+        gc_ids = GroupCategory.objects.filter(group_id__in=group_ids).values_list('category_id', flat=True)
+        group_direct_ids = list(gc_ids)
+
+    excluded_ids = set(assigned_ids + group_direct_ids)
+    available_categories = Category.objects.exclude(id__in=excluded_ids)
     return render(request, 'groups/folder_categories_manage.html', {
         'folder': folder,
         'assigned_categories': assigned_categories,
@@ -3137,11 +3205,20 @@ def folder_category_add(request, folder_id):
             messages.error(request, 'Kategoriya tanlanmagan!')
             return redirect('folder_categories_manage', folder_id=folder_id)
         category = get_object_or_404(Category, id=category_id)
-        if not FolderCategory.objects.filter(folder=folder, category=category).exists():
-            FolderCategory.objects.create(folder=folder, category=category)
-            messages.success(request, f'✅ "{category.name}" kategoriyasi papkaga qo\'shildi!')
-        else:
+
+        # Papka ichida allaqachon borligini tekshirish
+        if FolderCategory.objects.filter(folder=folder, category=category).exists():
             messages.warning(request, f'"{category.name}" allaqachon papkada mavjud!')
+            return redirect('folder_categories_manage', folder_id=folder_id)
+
+        # Bu papka biriktirilgan guruhlarda to'g'ridan-to'g'ri biriktirilganligini tekshirish
+        group_ids = GroupFolder.objects.filter(folder=folder).values_list('group_id', flat=True)
+        if GroupCategory.objects.filter(group_id__in=group_ids, category=category).exists():
+            messages.warning(request, f'"{category.name}" allaqachon guruhga to\'g\'ridan-to\'g\'ri biriktirilgan!')
+            return redirect('folder_categories_manage', folder_id=folder_id)
+
+        FolderCategory.objects.create(folder=folder, category=category)
+        messages.success(request, f'✅ "{category.name}" kategoriyasi papkaga qo\'shildi!')
     except Exception as e:
         messages.error(request, f'Xatolik: {str(e)}')
     return redirect('folder_categories_manage', folder_id=folder_id)
@@ -3463,7 +3540,7 @@ def admin_question_add(request):
 
         if not question_type:
             messages.error(request, "Iltimos, savol turini tanlang!")
-            return redirect('admin_question_add')
+            return redirect(reverse('admin_question_add') + f'?category={category_id}')
 
         try:
             category = Category.objects.get(id=category_id)
@@ -3528,7 +3605,7 @@ def admin_question_add(request):
                         points=points
                     )
                     messages.success(request, "✅ Bo'sh joy (Word Bank) savoli qo'shildi!")
-                    return redirect('admin_question_list')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
 
             # ============ 2. FILL BLANK NO WORD ============
             elif question_type == 'fill_blank_no_word':
@@ -3543,7 +3620,7 @@ def admin_question_add(request):
                         points=points
                     )
                     messages.success(request, "✅ Bo'sh joy (variantlarsiz) savoli qo'shildi!")
-                    return redirect('admin_question_list')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
 
             # ============ 3. SENTENCE ARRANGEMENT ============
             elif question_type == 'sentence_arrangement':
@@ -3558,7 +3635,7 @@ def admin_question_add(request):
                         points=points
                     )
                     messages.success(request, "✅ So'z tartibi savoli qo'shildi!")
-                    return redirect('admin_question_list')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
 
             # ============ 4. READING COMPREHENSION ============
             elif question_type == 'reading_comprehension':
@@ -3568,7 +3645,7 @@ def admin_question_add(request):
                     reading_content = request.POST.get('reading_content', '').strip()
                     if not reading_title or not reading_content:
                         messages.error(request, "Matn sarlavhasi va mazmunini kiriting!")
-                        return redirect('admin_question_add')
+                        return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
                     reading_text_obj = ReadingText.objects.create(
                         title=reading_title, content=reading_content, category=category
                     )
@@ -3576,7 +3653,7 @@ def admin_question_add(request):
                     existing_text_id = request.POST.get('existing_reading_text')
                     if not existing_text_id:
                         messages.error(request, "Matn tanlanmagan!")
-                        return redirect('admin_question_add')
+                        return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
                     reading_text_obj = ReadingText.objects.get(id=existing_text_id)
 
                 questions_saved = 0
@@ -3596,7 +3673,7 @@ def admin_question_add(request):
 
                 if questions_saved == 0:
                     messages.warning(request, "Kamida bitta savol kiriting!")
-                    return redirect('admin_question_add')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
 
                 QuizQuestion.objects.create(
                     category=category, question_type='reading_comprehension',
@@ -3622,7 +3699,7 @@ def admin_question_add(request):
                         points=points
                     )
                     messages.success(request, "✅ To'g'ri/Noto'g'ri savoli qo'shildi!")
-                    return redirect('admin_question_list')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
 
             # ============ 6. MULTIPLE CHOICE ============
             elif question_type == 'multiple_choice':
@@ -3653,7 +3730,7 @@ def admin_question_add(request):
                         points=points
                     )
                     messages.success(request, "✅ Test varianti savoli qo'shildi!")
-                    return redirect('admin_question_list')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
 
             # ============ 7. UNDERLINE CORRECT (TO'G'RI SO'Z) - TO'G'RILANGAN ============
             elif question_type == 'underline_correct':
@@ -3693,12 +3770,12 @@ def admin_question_add(request):
                     # Hech qanday variant topilmasa
                     if not options or len(options) < 2:
                         messages.error(request, "Matn ichida / belgisi bilan ajratilgan 2 ta variant topilmadi! Misol: 'in / by'")
-                        return redirect('admin_question_add')
+                        return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
                     
                     # To'g'ri javob variantlardan biriga tengligini tekshirish
                     if correct_answer not in options:
                         messages.error(request, f"To'g'ri javob '{correct_answer}' variantlar ichida emas! Variantlar: {', '.join(options)}")
-                        return redirect('admin_question_add')
+                        return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
                     
                     # scrambled_words ga variantlarni JSON sifatida saqlash
                     scrambled_words_json = json.dumps(options)
@@ -3712,7 +3789,7 @@ def admin_question_add(request):
                         points=points
                     )
                     messages.success(request, "✅ To'g'ri so'zni tanlash savoli qo'shildi!")
-                    return redirect('admin_question_list')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
 
             # ============ 8. MATCHING (MOSLASHTIRISH) ============
             elif question_type == 'matching':
@@ -3747,7 +3824,7 @@ def admin_question_add(request):
                         points=points
                     )
                     messages.success(request, "✅ Moslashtirish savoli qo'shildi!")
-                    return redirect('admin_question_list')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
 
             # ============ 9. CLOZE MULTIPLE BLANKS ============
             elif question_type == 'cloze_multiple_blanks':
@@ -3776,7 +3853,7 @@ def admin_question_add(request):
                         points=points
                     )
                     messages.success(request, f"✅ Ko'p bo'sh joy savoli qo'shildi! ({len(blank_options)} ta)")
-                    return redirect('admin_question_list')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
 
             # ============ 10. COMPLETE THE WORDS ============
             elif question_type == 'complete_the_words':
@@ -3793,7 +3870,35 @@ def admin_question_add(request):
                         points=points
                     )
                     messages.success(request, "✅ So'zlarni to'ldirish savoli qo'shildi!")
-                    return redirect('admin_question_list')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
+
+            # ============ MATCH FILL ============
+            elif question_type == 'match_fill':
+                mf_text = request.POST.get('mf_question_text', '').strip()
+                mf_words_json = request.POST.get('mf_words', '[]')
+                mf_answers_json = request.POST.get('mf_correct_answers', '{}')
+                try:
+                    mf_words = json.loads(mf_words_json)
+                    mf_answers = json.loads(mf_answers_json)
+                except json.JSONDecodeError:
+                    mf_words = []
+                    mf_answers = {}
+                if not mf_text:
+                    messages.error(request, "Matnni kiriting!")
+                elif len(mf_words) < 2:
+                    messages.error(request, "Kamida 2 ta so'z kiriting!")
+                elif len(mf_answers) == 0:
+                    messages.error(request, "To'g'ri javoblarni belgilang!")
+                else:
+                    QuizQuestion.objects.create(
+                        category=category, question_type='match_fill',
+                        question_text=mf_text,
+                        correct_answer=json.dumps(mf_answers),
+                        scrambled_words=json.dumps(mf_words),
+                        points=points
+                    )
+                    messages.success(request, "✅ So'zlarni matnga mos qo'yish savoli qo'shildi!")
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
 
             elif question_type == 'writing':
                 topic = request.POST.get('w_topic', '').strip()
@@ -3806,7 +3911,7 @@ def admin_question_add(request):
                         points=points
                     )
                     messages.success(request, "✅ Yozma ish (Writing) savoli qo'shildi!")
-                    return redirect('admin_question_list')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
 
             elif question_type == 'speaking':
                 topic = request.POST.get('s_topic', '').strip()
@@ -3819,7 +3924,7 @@ def admin_question_add(request):
                         points=points
                     )
                     messages.success(request, "✅ Og'zaki (Speaking) savoli qo'shildi!")
-                    return redirect('admin_question_list')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
 
             else:
                 messages.error(request, f"Noto'g'ri savol turi: '{question_type}'")
@@ -3836,6 +3941,8 @@ def admin_question_add(request):
     return render(request, 'groups/admin_question_add.html', {
         'categories': categories,
         'reading_texts': reading_texts,
+        'selected_category': request.GET.get('category', ''),
+        'selected_type': request.GET.get('type', ''),
     })
 
 @staff_member_required
@@ -3851,6 +3958,12 @@ def admin_question_edit(request, pk):
             if question_type == 'fill_blank':
                 question.question_text = request.POST.get('question_text')
                 question.correct_answer = request.POST.get('correct_answer')
+            elif question_type == 'match_fill':
+                question.question_text = request.POST.get('mf_question_text', '')
+                mf_words_json = request.POST.get('mf_words', '[]')
+                mf_answers_json = request.POST.get('mf_correct_answers', '{}')
+                question.scrambled_words = mf_words_json
+                question.correct_answer = mf_answers_json
             else:
                 question.scrambled_words = request.POST.get('scrambled_words')
                 question.correct_sentence = request.POST.get('correct_sentence')
@@ -4925,7 +5038,7 @@ def admin_question_edit(request, pk):
                     question.scrambled_words = json.dumps(options)
                     question.save()
                     messages.success(request, "✅ Test varianti savoli tahrirlandi!")
-                    return redirect('admin_question_list')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
             
             # ============ 7. UNDERLINE CORRECT ============
             elif question_type == 'underline_correct':
@@ -4952,7 +5065,7 @@ def admin_question_edit(request, pk):
                     question.scrambled_words = json.dumps(options)
                     question.save()
                     messages.success(request, "✅ To'g'ri so'zni tanlash savoli tahrirlandi!")
-                    return redirect('admin_question_list')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
             
             # ============ 8. MATCHING ============
             elif question_type == 'matching':
@@ -4987,7 +5100,7 @@ def admin_question_edit(request, pk):
                     question.scrambled_words = json.dumps(matching_data)
                     question.save()
                     messages.success(request, "✅ Moslashtirish savoli tahrirlandi!")
-                    return redirect('admin_question_list')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
             
             # ============ 9. CLOZE MULTIPLE BLANKS ============
             elif question_type == 'cloze_multiple_blanks':
@@ -5013,7 +5126,7 @@ def admin_question_edit(request, pk):
                     question.scrambled_words = json.dumps(blank_options)
                     question.save()
                     messages.success(request, "✅ Ko'p bo'sh joy savoli tahrirlandi!")
-                    return redirect('admin_question_list')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
             
             # ============ 10. COMPLETE THE WORDS ============
             elif question_type == 'complete_the_words':
@@ -5029,7 +5142,7 @@ def admin_question_edit(request, pk):
                     question.correct_answer = correct_answer
                     question.save()
                     messages.success(request, "✅ So'zlarni to'ldirish savoli tahrirlandi!")
-                    return redirect('admin_question_list')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
             
             elif question_type == 'writing':
                 topic = request.POST.get('w_topic', '').strip()
@@ -5040,7 +5153,7 @@ def admin_question_edit(request, pk):
                     question.correct_answer = ''
                     question.save()
                     messages.success(request, "✅ Yozma ish (Writing) savoli tahrirlandi!")
-                    return redirect('admin_question_list')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
 
             elif question_type == 'speaking':
                 topic = request.POST.get('s_topic', '').strip()
@@ -5051,7 +5164,7 @@ def admin_question_edit(request, pk):
                     question.correct_answer = ''
                     question.save()
                     messages.success(request, "✅ Og'zaki (Speaking) savoli tahrirlandi!")
-                    return redirect('admin_question_list')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
 
             else:
                 messages.error(request, f"Noto'g'ri savol turi: {question_type}")

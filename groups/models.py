@@ -16,6 +16,7 @@ class QuestionType(models.TextChoices):
     MATCHING = 'matching', "Moslashtirish"
     CLOZE_MULTIPLE_BLANKS = 'cloze_multiple_blanks', "Matn ichidagi bo'sh joylar"
     COMPLETE_THE_WORDS = 'complete_the_words', "So'zlarni to'ldirish (birinchi harf berilgan)"
+    MATCH_FILL = 'match_fill', "So'zlarni matnga mos qo'yish"
     WRITING = 'writing', "Yozma ish (Writing)"
     SPEAKING = 'speaking', "Og'zaki (Speaking)"
 
@@ -370,6 +371,50 @@ class QuizQuestion(models.Model):
             except:
                 return {}
         return {}
+
+    # =========================================================
+    # MATCH FILL - So'zlarni matnga mos qo'yish
+    # =========================================================
+    def get_match_fill_words(self):
+        """match_fill uchun so'zlar bankini qaytaradi"""
+        if self.question_type != 'match_fill':
+            return []
+        if self.scrambled_words:
+            try:
+                data = json.loads(self.scrambled_words)
+                if isinstance(data, list):
+                    return data
+            except:
+                pass
+            if '/' in self.scrambled_words:
+                return [w.strip() for w in self.scrambled_words.split('/') if w.strip()]
+        return []
+
+    def get_match_fill_correct_answers(self):
+        """match_fill uchun to'g'ri javoblarni qaytaradi: {blank_index: word}"""
+        if self.question_type == 'match_fill' and self.correct_answer:
+            try:
+                return json.loads(self.correct_answer)
+            except:
+                return {}
+        return {}
+
+    def get_question_text_with_match_fill_selects(self):
+        """match_fill: ___1___ o'rniga dropdown select qo'yadi"""
+        if self.question_type != 'match_fill' or not self.question_text:
+            return self.question_text or ''
+        words = self.get_match_fill_words()
+        text = self.question_text
+        blanks = re.findall(r'_{3,}(\d+)_{3,}', text)
+        for blank_num in blanks:
+            placeholder = '___' + blank_num + '___'
+            select_html = '<select name="q_{}_{}" class="match-fill-select border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-black focus:outline-none bg-white min-w-[120px]">'.format(self.id, blank_num)
+            select_html += '<option value="">-- Tanlang --</option>'
+            for word in words:
+                select_html += '<option value="{}">{}</option>'.format(word, word)
+            select_html += '</select>'
+            text = text.replace(placeholder, select_html, 1)
+        return text
 
     # =========================================================
     # CLOZE
