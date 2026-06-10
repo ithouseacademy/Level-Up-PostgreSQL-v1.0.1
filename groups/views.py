@@ -4161,6 +4161,17 @@ def quiz_check_status(request):
         if is_paused is None:
             is_paused = False
         
+        # MUHIM: Cache is_paused=True bo'lsa ham DB dan tekshir
+        # (workerlar orasida eski cache qolib ketmasligi uchun)
+        if is_paused is True:
+            try:
+                db_control = ExamControl.objects.get(group_id=group_id)
+                if not db_control.is_paused:
+                    is_paused = False
+                    cache.set(f'exam_paused_{group_id}', False, timeout=86400)
+            except ExamControl.DoesNotExist:
+                is_paused = False
+        
         remaining_time = None
         total_time = config.time_limit * 60 if config.time_limit > 0 else 0
         
