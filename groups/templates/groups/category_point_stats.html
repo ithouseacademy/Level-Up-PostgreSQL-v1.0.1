@@ -1,0 +1,93 @@
+{% extends 'groups/base.html' %}
+
+{% block title %}Kategoriya ball statistikasi{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="mb-6">
+            <a href="{% url 'admin_panel' %}" class="text-gray-500 hover:text-gray-700 text-sm mb-2 inline-block">
+                <i class="fas fa-arrow-left mr-1"></i> Boshqaruv paneli
+            </a>
+            <h1 class="text-2xl font-bold text-gray-900">Kategoriya ball statistikasi</h1>
+            <p class="text-gray-500 text-sm">Barcha kategoriyalardagi savollarning ball taqsimoti</p>
+        </div>
+
+        <div class="space-y-6">
+            {% for item in stats_data %}
+            <div class="bg-white rounded-xl border {% if item.has_anomaly %}border-orange-300{% else %}border-gray-200{% endif %} overflow-hidden shadow-sm">
+                <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center {% if item.has_anomaly %}bg-orange-50{% else %}bg-gray-50{% endif %}">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 {% if item.has_anomaly %}bg-orange-100{% else %}bg-gray-100{% endif %} rounded-xl flex items-center justify-center">
+                            <i class="fas fa-tag {% if item.has_anomaly %}text-orange-600{% else %}text-gray-600{% endif %}"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900">{{ item.category.name }}</h3>
+                            <p class="text-xs text-gray-500">{{ item.category.description|truncatechars:60|default:"Tavsif mavjud emas" }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        {% if item.has_anomaly %}
+                        <span class="bg-orange-100 text-orange-700 text-xs px-3 py-1 rounded-full font-medium animate-pulse">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>{{ item.unexpected_questions|length }} ta nomutanosib
+                        </span>
+                        {% endif %}
+                        <span class="bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded-full">
+                            {{ item.total_questions }} ta savol
+                        </span>
+                    </div>
+                </div>
+
+                <div class="px-6 py-4">
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        {% for pts, count in item.distribution.items %}
+                        <span class="px-3 py-1.5 rounded-full text-xs font-medium
+                            {% if pts == item.common_point %}bg-blue-100 text-blue-800 ring-2 ring-blue-300
+                            {% elif pts|add:0 == 1 %}bg-gray-100 text-gray-700
+                            {% else %}bg-orange-100 text-orange-700{% endif %}">
+                            {% if pts == item.common_point %}<i class="fas fa-check-circle mr-1"></i>{% endif %}
+                            <strong>{{ pts }}</strong> ball: <strong>{{ count }}</strong> ta
+                        </span>
+                        {% endfor %}
+                    </div>
+
+                    {% if item.has_anomaly %}
+                    <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                        <p class="text-sm font-medium text-orange-800 mb-3">
+                            <i class="fas fa-exclamation-circle mr-1"></i>
+                            Nomutanosib ballar (ko'pchilik {{ item.common_point }} ball)
+                        </p>
+                        <div class="space-y-2">
+                            {% for q in item.unexpected_questions %}
+                            <div class="flex items-center justify-between bg-white rounded-lg px-4 py-2 border border-orange-100">
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm text-gray-900 truncate">{{ q.question_text|default:"(matnsiz savol)"|truncatechars:80 }}</p>
+                                    <p class="text-xs text-gray-500">ID: {{ q.id }} | Tur: {{ q.get_question_type_display }}</p>
+                                </div>
+                                <div class="flex items-center gap-3 ml-4 flex-shrink-0">
+                                    <span class="text-sm font-bold text-orange-600 bg-orange-100 px-3 py-1 rounded-lg">
+                                        {{ q.points }} ball
+                                    </span>
+                                    <a href="{% url 'category_question_edit' q.id %}" class="text-gray-400 hover:text-gray-600" title="Tahrirlash">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-12 bg-white rounded-xl border border-gray-200">
+                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-chart-bar text-gray-400 text-2xl"></i>
+                </div>
+                <p class="text-gray-500">Hech qanday kategoriya mavjud emas</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

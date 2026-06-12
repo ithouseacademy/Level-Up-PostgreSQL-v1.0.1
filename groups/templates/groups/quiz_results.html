@@ -389,18 +389,48 @@ function showAttemptDetails(resultId) {
                                     <div class="text-xs text-gray-400 uppercase mt-1">Maks. ball</div>
                                 </div>
                                 <div>
-                                    <div class="text-2xl font-light text-gray-800">${data.percentage}%</div>
+                                    <div class="text-2xl font-light text-gray-800" id="detailPercentage">${data.percentage}%</div>
                                     <div class="text-xs text-gray-400 uppercase mt-1">Foiz</div>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="space-y-3">
+                        <div class="space-y-3" id="answersContainer">
                             ${data.answers_html || '<p class="text-gray-500 text-center">Javoblar tafsilotlari mavjud emas</p>'}
                         </div>
                     </div>
                 `;
                 modalContent.innerHTML = html;
+                
+                // Noto'g'ri javoblarga "To'g'rilash" tugmasini qo'shish (faqat admin uchun)
+                if (isAdminUser && data.questions && data.questions.length > 0) {
+                    var container = document.getElementById('answersContainer');
+                    var answerCards = container.querySelectorAll('[data-qid]');
+                    
+                    data.questions.forEach(function(q) {
+                        if (q.is_correct) return;
+                        if (q.type === 'writing' || q.type === 'speaking') return;
+                        
+                        var card = container.querySelector('[data-qid="' + q.qid + '"]' + (q.bnum ? '[data-bnum="' + q.bnum + '"]' : ''));
+                        if (!card) return;
+                        
+                        var btnDiv = document.createElement('div');
+                        btnDiv.className = 'ml-2 flex-shrink-0';
+                        var btn = document.createElement('button');
+                        btn.className = 'toggle-answer-btn text-xs bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded transition';
+                        btn.textContent = '✎ To\'g\'rilash';
+                        btn.dataset.resultId = data.result_id;
+                        btn.dataset.questionId = q.qid;
+                        btn.dataset.blankNum = q.bnum || '';
+                        
+                        btn.addEventListener('click', function() {
+                            toggleAnswer(this);
+                        });
+                        
+                        btnDiv.appendChild(btn);
+                        card.appendChild(btnDiv);
+                    });
+                }
             } else {
                 modalContent.innerHTML = `
                     <div class="text-center py-8">
@@ -414,11 +444,76 @@ function showAttemptDetails(resultId) {
             console.error('Error:', error);
             modalContent.innerHTML = `
                 <div class="text-center py-8">
-                    <p class="text-gray-500">Server bilan bog'lanishda xatolik: ${error.message}</p>
+                    <p class="text-gray-500">Server bilan bog\'lanishda xatolik: ${error.message}</p>
                     <button onclick="closeDetailsModal()" class="mt-4 text-gray-500 hover:text-gray-700 text-sm">Yopish</button>
                 </div>
             `;
         });
+}
+
+// Javobni to'g'rilash
+function toggleAnswer(btn) {
+    var resultId = btn.dataset.resultId;
+    var questionId = btn.dataset.questionId;
+    var blankNum = btn.dataset.blankNum;
+    
+    btn.disabled = true;
+    btn.textContent = '⏳ ...';
+    
+    var postData = {
+        result_id: parseInt(resultId),
+        question_id: parseInt(questionId)
+    };
+    if (blankNum) {
+        postData.blank_num = parseInt(blankNum);
+    }
+    
+    fetch('/quiz/toggle-answer/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify(postData)
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(data) {
+        if (data.success) {
+            var card = btn.closest('[data-qid]');
+            if (card) {
+                card.classList.remove('border-red-400');
+                card.classList.add('border-green-500');
+                var icon = card.querySelector('.text-sm .font-medium');
+                if (icon) {
+                    icon.innerHTML = icon.innerHTML.replace('❌', '✅');
+                }
+            }
+            btn.textContent = '✅ To\'g\'rilandi';
+            btn.classList.remove('bg-amber-500', 'hover:bg-amber-600');
+            btn.classList.add('bg-green-500');
+            
+            var pctEl = document.getElementById('detailPercentage');
+            if (pctEl) {
+                pctEl.textContent = data.percentage + '%';
+            }
+            
+            var scoreEl = document.querySelector('.text-2xl');
+            if (scoreEl) {
+                scoreEl.textContent = data.raw_score;
+            }
+        } else {
+            alert('Xatolik: ' + data.message);
+            btn.disabled = false;
+            btn.textContent = '✎ To\'g\'rilash';
+        }
+    })
+    .catch(function(error) {
+        alert('Xatolik: ' + error.message);
+        btn.disabled = false;
+        btn.textContent = '✎ To\'g\'rilash';
+    });
 }
 
 function closeAttemptsModal() {
@@ -470,6 +565,7 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
+var isAdminUser = {% if user.is_staff or user.is_superuser %}true{% else %}false{% endif %};
 console.log('Quiz results page loaded');
 </script>
 {% endblock %}

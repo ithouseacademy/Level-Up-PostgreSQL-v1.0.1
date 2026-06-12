@@ -500,7 +500,7 @@
                     <!-- ============================================================ -->
                     <div class="px-6 py-5 border-b border-gray-100">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Ball (necha ballik savol) <span class="text-red-500">*</span></label>
-                        <input type="number" name="points" value="1" min="1" max="100" class="w-32 border border-gray-200 px-3 py-2 text-gray-700 focus:border-black focus:outline-none text-sm">
+                        <input type="number" name="points" value="{{ selected_points|default:'1' }}" min="1" max="100" class="w-32 border border-gray-200 px-3 py-2 text-gray-700 focus:border-black focus:outline-none text-sm">
                         <p class="text-xs text-gray-400 mt-1">📌 Bu savol necha ball ekanligini kiriting. Masalan: 1, 2, 3, 5, 10</p>
                     </div>
 

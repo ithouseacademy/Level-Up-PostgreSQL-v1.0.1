@@ -10,7 +10,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
-from django.db.models import Q, Count, Max
+from django.db.models import Q, Count, Max, Sum
 from django.db import transaction
 from django.core.cache import cache
 from django.template.defaulttags import register
@@ -1601,6 +1601,23 @@ def quiz_submit(request):
         except Exception as cert_err:
             print(f"Certificate generation error: {cert_err}")
 
+        # Agar barcha studentlar topshirgan bo'lsa, ExamControlni deaktivatsiya qilish
+        try:
+            total_students = Student.objects.filter(group=group).count()
+            completed_attempts = UserExamAttempt.objects.filter(
+                exam_session=quiz_session, is_completed=True
+            ).count()
+            if total_students > 0 and completed_attempts >= total_students:
+                ExamControl.objects.filter(group=group).update(
+                    is_active=False,
+                    is_paused=False,
+                    paused_at=None
+                )
+                cache.delete(f'exam_active_{group_id}')
+                cache.delete(f'exam_paused_{group_id}')
+        except Exception:
+            pass
+
         return JsonResponse({
             'success': True,
             'message': f'Ball: {final_score}/100',
@@ -2254,10 +2271,11 @@ def stop_exam_api(request):
         quiz_session.ended_at = timezone.now()
         quiz_session.save()
         
-        # ExamControl ni o'chirish
+        # ExamControl ni o'chirish (started_at ni ham tozalash - qayta boshlash uchun)
         ExamControl.objects.filter(group=group).update(
             is_active=False,
             is_paused=False,
+            started_at=None,
             paused_at=None,
             elapsed_time=0
         )
@@ -2335,10 +2353,18 @@ def auto_stop_exam_api(request):
             quiz_session.ended_at = timezone.now()
             quiz_session.save()
 
-        ExamControl.objects.filter(group=group).update(is_active=False)
+        ExamControl.objects.filter(group=group).update(
+            is_active=False,
+            is_paused=False,
+            started_at=None,
+            paused_at=None,
+            elapsed_time=0
+        )
         cache.delete(f'exam_active_{group_id}')
         cache.delete(f'exam_start_time_{group_id}')
         cache.delete(f'exam_end_time_{group_id}')
+        cache.delete(f'exam_paused_{group_id}')
+        cache.delete(f'exam_elapsed_time_{group_id}')
 
         return JsonResponse({
             'success': True,
@@ -2607,39 +2633,60 @@ def quiz_result_details_api(request, result_id):
     try:
         result = QuizResult.objects.get(id=result_id)
         answers_html = '<div class="space-y-2">'
+        questions_data = []
         
         if result.answers:
             for qid, answer in result.answers.items():
                 if isinstance(answer, dict):
-                    # Agar 'blanks' mavjud bo'lsa (matching, cloze, reading)
                     if 'blanks' in answer:
                         for bnum, bdata in answer['blanks'].items():
                             is_correct = bdata.get('is_correct', False)
+                            user_ans = bdata.get('user_answer', '-')
+                            correct_ans = bdata.get('correct_answer', '-')
                             answers_html += f'''
-                            <div class="border-l-4 {'border-green-500' if is_correct else 'border-red-400'} bg-gray-50 p-3 rounded">
-                                <p class="text-sm">
-                                    <span class="text-gray-500">Savol {qid} - Bo\'sh joy {bnum}:</span><br>
-                                    <span class="font-medium">Javob: {bdata.get('user_answer', '-')}</span>
-                                    {'✅' if is_correct else '❌'}
-                                    <span class="text-gray-400 text-xs ml-2">(To\'g\'ri: {bdata.get('correct_answer', '-')})</span>
-                                </p>
+                            <div class="border-l-4 {'border-green-500' if is_correct else 'border-red-400'} bg-gray-50 p-3 rounded flex justify-between items-start" data-qid="{qid}" data-bnum="{bnum}">
+                                <div class="flex-1">
+                                    <p class="text-sm">
+                                        <span class="text-gray-500">Savol {qid} - Bo\'sh joy {bnum}:</span><br>
+                                        <span class="font-medium">Javob: {user_ans}</span>
+                                        {'✅' if is_correct else '❌'}
+                                        <span class="text-gray-400 text-xs ml-2">(To\'g\'ri: {correct_ans})</span>
+                                    </p>
+                                </div>
                             </div>'''
+                            questions_data.append({
+                                'qid': qid,
+                                'bnum': bnum,
+                                'is_correct': is_correct,
+                                'user_answer': str(user_ans),
+                                'correct_answer': str(correct_ans),
+                                'has_blanks': True
+                            })
                     else:
-                        # Oddiy savol
                         is_correct = answer.get('is_correct', False)
                         user_answer = answer.get('user_answer', 'Javob berilmagan')
                         correct_answer = answer.get('correct_answer', '-')
+                        q_type = answer.get('type', 'standard')
                         answers_html += f'''
-                        <div class="border-l-4 {'border-green-500' if is_correct else 'border-red-400'} bg-gray-50 p-3 rounded">
-                            <p class="text-sm">
-                                <span class="text-gray-500">Savol {qid}:</span><br>
-                                <span class="font-medium">Javob: {user_answer}</span>
-                                {'✅' if is_correct else '❌'}
-                                <span class="text-gray-400 text-xs ml-2">(To\'g\'ri: {correct_answer})</span>
-                            </p>
+                        <div class="border-l-4 {'border-green-500' if is_correct else 'border-red-400'} bg-gray-50 p-3 rounded flex justify-between items-start" data-qid="{qid}">
+                            <div class="flex-1">
+                                <p class="text-sm">
+                                    <span class="text-gray-500">Savol {qid}:</span><br>
+                                    <span class="font-medium">Javob: {user_answer}</span>
+                                    {'✅' if is_correct else '❌'}
+                                    <span class="text-gray-400 text-xs ml-2">(To\'g\'ri: {correct_answer})</span>
+                                </p>
+                            </div>
                         </div>'''
+                        questions_data.append({
+                            'qid': qid,
+                            'is_correct': is_correct,
+                            'user_answer': str(user_answer),
+                            'correct_answer': str(correct_answer),
+                            'type': q_type,
+                            'has_blanks': False
+                        })
                 else:
-                    # String formatdagi javob
                     answers_html += f'''
                     <div class="border-l-4 border-gray-400 bg-gray-50 p-3 rounded">
                         <p class="text-sm">Savol {qid}: {answer}</p>
@@ -2660,12 +2707,103 @@ def quiz_result_details_api(request, result_id):
             'total': total_possible,
             'percentage': float(result.percentage),
             'submitted_at': result.submitted_at.strftime('%Y-%m-%d %H:%M:%S'),
-            'answers_html': answers_html
+            'answers_html': answers_html,
+            'questions': questions_data,
+            'result_id': result_id
         })
     except QuizResult.DoesNotExist:
         return JsonResponse({'success': False, 'message': 'Natija topilmadi'})
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)})
+
+@login_required
+@csrf_exempt
+def admin_toggle_answer_api(request):
+    """Admin tomonidan javobni to'g'rilash (noto'g'ri -> to'g'ri)"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Faqat POST so\'rov!'})
+    if not is_admin_user(request.user) and not is_teacher_user(request.user):
+        return JsonResponse({'success': False, 'message': 'Huquq yo\'q'})
+    try:
+        data = json.loads(request.body)
+        result_id = data.get('result_id')
+        question_id = str(data.get('question_id'))
+        blank_num = data.get('blank_num')
+
+        if not result_id or not question_id:
+            return JsonResponse({'success': False, 'message': 'result_id va question_id kerak'})
+
+        result = QuizResult.objects.get(id=result_id)
+        answers = result.answers
+
+        if question_id not in answers:
+            return JsonResponse({'success': False, 'message': 'Savol topilmadi'})
+
+        ans_data = answers[question_id]
+
+        if blank_num is not None and isinstance(ans_data, dict) and 'blanks' in ans_data:
+            bnum = str(blank_num)
+            if bnum not in ans_data['blanks']:
+                return JsonResponse({'success': False, 'message': 'Bo\'sh joy topilmadi'})
+
+            blank = ans_data['blanks'][bnum]
+            blank['is_correct'] = True
+            blank['user_answer'] = blank.get('correct_answer', blank.get('user_answer', ''))
+        elif isinstance(ans_data, dict):
+            if ans_data.get('type') in ('writing', 'speaking'):
+                return JsonResponse({'success': False, 'message': 'Writing/Speaking savollarini baholash bo\'limida baholang'})
+            ans_data['is_correct'] = True
+            ans_data['user_answer'] = ans_data.get('correct_answer', ans_data.get('user_answer', ''))
+        else:
+            return JsonResponse({'success': False, 'message': 'Bu savol turini o\'zgartirib bo\'lmaydi'})
+
+        answers[question_id] = ans_data
+
+        # Ballarni qayta hisoblash
+        total_score = 0
+        total_possible = 0
+        qid_list = [int(k) for k in answers.keys() if str(k).isdigit()]
+        questions = QuizQuestion.objects.filter(id__in=qid_list) if qid_list else QuizQuestion.objects.none()
+        q_map = {str(q.id): q for q in questions}
+
+        for qid_str, a in answers.items():
+            if not isinstance(a, dict):
+                continue
+            q = q_map.get(qid_str)
+            if not q:
+                continue
+
+            total_possible += q.points
+
+            if 'blanks' in a:
+                blanks_correct = sum(1 for b in a['blanks'].values() if b.get('is_correct'))
+                blanks_total = max(len(a['blanks']), 1)
+                pts_per = round(q.points / blanks_total, 2)
+                total_score += blanks_correct * pts_per
+            elif a.get('type') in ('writing', 'speaking'):
+                total_score += a.get('earned_points', 0)
+            elif a.get('is_correct'):
+                total_score += q.points
+
+        result.score = round((total_score / total_possible) * 100, 1) if total_possible > 0 else 0
+        result.total_questions = total_possible
+        result.answers = answers
+        result.save()
+
+        return JsonResponse({
+            'success': True,
+            'score': result.score,
+            'total_score': round(total_score, 1),
+            'total_possible': total_possible,
+            'percentage': float(result.percentage),
+            'raw_score': round(total_score, 1)
+        })
+
+    except QuizResult.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Natija topilmadi'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})
+
 
 @login_required
 @user_passes_test(is_admin_user)
@@ -2835,9 +2973,30 @@ def category_list(request):
         questions_count=Count('quiz_questions'),
         groups_count=Count('group_categories')
     )
+    
+    category_point_stats = {}
+    for cat in categories:
+        questions = QuizQuestion.objects.filter(category=cat)
+        total = questions.count()
+        if total > 0:
+            dist = {}
+            for q in questions:
+                pts = q.points
+                dist[pts] = dist.get(pts, 0) + 1
+            category_point_stats[str(cat.id)] = {
+                'distribution': {str(k): v for k, v in sorted(dist.items())},
+                'total_points': sum(q.points for q in questions),
+            }
+        else:
+            category_point_stats[str(cat.id)] = {
+                'distribution': {},
+                'total_points': 0,
+            }
+    
     return render(request, 'groups/category_list.html', {
         'categories': categories,
         'total_categories': categories.count(),
+        'category_point_stats': category_point_stats,
     })
 
 
@@ -2998,11 +3157,22 @@ def category_questions_list(request, category_id):
     category = get_object_or_404(Category, id=category_id)
     questions = QuizQuestion.objects.filter(category=category).order_by('id')
     groups_using = Group.objects.filter(group_categories__category=category).distinct()
+    
+    # Ball statistikasi
+    total_questions = questions.count()
+    point_distribution = {}
+    unexpected_questions = []
+    for q in questions:
+        pts = q.points
+        point_distribution[pts] = point_distribution.get(pts, 0) + 1
+    
     return render(request, 'groups/category_questions_list.html', {
         'category': category,
         'questions': questions,
-        'total_questions': questions.count(),
+        'total_questions': total_questions,
         'groups_using': groups_using,
+        'point_distribution': point_distribution,
+        'point_distribution_sorted': sorted(point_distribution.items()),
     })
 
 
@@ -3569,14 +3739,15 @@ def admin_question_add(request):
     if request.method == 'POST':
         question_type = request.POST.get('question_type')
         category_id = request.POST.get('category')
+        points = request.POST.get('points', '1')
 
         if not question_type:
             messages.error(request, "Iltimos, savol turini tanlang!")
-            return redirect(reverse('admin_question_add') + f'?category={category_id}')
+            return redirect(reverse('admin_question_add') + f'?category={category_id}&points={points}')
 
         try:
             category = Category.objects.get(id=category_id)
-            points = int(request.POST.get('points', 1))
+            points = int(points)
 
             audio_updated = False
 
@@ -3637,7 +3808,7 @@ def admin_question_add(request):
                         points=points
                     )
                     messages.success(request, "✅ Bo'sh joy (Word Bank) savoli qo'shildi!")
-                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}&points={points}')
 
             # ============ 2. FILL BLANK NO WORD ============
             elif question_type == 'fill_blank_no_word':
@@ -3652,7 +3823,7 @@ def admin_question_add(request):
                         points=points
                     )
                     messages.success(request, "✅ Bo'sh joy (variantlarsiz) savoli qo'shildi!")
-                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}&points={points}')
 
             # ============ 3. SENTENCE ARRANGEMENT ============
             elif question_type == 'sentence_arrangement':
@@ -3667,7 +3838,7 @@ def admin_question_add(request):
                         points=points
                     )
                     messages.success(request, "✅ So'z tartibi savoli qo'shildi!")
-                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}&points={points}')
 
             # ============ 4. READING COMPREHENSION ============
             elif question_type == 'reading_comprehension':
@@ -3677,7 +3848,7 @@ def admin_question_add(request):
                     reading_content = request.POST.get('reading_content', '').strip()
                     if not reading_title or not reading_content:
                         messages.error(request, "Matn sarlavhasi va mazmunini kiriting!")
-                        return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
+                        return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}&points={points}')
                     reading_text_obj = ReadingText.objects.create(
                         title=reading_title, content=reading_content, category=category
                     )
@@ -3685,7 +3856,7 @@ def admin_question_add(request):
                     existing_text_id = request.POST.get('existing_reading_text')
                     if not existing_text_id:
                         messages.error(request, "Matn tanlanmagan!")
-                        return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
+                        return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}&points={points}')
                     reading_text_obj = ReadingText.objects.get(id=existing_text_id)
 
                 questions_saved = 0
@@ -3705,7 +3876,7 @@ def admin_question_add(request):
 
                 if questions_saved == 0:
                     messages.warning(request, "Kamida bitta savol kiriting!")
-                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}&points={points}')
 
                 QuizQuestion.objects.create(
                     category=category, question_type='reading_comprehension',
@@ -3731,7 +3902,7 @@ def admin_question_add(request):
                         points=points
                     )
                     messages.success(request, "✅ To'g'ri/Noto'g'ri savoli qo'shildi!")
-                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}&points={points}')
 
             # ============ 6. MULTIPLE CHOICE ============
             elif question_type == 'multiple_choice':
@@ -3762,7 +3933,7 @@ def admin_question_add(request):
                         points=points
                     )
                     messages.success(request, "✅ Test varianti savoli qo'shildi!")
-                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}&points={points}')
 
             # ============ 7. UNDERLINE CORRECT (TO'G'RI SO'Z) - TO'G'RILANGAN ============
             elif question_type == 'underline_correct':
@@ -3802,12 +3973,12 @@ def admin_question_add(request):
                     # Hech qanday variant topilmasa
                     if not options or len(options) < 2:
                         messages.error(request, "Matn ichida / belgisi bilan ajratilgan 2 ta variant topilmadi! Misol: 'in / by'")
-                        return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
+                        return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}&points={points}')
                     
                     # To'g'ri javob variantlardan biriga tengligini tekshirish
                     if correct_answer not in options:
                         messages.error(request, f"To'g'ri javob '{correct_answer}' variantlar ichida emas! Variantlar: {', '.join(options)}")
-                        return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
+                        return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}&points={points}')
                     
                     # scrambled_words ga variantlarni JSON sifatida saqlash
                     scrambled_words_json = json.dumps(options)
@@ -3821,7 +3992,7 @@ def admin_question_add(request):
                         points=points
                     )
                     messages.success(request, "✅ To'g'ri so'zni tanlash savoli qo'shildi!")
-                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}&points={points}')
 
             # ============ 8. MATCHING (MOSLASHTIRISH) ============
             elif question_type == 'matching':
@@ -3856,7 +4027,7 @@ def admin_question_add(request):
                         points=points
                     )
                     messages.success(request, "✅ Moslashtirish savoli qo'shildi!")
-                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}&points={points}')
 
             # ============ 9. CLOZE MULTIPLE BLANKS ============
             elif question_type == 'cloze_multiple_blanks':
@@ -3885,7 +4056,7 @@ def admin_question_add(request):
                         points=points
                     )
                     messages.success(request, f"✅ Ko'p bo'sh joy savoli qo'shildi! ({len(blank_options)} ta)")
-                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}&points={points}')
 
             # ============ 10. COMPLETE THE WORDS ============
             elif question_type == 'complete_the_words':
@@ -3902,7 +4073,7 @@ def admin_question_add(request):
                         points=points
                     )
                     messages.success(request, "✅ So'zlarni to'ldirish savoli qo'shildi!")
-                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}&points={points}')
 
             # ============ MATCH FILL ============
             elif question_type == 'match_fill':
@@ -3930,7 +4101,7 @@ def admin_question_add(request):
                         points=points
                     )
                     messages.success(request, "✅ So'zlarni matnga mos qo'yish savoli qo'shildi!")
-                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}&points={points}')
 
             elif question_type == 'writing':
                 topic = request.POST.get('w_topic', '').strip()
@@ -3943,7 +4114,7 @@ def admin_question_add(request):
                         points=points
                     )
                     messages.success(request, "✅ Yozma ish (Writing) savoli qo'shildi!")
-                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}&points={points}')
 
             elif question_type == 'speaking':
                 topic = request.POST.get('s_topic', '').strip()
@@ -3956,7 +4127,7 @@ def admin_question_add(request):
                         points=points
                     )
                     messages.success(request, "✅ Og'zaki (Speaking) savoli qo'shildi!")
-                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}&points={points}')
 
             elif question_type == 'plain_text':
                 text = request.POST.get('pt_text', '').strip()
@@ -3969,7 +4140,7 @@ def admin_question_add(request):
                         points=0
                     )
                     messages.success(request, "✅ Oddiy matn qo'shildi!")
-                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}&points={points}')
 
             else:
                 messages.error(request, f"Noto'g'ri savol turi: '{question_type}'")
@@ -3988,6 +4159,7 @@ def admin_question_add(request):
         'reading_texts': reading_texts,
         'selected_category': request.GET.get('category', ''),
         'selected_type': request.GET.get('type', ''),
+        'selected_points': request.GET.get('points', '1'),
     })
 
 @staff_member_required
@@ -5082,7 +5254,7 @@ def admin_question_edit(request, pk):
                     question.scrambled_words = json.dumps(options)
                     question.save()
                     messages.success(request, "✅ Test varianti savoli tahrirlandi!")
-                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}&points={points}')
             
             # ============ 7. UNDERLINE CORRECT ============
             elif question_type == 'underline_correct':
@@ -5109,7 +5281,7 @@ def admin_question_edit(request, pk):
                     question.scrambled_words = json.dumps(options)
                     question.save()
                     messages.success(request, "✅ To'g'ri so'zni tanlash savoli tahrirlandi!")
-                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}&points={points}')
             
             # ============ 8. MATCHING ============
             elif question_type == 'matching':
@@ -5144,7 +5316,7 @@ def admin_question_edit(request, pk):
                     question.scrambled_words = json.dumps(matching_data)
                     question.save()
                     messages.success(request, "✅ Moslashtirish savoli tahrirlandi!")
-                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}&points={points}')
             
             # ============ 9. CLOZE MULTIPLE BLANKS ============
             elif question_type == 'cloze_multiple_blanks':
@@ -5170,7 +5342,7 @@ def admin_question_edit(request, pk):
                     question.scrambled_words = json.dumps(blank_options)
                     question.save()
                     messages.success(request, "✅ Ko'p bo'sh joy savoli tahrirlandi!")
-                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}&points={points}')
             
             # ============ 10. COMPLETE THE WORDS ============
             elif question_type == 'complete_the_words':
@@ -5186,7 +5358,7 @@ def admin_question_edit(request, pk):
                     question.correct_answer = correct_answer
                     question.save()
                     messages.success(request, "✅ So'zlarni to'ldirish savoli tahrirlandi!")
-                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}&points={points}')
             
             elif question_type == 'writing':
                 topic = request.POST.get('w_topic', '').strip()
@@ -5197,7 +5369,7 @@ def admin_question_edit(request, pk):
                     question.correct_answer = ''
                     question.save()
                     messages.success(request, "✅ Yozma ish (Writing) savoli tahrirlandi!")
-                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}&points={points}')
 
             elif question_type == 'speaking':
                 topic = request.POST.get('s_topic', '').strip()
@@ -5208,7 +5380,7 @@ def admin_question_edit(request, pk):
                     question.correct_answer = ''
                     question.save()
                     messages.success(request, "✅ Og'zaki (Speaking) savoli tahrirlandi!")
-                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}')
+                    return redirect(reverse('admin_question_add') + f'?category={category_id}&type={question_type}&points={points}')
 
             else:
                 messages.error(request, f"Noto'g'ri savol turi: {question_type}")
@@ -6199,3 +6371,33 @@ def admin_save_assessment_api(request):
         })
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)})
+
+
+@login_required
+@user_passes_test(is_admin_user)
+def category_point_stats(request):
+    categories = Category.objects.all().order_by('name')
+    stats_data = []
+    for cat in categories:
+        questions = QuizQuestion.objects.filter(category=cat).order_by('points', 'id')
+        total = questions.count()
+        dist = {}
+        for q in questions:
+            pts = q.points
+            dist[pts] = dist.get(pts, 0) + 1
+        max_point = max(dist.keys()) if dist else 0
+        common_point = max(dist, key=dist.get) if dist else 0
+        unexpected = [q for q in questions if q.points != common_point]
+        stats_data.append({
+            'category': cat,
+            'total_questions': total,
+            'distribution': dict(sorted(dist.items())),
+            'max_point': max_point,
+            'common_point': common_point,
+            'unexpected_questions': unexpected,
+            'has_anomaly': len(unexpected) > 0,
+        })
+    return render(request, 'groups/category_point_stats.html', {
+        'stats_data': stats_data,
+        'total_categories': categories.count(),
+    })

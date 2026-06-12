@@ -53,6 +53,7 @@ urlpatterns = [
     path('groups/categories/remove/<int:group_category_id>/', views.group_category_remove, name='group_category_remove'),
     path('quiz/student-attempts/<int:student_id>/', views.student_attempts_api, name='student_attempts_api'),
     path('quiz/result-details/<int:result_id>/', views.quiz_result_details_api, name='quiz_result_details_api'),
+    path('quiz/toggle-answer/', views.admin_toggle_answer_api, name='admin_toggle_answer_api'),
     path('groups/api/group/<int:group_id>/', views.get_group_api, name='get_group_api'),
     path('groups/category-group-config/edit/<int:config_id>/', views.category_group_config_edit_api, name='category_group_config_edit_api'),
     path('groups/category-group-config/delete/<int:config_id>/', views.category_group_config_delete_api, name='category_group_config_delete_api'),
@@ -79,7 +80,7 @@ urlpatterns = [
     
     # STUDENTLAR
     path('users/', views.student_list, name='student_list'),
-    path('user/add/', views.student_add, name='student_add'),
+    path('user/ad`d/', views.student_add, name='student_add'),
     path('user/edit/<int:pk>/', views.student_edit, name='student_edit'),
     path('user/delete/<int:pk>/', views.student_delete, name='student_delete'),
     path('user/<int:pk>/detail/', views.student_detail, name='student_detail'),
@@ -193,5 +194,6 @@ urlpatterns = [
     path('certificate/my-certificates/', views.my_certificates, name='my_certificates'),
     path('sertivkat/', views.sertivkat_view, name='sertivkat_view'),
     path('certificate/archive/', views.certificate_archive, name='certificate_archive'),
+    path('category-point-stats/', views.category_point_stats, name='category_point_stats'),
 
 ]

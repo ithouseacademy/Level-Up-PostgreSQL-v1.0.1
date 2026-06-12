@@ -21,10 +21,12 @@
                     <p class="text-sm mt-1">
                         Status: 
                         <span id="examStatus" class="font-medium">
-                            {% if exam_control.is_active %}
+                            {% if exam_control.is_active and not exam_control.is_paused %}
                             <span class="text-green-600">✅ TEST FAOL</span>
                             {% elif exam_control.is_paused %}
                             <span class="text-yellow-600">⏸ PAUZADA</span>
+                            {% elif not exam_control.started_at %}
+                            <span class="text-gray-500">⚪ TEST BOSHLANMAGAN</span>
                             {% else %}
                             <span class="text-red-600">⛔ TEST TO'XTATILGAN</span>
                             {% endif %}
@@ -98,7 +100,7 @@
                         <p class="text-xs text-gray-500">{{ student.user.username }}</p>
                     </div>
                     <div class="text-sm">
-                        {% if exam_control.is_active %}
+                        {% if exam_control.is_active and not exam_control.is_paused %}
                         <span class="text-green-500">🟢 Testda</span>
                         {% elif exam_control.is_paused %}
                         <span class="text-yellow-500">⏸ Pauzada</span>
