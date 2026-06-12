@@ -18,16 +18,25 @@
         <div class="bg-white rounded-lg border border-gray-200">
             <form method="POST" class="p-6">
                 {% csrf_token %}
-                
-                {% if not is_edit %}
+
+                <!-- Kategoriya -->
+                <div class="mb-5">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Kategoriya</label>
+                    <select name="category" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-200 focus:border-gray-400 outline-none transition">
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if question.category.id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Savol turi -->
                 <div class="mb-5">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Savol turi</label>
                     <select name="question_type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-200 focus:border-gray-400 outline-none transition">
-                        <option value="fill_blank">Oddiy savol</option>
-                        <option value="plain_text">Oddiy matn (ball berilmaydi)</option>
+                        <option value="fill_blank" {% if question.question_type == 'fill_blank' %}selected{% endif %}>Oddiy savol</option>
+                        <option value="plain_text" {% if question.question_type == 'plain_text' %}selected{% endif %}>Oddiy matn (ball berilmaydi)</option>
                     </select>
                 </div>
-                {% endif %}
 
                 <div class="mb-5">
                     <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -55,6 +64,13 @@
                     <p class="text-xs text-gray-400 mt-1">Javobni kichik harflarda kiriting (case-sensitive emas)</p>
                 </div>
                 {% endif %}
+
+                <!-- Ball -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Ball <span class="text-red-500">*</span></label>
+                    <input type="number" name="points" value="{{ question.points|default:1 }}" min="0" max="100" class="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-200 focus:border-gray-400 outline-none transition">
+                    <p class="text-xs text-gray-400 mt-1">Bu savol necha ballik ekanligini kiriting</p>
+                </div>
 
                 <div class="flex justify-end space-x-3 pt-4 border-t border-gray-100">
                     <a href="{% url 'category_questions_list' category.id %}" class="px-4 py-2 text-gray-600 hover:text-gray-800">

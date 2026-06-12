@@ -2,126 +2,389 @@
 
 {% block title %}IT House Level Up - Sayt haqida | Platforma imkoniyatlari{% endblock %}
 {% block og_title %}IT House Level Up - Sayt haqida | Platforma imkoniyatlari{% endblock %}
-{% block og_description %}IT House Level Up platformasining barcha imkoniyatlari: onlayn test, guruhlar boshqaruvi, sertifikatlar va ko'proq.{% endblock %}
+{% block og_description %}IT House Level Up - onlayn test tizimi, 14 xil savol turi, guruhlar boshqaruvi, sertifikatlar, audio tizim va ko'plab imkoniyatlar.{% endblock %}
 
 {% block content %}
-<div class="min-h-screen flex items-center justify-center px-4 py-12">
-    <div class="max-w-4xl w-full">
+<div class="min-h-screen px-4 py-12">
+    <div class="max-w-5xl mx-auto">
         <!-- Header -->
         <div class="text-center mb-12">
             <div class="inline-flex items-center justify-center w-16 h-16 bg-gray-900 rounded-2xl mb-4 shadow-sm">
                 <i class="fas fa-graduation-cap text-white text-2xl"></i>
             </div>
             <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-3">IT House Academy</h1>
-            <p class="text-lg text-gray-500">Level up platformasi haqida</p>
+            <p class="text-lg text-gray-500">Level Up platformasi - to'liq imkoniyatlar</p>
         </div>
 
-        <!-- Content Grid -->
+        <!-- Foydalanuvchi turlari -->
+        <div class="bg-white rounded-xl border border-gray-200 p-6 mb-6 hover:shadow-md transition">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-gray-900 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-users text-white"></i>
+                </div>
+                <h2 class="text-lg font-semibold text-gray-900">Foydalanuvchi turlari</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                <div class="p-3 bg-blue-50 rounded-lg">
+                    <strong class="text-blue-700">Admin</strong>
+                    <p class="mt-1">To'liq boshqaruv: savollar, guruhlar, talabalar, o'qituvchilar, natijalar, sertifikatlar va barcha sozlamalar.</p>
+                </div>
+                <div class="p-3 bg-pink-50 rounded-lg">
+                    <strong class="text-pink-700">O'qituvchi</strong>
+                    <p class="mt-1">Guruhlarni kuzatish, writing va speaking baholash, natijalarni ko'rish, ball qo'shish.</p>
+                </div>
+                <div class="p-3 bg-green-50 rounded-lg">
+                    <strong class="text-green-700">Talaba</strong>
+                    <p class="mt-1">Test topshirish, natijalarni ko'rish, sertifikatlarni yuklab olish, shaxsiy kabinet.</p>
+                </div>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Imkoniyatlar -->
+            <!-- Savol turlari -->
             <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
                 <div class="flex items-center gap-3 mb-4">
                     <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-laptop-code text-blue-600"></i>
+                        <i class="fas fa-list-check text-blue-600"></i>
                     </div>
-                    <h2 class="text-lg font-semibold text-gray-900">Onlayn test tizimi</h2>
+                    <h2 class="text-lg font-semibold text-gray-900">14 xil savol turi</h2>
                 </div>
-                <p class="text-gray-600 text-sm leading-relaxed">
-                    15 xil turdagi savollar: test, moslashtirish, matn asosida savollar, gap tuzish, 
-                    bo'sh joy to'ldirish va boshqalar. Har bir savol turi o'quvchilarning bilimini 
-                    to'liq baholash uchun mo'ljallangan.
-                </p>
+                <ul class="text-sm text-gray-600 space-y-1.5">
+                    <li><strong>Bo'sh joy to'ldirish</strong> — so'zlar bankidan tanlab to'ldirish</li>
+                    <li><strong>Bo'sh joy (variantlarsiz)</strong> — o'zi yozib to'ldirish</li>
+                    <li><strong>So'zlarni tartibga solish</strong> — aralashtirilgan so'zlardan gap tuzish</li>
+                    <li><strong>Test varianti</strong> — bir nechta variantdan tanlash</li>
+                    <li><strong>To'g'ri/Noto'g'ri</strong> — True/False savollari</li>
+                    <li><strong>To'g'ri so'zni tanlash</strong> — berilgan variantlardan to'g'risini tanlash</li>
+                    <li><strong>Moslashtirish</strong> — chap va o'ng tomon elementlarini moslash</li>
+                    <li><strong>Matn ichidagi bo'sh joylar</strong> — cloze test (har bir bo'sh joy alohida)</li>
+                    <li><strong>So'zlarni to'ldirish</strong> — birinchi harfi berilgan so'zlarni to'ldirish</li>
+                    <li><strong>So'zlarni matnga mos qo'yish</strong> — berilgan so'zlarni mos joyga qo'yish</li>
+                    <li><strong>Matn asosida savol</strong> — o'qish matni + unga oid savollar</li>
+                    <li><strong>Writing</strong> — yozma ish (o'qituvchi baholaydi)</li>
+                    <li><strong>Speaking</strong> — og'zaki topshiriq (o'qituvchi baholaydi)</li>
+                    <li><strong>Oddiy matn</strong> — ma'lumot matni (ball berilmaydi)</li>
+                </ul>
             </div>
 
-            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-users-cog text-green-600"></i>
-                    </div>
-                    <h2 class="text-lg font-semibold text-gray-900">Guruhlar boshqaruvi</h2>
-                </div>
-                <p class="text-gray-600 text-sm leading-relaxed">
-                    O'quv guruhlarini yaratish, talabalarni qo'shish va ularni kategoriyalar bo'yicha 
-                    tartibga solish. Har bir guruh uchun alohida imtihon sozlamalari.
-                </p>
-            </div>
-
-            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-chart-bar text-purple-600"></i>
-                    </div>
-                    <h2 class="text-lg font-semibold text-gray-900">Natijalar va statistika</h2>
-                </div>
-                <p class="text-gray-600 text-sm leading-relaxed">
-                    Batafsil natijalar, foiz ko'rsatkichlari, guruh bo'yicha statistika. 
-                    CSV va Excel formatida eksport qilish imkoniyati.
-                </p>
-            </div>
-
-            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-file-alt text-orange-600"></i>
-                    </div>
-                    <h2 class="text-lg font-semibold text-gray-900">Sertifikat berish</h2>
-                </div>
-                <p class="text-gray-600 text-sm leading-relaxed">
-                    Imtihon natijalariga ko'ra avtomatik sertifikat generatsiyasi. 
-                    Shaxsiylashtirilgan sertifikatlar bilan o'quvchilarni rag'batlantirish.
-                </p>
-            </div>
-
-            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-microphone-alt text-red-600"></i>
-                    </div>
-                    <h2 class="text-lg font-semibold text-gray-900">Og'zaki va yozma baholash</h2>
-                </div>
-                <p class="text-gray-600 text-sm leading-relaxed">
-                    Speaking va Writing topshiriqlarini o'qituvchi tomonidan baholash tizimi. 
-                    Har bir talabaga alohida baho qo'yish imkoniyati.
-                </p>
-            </div>
-
-            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-mobile-alt text-teal-600"></i>
-                    </div>
-                    <h2 class="text-lg font-semibold text-gray-900">Mobil qurilmalar nazorati</h2>
-                </div>
-                <p class="text-gray-600 text-sm leading-relaxed">
-                    Imtihon vaqtida qurilmalarni kuzatish, imtihonni boshqarish, 
-                    vaqt cheklovlari va avtomatik to'xtatish tizimi.
-                </p>
-            </div>
-
+            <!-- Savollarni boshqarish -->
             <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
                 <div class="flex items-center gap-3 mb-4">
                     <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-headphones text-indigo-600"></i>
+                        <i class="fas fa-pen-to-square text-indigo-600"></i>
+                    </div>
+                    <h2 class="text-lg font-semibold text-gray-900">Savollarni boshqarish</h2>
+                </div>
+                <ul class="text-sm text-gray-600 space-y-1.5">
+                    <li>Savollarni qo'shish, tahrirlash va o'chirish</li>
+                    <li>Kategoriya, tur va ballni tahrirlash</li>
+                    <li>Kategoriya bo'yicha guruhlash va tartiblash</li>
+                    <li>Qidirish va filtrlab ko'rish (turi, kategoriyasi bo'yicha)</li>
+                    <li>Ball statistikasi va taqsimoti</li>
+                    <li>Savollarni API orqali o'chirish</li>
+                </ul>
+            </div>
+
+            <!-- Kategoriyalar -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-tags text-cyan-600"></i>
+                    </div>
+                    <h2 class="text-lg font-semibold text-gray-900">Kategoriyalar</h2>
+                </div>
+                <ul class="text-sm text-gray-600 space-y-1.5">
+                    <li>Kategoriya yaratish, tahrirlash va o'chirish</li>
+                    <li>Har bir kategoriyaga audio fayl yuklash</li>
+                    <li>Audio tinglash sonini cheklash (0 - cheksiz)</li>
+                    <li>Audio ko'rsatma matni</li>
+                    <li>Guruhlarga kategoriya biriktirish</li>
+                    <li>Har bir guruh uchun savollar soni va tartibini sozlash</li>
+                </ul>
+            </div>
+
+            <!-- Papkalar tizimi -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-folder-open text-yellow-600"></i>
+                    </div>
+                    <h2 class="text-lg font-semibold text-gray-900">Papkalar tizimi</h2>
+                </div>
+                <ul class="text-sm text-gray-600 space-y-1.5">
+                    <li>Kategoriyalarni papkalarga joylash</li>
+                    <li>Guruhlarga papka biriktirish</li>
+                    <li>Papkadan nechta kategoriya olinishini sozlash</li>
+                    <li>Kategoriyalarni random tanlash imkoniyati</li>
+                    <li>Papka-guruh konfiguratsiyasini sozlash</li>
+                </ul>
+            </div>
+
+            <!-- Guruhlar boshqaruvi -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-users-gear text-green-600"></i>
+                    </div>
+                    <h2 class="text-lg font-semibold text-gray-900">Guruhlar boshqaruvi</h2>
+                </div>
+                <ul class="text-sm text-gray-600 space-y-1.5">
+                    <li>Guruh yaratish, tahrirlash va o'chirish</li>
+                    <li>Talabalarni guruhlarga biriktirish</li>
+                    <li>Guruhga kategoriya va papka biriktirish</li>
+                    <li>Har bir guruh uchun imtihon sozlamalari</li>
+                    <li>O'qituvchini guruhga biriktirish</li>
+                    <li>Guruh bo'yicha natijalar va statistika</li>
+                </ul>
+            </div>
+
+            <!-- Imtihon sozlamalari -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-sliders text-orange-600"></i>
+                    </div>
+                    <h2 class="text-lg font-semibold text-gray-900">Imtihon sozlamalari</h2>
+                </div>
+                <ul class="text-sm text-gray-600 space-y-1.5">
+                    <li>Vaqt cheklovi (daqiqalarda)</li>
+                    <li>Maksimal urinishlar soni</li>
+                    <li>Savollarni random tartibda berish</li>
+                    <li>To'g'ri javobni ko'rsatish</li>
+                    <li>Har bir talabaga savollar soni</li>
+                    <li>Baholash tizimi: past/o'rta/yuqori chegaralari</li>
+                    <li>Chegaralar nomlarini o'zgartirish</li>
+                    <li>Sertifikat yoqish/o'chirish va darajasi</li>
+                </ul>
+            </div>
+
+            <!-- Imtihon jarayoni -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-play text-red-600"></i>
+                    </div>
+                    <h2 class="text-lg font-semibold text-gray-900">Imtihon jarayoni</h2>
+                </div>
+                <ul class="text-sm text-gray-600 space-y-1.5">
+                    <li>Imtihonni boshlash, pauza qilish va davom ettirish</li>
+                    <li>Imtihonni to'xtatish va barcha natijalarni yig'ish</li>
+                    <li>Vaqt tugashi bilan avtomatik to'xtatish</li>
+                    <li>Javoblarni avtomatik saqlash</li>
+                    <li>Imtihon holatini kuzatish</li>
+                    <li>Qolgan vaqtni ko'rsatish</li>
+                    <li>Qayta urinishlarni cheklash</li>
+                </ul>
+            </div>
+
+            <!-- Talabalar boshqaruvi -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-user-graduate text-teal-600"></i>
+                    </div>
+                    <h2 class="text-lg font-semibold text-gray-900">Talabalar boshqaruvi</h2>
+                </div>
+                <ul class="text-sm text-gray-600 space-y-1.5">
+                    <li>Talabalarni qo'shish, tahrirlash va o'chirish</li>
+                    <li>Arxivlash va qayta tiklash</li>
+                    <li>Ommaviy o'chirish va arxivlash</li>
+                    <li>Qidirish va filtrlash</li>
+                    <li>Shaxsiy kabinet va natijalar tarixi</li>
+                    <li>Sertifikatlarini ko'rish</li>
+                    <li>Guruhini o'zgartirish (talaba orqali)</li>
+                    <li>Qoidalarni qabul qilish tizimi</li>
+                </ul>
+            </div>
+
+            <!-- Writing & Speaking -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-microphone text-purple-600"></i>
+                    </div>
+                    <h2 class="text-lg font-semibold text-gray-900">Writing va Speaking baholash</h2>
+                </div>
+                <ul class="text-sm text-gray-600 space-y-1.5">
+                    <li>Yozma ishlarni o'qituvchi tomonidan baholash</li>
+                    <li>Og'zaki topshiriqlarni baholash</li>
+                    <li>0 dan maksimal ballgacha baho qo'yish</li>
+                    <li>Ball qo'yilganda umumiy natijani qayta hisoblash</li>
+                    <li>AssessmentScore tizimi orqali baholarni saqlash</li>
+                    <li>Izoh qoldirish imkoniyati</li>
+                </ul>
+            </div>
+
+            <!-- Natijalar -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-chart-simple text-emerald-600"></i>
+                    </div>
+                    <h2 class="text-lg font-semibold text-gray-900">Natijalar va statistika</h2>
+                </div>
+                <ul class="text-sm text-gray-600 space-y-1.5">
+                    <li>Har bir talabaning batafsil natijalari</li>
+                    <li>Savol bazasida to'g'ri/noto'g'ri javoblar tahlili</li>
+                    <li>Guruh bo'yicha statistika (o'rtacha, maks, min ball)</li>
+                    <li>Ball oralig'i bo'yicha taqsimot</li>
+                    <li>CSV formatida eksport</li>
+                    <li>Excel (XLSX) formatida eksport</li>
+                    <li>Natijalarni arxivlash</li>
+                    <li>Admin tomonidan javobni to'g'rilash va qayta hisoblash</li>
+                    <li>Grade label tizimi (past/o'rta/yuqori)</li>
+                </ul>
+            </div>
+
+            <!-- Audio tizim -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-headphones-simple text-sky-600"></i>
                     </div>
                     <h2 class="text-lg font-semibold text-gray-900">Audio tizim</h2>
                 </div>
-                <p class="text-gray-600 text-sm leading-relaxed">
-                    Kategoriyalar uchun audio fayllar yuklash, tinglash sonini cheklash 
-                    va har bir talabaning audio tinglash statistikasini yuritish.
-                </p>
+                <ul class="text-sm text-gray-600 space-y-1.5">
+                    <li>Kategoriyalarga audio fayl yuklash</li>
+                    <li>Audio tinglash sonini cheklash</li>
+                    <li>Har bir talabaning audio tinglash statistikasi</li>
+                    <li>Audio tinglashni nazorat qilish API si</li>
+                    <li>Qancha marta tinglaganini kuzatish</li>
+                </ul>
             </div>
 
+            <!-- Sertifikatlar -->
             <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
                 <div class="flex items-center gap-3 mb-4">
-                    <div class="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-chalkboard-teacher text-pink-600"></i>
+                    <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-certificate text-amber-600"></i>
+                    </div>
+                    <h2 class="text-lg font-semibold text-gray-900">Sertifikat tizimi</h2>
+                </div>
+                <ul class="text-sm text-gray-600 space-y-1.5">
+                    <li>Imtihon natijasiga ko'ra avtomatik sertifikat generatsiyasi</li>
+                    <li>Threshold foizi (sertifikat olish uchun minimal ball)</li>
+                    <li>Fon rasmini yuklash imkoniyati</li>
+                    <li>CEFR darajalari (A1, A2, B1, B2, C1, C2)</li>
+                    <li>O'qituvchi ismini sertifikatga qo'shish</li>
+                    <li>Sertifikatlarni arxivlash</li>
+                    <li>Sertifikatlarni yuklab olish</li>
+                    <li>Talaba o'z sertifikatlarini ko'rish</li>
+                </ul>
+            </div>
+
+            <!-- Qurilmalar nazorati -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-shield-halved text-rose-600"></i>
+                    </div>
+                    <h2 class="text-lg font-semibold text-gray-900">Qurilmalar nazorati</h2>
+                </div>
+                <ul class="text-sm text-gray-600 space-y-1.5">
+                    <li>Real-time qurilmalar monitoringi</li>
+                    <li>Online/offline holatini aniqlash</li>
+                    <li>Qurilma ma'lumotlari: platforma, IP, brauzer</li>
+                    <li>Qurilmalarni nomlash va o'chirish</li>
+                    <li>Talaba-qurilma bog'liqligi tarixi</li>
+                    <li>Har bir talabaning oxirgi qurilmasi</li>
+                </ul>
+            </div>
+
+            <!-- Xavfsizlik -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-lock text-gray-600"></i>
+                    </div>
+                    <h2 class="text-lg font-semibold text-gray-900">Xavfsizlik va nazorat</h2>
+                </div>
+                <ul class="text-sm text-gray-600 space-y-1.5">
+                    <li>Imtihonni pauza qilish va vaqtincha to'xtatish</li>
+                    <li>Ko'p marta urinishni cheklash</li>
+                    <li>Imtihon vaqtida qurilmalarni kuzatish</li>
+                    <li>Vaqt tugashi bilan avtomatik yakunlash</li>
+                    <li>Admin va o'qituvchi huquqlarini ajratish</li>
+                    <li>Talabalar harakatini kuzatish</li>
+                </ul>
+            </div>
+
+            <!-- O'qituvchi paneli -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-violet-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-chalkboard-user text-violet-600"></i>
                     </div>
                     <h2 class="text-lg font-semibold text-gray-900">O'qituvchi paneli</h2>
                 </div>
-                <p class="text-gray-600 text-sm leading-relaxed">
-                    O'qituvchilar o'z guruhlarini kuzatish, baholash va natijalarni 
-                    ko'rish imkoniyatiga ega. Alohida o'qituvchi hisoblari.
-                </p>
+                <ul class="text-sm text-gray-600 space-y-1.5">
+                    <li>O'z guruhlarini ko'rish va kuzatish</li>
+                    <li>Writing va speaking topshiriqlarini baholash</li>
+                    <li>Talabalarga bonus ball qo'shish</li>
+                    <li>Ball qo'shish tarixini ko'rish</li>
+                    <li>Natijalarni ko'rish</li>
+                    <li>Umumiy guruhlarga kirish huquqi (sozlanishi)</li>
+                    <li>Faol/faol emas holati</li>
+                </ul>
+            </div>
+
+            <!-- Admin boshqaruvi -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-user-tie text-slate-600"></i>
+                    </div>
+                    <h2 class="text-lg font-semibold text-gray-900">Admin boshqaruvi</h2>
+                </div>
+                <ul class="text-sm text-gray-600 space-y-1.5">
+                    <li>Adminlarni qo'shish, tahrirlash va o'chirish</li>
+                    <li>Superuser huquqlarini berish</li>
+                    <li>Parollarni ko'rish va yangilash</li>
+                    <li>O'qituvchilarni boshqarish</li>
+                    <li>Qoidalarni tahrirlash (matn, video, rasm)</li>
+                    <li>Django admin paneli orqali to'liq boshqaruv</li>
+                </ul>
+            </div>
+
+            <!-- API imkoniyatlari -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition md:col-span-2">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-neutral-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-cloud-arrow-up text-neutral-600"></i>
+                    </div>
+                    <h2 class="text-lg font-semibold text-gray-900">API interfeyslari</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-gray-600">
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                        <strong class="text-gray-800">Imtihon API:</strong>
+                        <p class="mt-1">Boshlash, to'xtatish, pauza, davom ettirish, vaqtni tekshirish, avtomatik to'xtatish</p>
+                    </div>
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                        <strong class="text-gray-800">Talaba API:</strong>
+                        <p class="mt-1">Javoblarni saqlash, guruhni o'zgartirish, qoidalarni qabul qilish</p>
+                    </div>
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                        <strong class="text-gray-800">Boshqa API:</strong>
+                        <p class="mt-1">Audio, qurilma, baholash, natijalar, admin, konfiguratsiya</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dastur asoschisi -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition md:col-span-2">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-gray-900 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-crown text-white"></i>
+                    </div>
+                    <h2 class="text-lg font-semibold text-gray-900">Dastur asoschisi</h2>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-lg text-center">
+                    <div class="w-16 h-16 bg-gray-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-user text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900">Humoyun Mamasodiqov</h3>
+                    <p class="text-sm text-gray-500">Platforma dasturchisi va asoschisi</p>
+                </div>
             </div>
         </div>
 
@@ -136,7 +399,10 @@
         <!-- Footer -->
         <div class="mt-12 pt-6 border-t border-gray-200 text-center">
             <p class="text-xs text-gray-400">
-                © 2026 IT House Academy Level up . Barcha huquqlar himoyalangan.
+                © 2026 IT House Academy Level Up. Barcha huquqlar himoyalangan.
+            </p>
+            <p class="text-xs text-gray-400 mt-1">
+                Platforma <strong>Humoyun Mamasodiqov</strong> tomonidan yaratilgan
             </p>
         </div>
     </div>

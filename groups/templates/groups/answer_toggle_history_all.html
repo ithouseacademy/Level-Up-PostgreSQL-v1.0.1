@@ -1,0 +1,85 @@
+{% extends 'groups/base.html' %}
+{% block title %}O'zgartirish tarixi{% endblock %}
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <div class="flex items-center gap-3 mb-1">
+                    <a href="{% url 'admin_panel' %}" class="text-gray-400 hover:text-gray-600 transition">
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                    <h1 class="text-2xl font-bold text-gray-900">O'zgartirish tarixi</h1>
+                </div>
+                <p class="text-gray-500 text-sm mt-1">Admin/teacher tomonidan qilingan barcha javob o'zgartirishlar</p>
+            </div>
+        </div>
+
+        <!-- Qidirish -->
+        <div class="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <form method="GET" class="flex items-center gap-3">
+                    <div class="relative flex-1 max-w-md">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                        <input type="text" name="q" value="{{ search }}" placeholder="Student yoki admin ismi bilan qidirish..." class="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-gray-400">
+                    </div>
+                    <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white text-sm px-4 py-2 rounded-lg transition">Qidirish</button>
+                    {% if search %}
+                    <a href="{% url 'answer_toggle_history_all' %}" class="text-gray-500 hover:text-gray-700 text-sm border border-gray-300 px-4 py-2 rounded-lg transition">Tozalash</a>
+                    {% endif %}
+                </form>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-gray-50 border-b border-gray-200">
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">#</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">O'zgartirgan</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Student</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Savol</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Eski</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Yangi</th>
+                            <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Vaqt</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for h in history %}
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="px-6 py-4 text-sm text-gray-500">{{ forloop.counter }}</td>
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ h.user.get_full_name|default:h.user.username }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-600">{{ h.quiz_result.student_name_saved }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">#{{ h.question_id }}{% if h.blank_num %} ({{ h.blank_num }}){% endif %}</td>
+                            <td class="px-6 py-4">
+                                {% if h.was_correct %}
+                                <span class="text-green-600 bg-green-50 px-2 py-0.5 rounded-full text-xs font-medium">To'g'ri</span>
+                                {% else %}
+                                <span class="text-red-600 bg-red-50 px-2 py-0.5 rounded-full text-xs font-medium">Xato</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4">
+                                {% if h.now_correct %}
+                                <span class="text-green-600 bg-green-50 px-2 py-0.5 rounded-full text-xs font-medium">To'g'ri</span>
+                                {% else %}
+                                <span class="text-red-600 bg-red-50 px-2 py-0.5 rounded-full text-xs font-medium">Xato</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 text-right text-xs text-gray-500">{{ h.changed_at|date:"d.m.Y H:i" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="px-6 py-12 text-center">
+                                <div class="flex flex-col items-center">
+                                    <i class="fas fa-history text-gray-300 text-4xl mb-3"></i>
+                                    <p class="text-gray-500 text-sm">{% if search %}Hech narsa topilmadi{% else %}Hech qanday o'zgartirish amalga oshirilmagan{% endif %}</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -219,11 +219,18 @@
     <div class="bg-white max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-xl rounded-lg">
         <div class="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex justify-between items-center">
             <h3 class="text-lg font-medium text-gray-800">Javoblar tafsilotlari</h3>
-            <button onclick="closeDetailsModal()" class="text-gray-400 hover:text-gray-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
+            <div class="flex items-center gap-2">
+                {% if user.is_staff or user.is_superuser %}
+                <a href="#" id="historyLink" class="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1 px-2 py-1 border border-gray-200 rounded transition" style="display:none;">
+                    <i class="fas fa-history"></i> Tarix
+                </a>
+                {% endif %}
+                <button onclick="closeDetailsModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
         </div>
         <div id="detailsModalContent" class="p-6">
             <div class="text-center py-8">
@@ -363,6 +370,13 @@ function showAttemptDetails(resultId) {
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     
+    // Tarix havolasini yangilash
+    var historyLink = document.getElementById('historyLink');
+    if (historyLink) {
+        historyLink.href = '/quiz/toggle-history/' + resultId + '/';
+        historyLink.style.display = 'inline-flex';
+    }
+    
     modalContent.innerHTML = `
         <div class="text-center py-8">
             <div class="inline-block w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
@@ -402,14 +416,12 @@ function showAttemptDetails(resultId) {
                 `;
                 modalContent.innerHTML = html;
                 
-                // Noto'g'ri javoblarga "To'g'rilash" tugmasini qo'shish (faqat admin uchun)
+                // Admin uchun tugmalar: noto'g'ri bo'lsa "To'g'rilash", to'g'ri bo'lsa "Xato deb belgilash"
                 if (isAdminUser && data.questions && data.questions.length > 0) {
                     var container = document.getElementById('answersContainer');
-                    var answerCards = container.querySelectorAll('[data-qid]');
                     
                     data.questions.forEach(function(q) {
-                        if (q.is_correct) return;
-                        if (q.type === 'writing' || q.type === 'speaking') return;
+                        if (q.type === 'writing' || q.type === 'speaking' || q.type === 'plain_text') return;
                         
                         var card = container.querySelector('[data-qid="' + q.qid + '"]' + (q.bnum ? '[data-bnum="' + q.bnum + '"]' : ''));
                         if (!card) return;
@@ -417,11 +429,18 @@ function showAttemptDetails(resultId) {
                         var btnDiv = document.createElement('div');
                         btnDiv.className = 'ml-2 flex-shrink-0';
                         var btn = document.createElement('button');
-                        btn.className = 'toggle-answer-btn text-xs bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded transition';
-                        btn.textContent = '✎ To\'g\'rilash';
+                        btn.className = 'toggle-answer-btn text-xs text-white px-3 py-1.5 rounded transition';
                         btn.dataset.resultId = data.result_id;
                         btn.dataset.questionId = q.qid;
                         btn.dataset.blankNum = q.bnum || '';
+                        
+                        if (q.is_correct) {
+                            btn.classList.add('bg-red-500', 'hover:bg-red-600');
+                            btn.textContent = '✕ Xato deb belgilash';
+                        } else {
+                            btn.classList.add('bg-amber-500', 'hover:bg-amber-600');
+                            btn.textContent = '✓ To\'g\'rilash';
+                        }
                         
                         btn.addEventListener('click', function() {
                             toggleAnswer(this);
@@ -451,11 +470,12 @@ function showAttemptDetails(resultId) {
         });
 }
 
-// Javobni to'g'rilash
+// Javobni to'g'rilash / xato deb belgilash
 function toggleAnswer(btn) {
     var resultId = btn.dataset.resultId;
     var questionId = btn.dataset.questionId;
     var blankNum = btn.dataset.blankNum;
+    var wasCorrect = btn.classList.contains('bg-red-500');
     
     btn.disabled = true;
     btn.textContent = '⏳ ...';
@@ -483,16 +503,36 @@ function toggleAnswer(btn) {
         if (data.success) {
             var card = btn.closest('[data-qid]');
             if (card) {
-                card.classList.remove('border-red-400');
-                card.classList.add('border-green-500');
+                var isNowCorrect = wasCorrect ? false : true;
+                if (isNowCorrect) {
+                    card.classList.remove('border-red-400');
+                    card.classList.add('border-green-500');
+                } else {
+                    card.classList.remove('border-green-500');
+                    card.classList.add('border-red-400');
+                }
                 var icon = card.querySelector('.text-sm .font-medium');
                 if (icon) {
-                    icon.innerHTML = icon.innerHTML.replace('❌', '✅');
+                    var text = icon.innerHTML;
+                    if (isNowCorrect) {
+                        text = text.replace('❌', '✅');
+                    } else {
+                        text = text.replace('✅', '❌');
+                    }
+                    icon.innerHTML = text;
                 }
             }
-            btn.textContent = '✅ To\'g\'rilandi';
-            btn.classList.remove('bg-amber-500', 'hover:bg-amber-600');
-            btn.classList.add('bg-green-500');
+            
+            // Tugmani o'zgartirish
+            if (wasCorrect) {
+                btn.textContent = '✓ To\'g\'rilash';
+                btn.classList.remove('bg-red-500', 'hover:bg-red-600', 'bg-green-500');
+                btn.classList.add('bg-amber-500', 'hover:bg-amber-600');
+            } else {
+                btn.textContent = '✕ Xato deb belgilash';
+                btn.classList.remove('bg-amber-500', 'hover:bg-amber-600', 'bg-green-500');
+                btn.classList.add('bg-red-500', 'hover:bg-red-600');
+            }
             
             var pctEl = document.getElementById('detailPercentage');
             if (pctEl) {
@@ -503,16 +543,26 @@ function toggleAnswer(btn) {
             if (scoreEl) {
                 scoreEl.textContent = data.raw_score;
             }
+            
+            btn.disabled = false;
         } else {
             alert('Xatolik: ' + data.message);
             btn.disabled = false;
-            btn.textContent = '✎ To\'g\'rilash';
+            if (wasCorrect) {
+                btn.textContent = '✕ Xato deb belgilash';
+            } else {
+                btn.textContent = '✓ To\'g\'rilash';
+            }
         }
     })
     .catch(function(error) {
         alert('Xatolik: ' + error.message);
         btn.disabled = false;
-        btn.textContent = '✎ To\'g\'rilash';
+        if (wasCorrect) {
+            btn.textContent = '✕ Xato deb belgilash';
+        } else {
+            btn.textContent = '✓ To\'g\'rilash';
+        }
     });
 }
 

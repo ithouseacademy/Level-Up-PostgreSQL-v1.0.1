@@ -25,7 +25,8 @@ from .models import (
     ReadingText, ReadingQuestion, StudentAudioPlay,
     Device, Teacher, TeacherScoreLog, AssessmentScore,
     CertificateSetting, Certificate,
-    Folder, FolderCategory, GroupFolder, FolderGroupConfig
+    Folder, FolderCategory, GroupFolder, FolderGroupConfig,
+    AnswerToggleHistory
 )
 from .forms import GroupForm, RegisterForm, LoginForm
 from django.http import HttpResponse
@@ -455,7 +456,7 @@ def student_detail(request, pk):
     results = QuizResult.objects.filter(student=student).order_by('-submitted_at')
     certificates = Certificate.objects.filter(
         quiz_result__student=student
-    ).order_by('-generated_at')
+    ).exclude(is_archived=True).order_by('-generated_at')
 
     if request.method == 'POST':
         try:
@@ -2609,12 +2610,22 @@ def quiz_edit_question(request, question_id):
         category_id = request.POST.get('category_id')
         question_text = request.POST.get('question_text', '').strip()
         correct_answer = request.POST.get('correct_answer', '').strip().lower()
-        if not question_text or not correct_answer:
-            messages.error(request, 'Savol matni va to\'g\'ri javob kiritilishi shart!')
+        question_type = request.POST.get('question_type', question.question_type)
+        points = request.POST.get('points', question.points)
+        try:
+            points = int(points)
+        except (ValueError, TypeError):
+            points = question.points
+        if not question_text:
+            messages.error(request, 'Savol matni kiritilishi shart!')
+        elif question_type != 'plain_text' and not correct_answer:
+            messages.error(request, 'To\'g\'ri javob kiritilishi shart!')
         else:
             try:
                 question.question_text = question_text
-                question.correct_answer = correct_answer
+                question.correct_answer = correct_answer if question_type != 'plain_text' else ''
+                question.question_type = question_type
+                question.points = 0 if question_type == 'plain_text' else points
                 if category_id:
                     question.category = Category.objects.get(id=category_id)
                 question.save()
@@ -2746,7 +2757,7 @@ def quiz_result_details_api(request, result_id):
 @login_required
 @csrf_exempt
 def admin_toggle_answer_api(request):
-    """Admin tomonidan javobni to'g'rilash (noto'g'ri -> to'g'ri)"""
+    """Admin tomonidan javobni to'g'rilash (noto'g'ri <-> to'g'ri)"""
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Faqat POST so\'rov!'})
     if not is_admin_user(request.user) and not is_teacher_user(request.user):
@@ -2768,21 +2779,23 @@ def admin_toggle_answer_api(request):
 
         ans_data = answers[question_id]
 
+        # Eski holatni saqlash
+        was_correct = None
         if blank_num is not None and isinstance(ans_data, dict) and 'blanks' in ans_data:
             bnum = str(blank_num)
             if bnum not in ans_data['blanks']:
                 return JsonResponse({'success': False, 'message': 'Bo\'sh joy topilmadi'})
 
             blank = ans_data['blanks'][bnum]
-            blank['is_correct'] = True
-            blank['user_answer'] = blank.get('correct_answer', blank.get('user_answer', ''))
+            was_correct = blank.get('is_correct', False)
+            blank['is_correct'] = not was_correct
             ans_data['blanks_correct'] = sum(1 for b in ans_data['blanks'].values() if b.get('is_correct'))
             ans_data['blanks_total'] = len(ans_data['blanks'])
         elif isinstance(ans_data, dict):
             if ans_data.get('type') in ('writing', 'speaking'):
                 return JsonResponse({'success': False, 'message': 'Writing/Speaking savollarini baholash bo\'limida baholang'})
-            ans_data['is_correct'] = True
-            ans_data['user_answer'] = ans_data.get('correct_answer', ans_data.get('user_answer', ''))
+            was_correct = ans_data.get('is_correct', False)
+            ans_data['is_correct'] = not was_correct
         else:
             return JsonResponse({'success': False, 'message': 'Bu savol turini o\'zgartirib bo\'lmaydi'})
 
@@ -2822,19 +2835,100 @@ def admin_toggle_answer_api(request):
         result.answers = answers
         result.save()
 
+        # Sertifikatni tekshirish va yangilash
+        setting = CertificateSetting.objects.filter(is_active=True).first()
+        threshold = setting.threshold_percentage if setting else 50
+        active_cert = Certificate.objects.filter(quiz_result=result, is_archived=False).first()
+        any_cert = Certificate.objects.filter(quiz_result=result).first()
+
+        cert_action = None
+        if result.score >= threshold:
+            if active_cert is None:
+                if any_cert and any_cert.is_archived:
+                    any_cert.is_archived = False
+                    any_cert.save()
+                    cert_action = 'restored'
+                else:
+                    generate_student_certificate(result)
+                    cert_action = 'created'
+        else:
+            if active_cert is not None:
+                active_cert.delete()
+                cert_action = 'deleted'
+
+        # O'zgartirish tarixiga yozish
+        AnswerToggleHistory.objects.create(
+            user=request.user,
+            quiz_result=result,
+            question_id=question_id,
+            blank_num=str(blank_num) if blank_num is not None else None,
+            was_correct=was_correct,
+            now_correct=not was_correct
+        )
+
         return JsonResponse({
             'success': True,
             'score': result.score,
             'total_score': round(total_score, 1),
             'total_possible': total_possible,
             'percentage': float(result.percentage),
-            'raw_score': round(total_score, 1)
+            'raw_score': round(total_score, 1),
+            'is_correct': ans_data.get('is_correct', False),
+            'blank_is_correct': blank.get('is_correct', False) if blank_num is not None and 'blanks' in ans_data else None,
+            'certificate': cert_action
         })
 
     except QuizResult.DoesNotExist:
         return JsonResponse({'success': False, 'message': 'Natija topilmadi'})
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)})
+
+
+@login_required
+def answer_toggle_history(request, result_id):
+    """Javob o'zgartirish tarixini ko'rsatish"""
+    if not is_admin_user(request.user) and not is_teacher_user(request.user):
+        messages.error(request, "Huquq yo'q!")
+        return redirect('home')
+
+    result = get_object_or_404(QuizResult, id=result_id)
+    history = AnswerToggleHistory.objects.filter(quiz_result=result).select_related('user')
+
+    student_name = result.student_name_saved
+    if not student_name and result.student:
+        student_name = result.student.full_name
+
+    context = {
+        'result': result,
+        'student_name': student_name,
+        'history': history,
+    }
+    return render(request, 'groups/answer_toggle_history.html', context)
+
+
+@login_required
+def answer_toggle_history_all(request):
+    """Barcha o'zgartirishlar tarixini ko'rsatish (global)"""
+    if not is_admin_user(request.user) and not is_teacher_user(request.user):
+        messages.error(request, "Huquq yo'q!")
+        return redirect('home')
+
+    search = request.GET.get('q', '').strip()
+    history = AnswerToggleHistory.objects.select_related('user', 'quiz_result').order_by('-changed_at')
+
+    if search:
+        history = history.filter(
+            Q(quiz_result__student_name_saved__icontains=search) |
+            Q(user__first_name__icontains=search) |
+            Q(user__last_name__icontains=search) |
+            Q(user__username__icontains=search)
+        )
+
+    context = {
+        'history': history,
+        'search': search,
+    }
+    return render(request, 'groups/answer_toggle_history_all.html', context)
 
 
 @login_required
@@ -2911,6 +3005,7 @@ def group_exam_config(request, group_id):
 
             config.random_order = random_order
             config.show_correct_answer = show_correct_answer
+            config.show_points_to_student = request.POST.get('show_points_to_student') == 'on'
             config.time_limit = time_limit
             config.max_attempts = max_attempts
             config.use_category_configs = True
@@ -3247,7 +3342,21 @@ def category_question_edit(request, question_id):
     if request.method == 'POST':
         question_text = request.POST.get('question_text', '').strip()
         correct_answer = request.POST.get('correct_answer', '').strip().lower()
-        if question.question_type == 'plain_text':
+        question_type = request.POST.get('question_type', question.question_type)
+        category_id = request.POST.get('category')
+        points = request.POST.get('points', question.points)
+        try:
+            points = int(points)
+        except (ValueError, TypeError):
+            points = question.points
+        if category_id:
+            try:
+                question.category = Category.objects.get(id=category_id)
+            except Category.DoesNotExist:
+                messages.error(request, 'Kategoriya topilmadi!')
+                return redirect('category_question_edit', question_id=question.id)
+        question.question_type = question_type
+        if question_type == 'plain_text':
             if not question_text:
                 messages.error(request, 'Matn kiritilishi shart!')
             else:
@@ -3256,17 +3365,19 @@ def category_question_edit(request, question_id):
                 question.points = 0
                 question.save()
                 messages.success(request, '✅ Oddiy matn tahrirlandi!')
-                return redirect('category_questions_list', category_id=category.id)
+                return redirect('category_questions_list', category_id=question.category.id)
         elif not question_text or not correct_answer:
             messages.error(request, 'Savol matni va to\'g\'ri javob kiritilishi shart!')
         else:
             question.question_text = question_text
             question.correct_answer = correct_answer
+            question.points = points
             question.save()
             messages.success(request, '✅ Savol tahrirlandi!')
-            return redirect('category_questions_list', category_id=category.id)
+            return redirect('category_questions_list', category_id=question.category.id)
     return render(request, 'groups/category_question_form.html', {
         'question': question, 'category': category, 'is_edit': True,
+        'categories': Category.objects.all(),
     })
 
 
@@ -4216,45 +4327,6 @@ def admin_question_add(request):
     })
 
 @staff_member_required
-def admin_question_edit(request, pk):
-    question = get_object_or_404(QuizQuestion, id=pk)
-    if request.method == 'POST':
-        question_type = request.POST.get('question_type')
-        category_id = request.POST.get('category')
-        try:
-            category = Category.objects.get(id=category_id)
-            question.category = category
-            question.question_type = question_type
-            if question_type == 'fill_blank':
-                question.question_text = request.POST.get('question_text')
-                question.correct_answer = request.POST.get('correct_answer')
-            elif question_type == 'match_fill':
-                question.question_text = request.POST.get('mf_question_text', '')
-                mf_words_json = request.POST.get('mf_words', '[]')
-                mf_answers_json = request.POST.get('mf_correct_answers', '{}')
-                question.scrambled_words = mf_words_json
-                question.correct_answer = mf_answers_json
-            elif question_type == 'plain_text':
-                question.question_text = request.POST.get('pt_text', '').strip()
-                question.correct_answer = ''
-                question.scrambled_words = ''
-                question.correct_sentence = ''
-                question.points = 0
-            else:
-                question.scrambled_words = request.POST.get('scrambled_words')
-                question.correct_sentence = request.POST.get('correct_sentence')
-            question.save()
-            messages.success(request, "Savol tahrirlandi!")
-            return redirect('admin_question_list')
-        except Category.DoesNotExist:
-            messages.error(request, "Kategoriya topilmadi!")
-    return render(request, 'groups/admin_question_edit.html', {
-        'question': question,
-        'categories': Category.objects.all(),
-    })
-
-
-@staff_member_required
 def admin_question_delete(request, pk):
     question = get_object_or_404(QuizQuestion, id=pk)
     if request.method == 'POST':
@@ -5182,7 +5254,8 @@ def my_certificates(request):
         return redirect('home')
 
     certificates = Certificate.objects.filter(
-        quiz_result__student=student
+        quiz_result__student=student,
+        is_archived=False
     ).order_by('-generated_at')
 
     if not certificates:

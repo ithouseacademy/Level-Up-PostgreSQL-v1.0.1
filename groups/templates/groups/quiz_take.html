@@ -177,7 +177,7 @@
                                                         {% elif q.question_type == 'plain_text' %}📄 Oddiy matn
                                                         {% endif %}
                                                     </span>
-                                                    {% if q.question_type != 'plain_text' %}
+                                                    {% if q.question_type != 'plain_text' and config.show_points_to_student %}
                                                     <span class="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full font-medium">
                                                         {{ q.points }} ball
                                                     </span>

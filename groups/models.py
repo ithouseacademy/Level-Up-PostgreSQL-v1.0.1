@@ -788,6 +788,7 @@ class GroupExamConfig(models.Model):
     total_questions = models.IntegerField(default=10, verbose_name="Jami savollar soni")
     random_order = models.BooleanField(default=True, verbose_name="Random tartib")
     show_correct_answer = models.BooleanField(default=False, verbose_name="To'g'ri javobni ko'rsatish")
+    show_points_to_student = models.BooleanField(default=False, verbose_name="Talabaga ballni ko'rsatish")
     time_limit = models.IntegerField(default=0, verbose_name="Vaqt limiti (daqiqa)")
     max_attempts = models.IntegerField(default=1, verbose_name="Maksimal urinishlar")
 
@@ -992,3 +993,21 @@ class Certificate(models.Model):
 
     def __str__(self):
         return f"{self.student_name} - {self.score}%"
+
+
+class AnswerToggleHistory(models.Model):
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name="O'zgartirgan")
+    quiz_result = models.ForeignKey(QuizResult, on_delete=models.CASCADE, related_name='toggle_history')
+    question_id = models.CharField(max_length=20, verbose_name="Savol ID")
+    blank_num = models.CharField(max_length=10, blank=True, null=True, verbose_name="Bo'sh joy")
+    was_correct = models.BooleanField(verbose_name="Oldingi holat")
+    now_correct = models.BooleanField(verbose_name="Hozirgi holat")
+    changed_at = models.DateTimeField(auto_now_add=True, verbose_name="O'zgartirilgan vaqt")
+
+    class Meta:
+        verbose_name = "Javob o'zgartirish tarixi"
+        verbose_name_plural = "Javob o'zgartirish tarixlari"
+        ordering = ['-changed_at']
+
+    def __str__(self):
+        return f"Savol #{self.question_id} - {self.user} - {self.changed_at.strftime('%d.%m.%Y %H:%M')}"

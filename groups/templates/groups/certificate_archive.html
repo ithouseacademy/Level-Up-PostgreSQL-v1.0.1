@@ -108,10 +108,12 @@ function updateBatchBar() {
     batchBar.classList.toggle('hidden', checked.length === 0);
 }
 
-selectAll.addEventListener('change', function() {
-    checkboxes.forEach(cb => cb.checked = this.checked);
-    updateBatchBar();
-});
+if (selectAll) {
+    selectAll.addEventListener('change', function() {
+        checkboxes.forEach(cb => cb.checked = this.checked);
+        updateBatchBar();
+    });
+}
 
 checkboxes.forEach(cb => {
     cb.addEventListener('change', updateBatchBar);

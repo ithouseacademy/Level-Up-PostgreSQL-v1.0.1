@@ -7,7 +7,8 @@ from .models import (
     Group, Student, ExamSession, ExamResult, ExamControl, 
     AdminPassword, Rules, Category, QuizQuestion, Teacher, TeacherScoreLog, AssessmentScore,
     CertificateSetting, Certificate, GroupExamConfig,
-    Folder, FolderCategory, GroupFolder, FolderGroupConfig
+    Folder, FolderCategory, GroupFolder, FolderGroupConfig,
+    AnswerToggleHistory
 )
 
 # forms.py dan import
@@ -570,3 +571,11 @@ class FolderGroupConfigAdmin(admin.ModelAdmin):
     list_display = ['id', 'folder', 'group', 'categories_to_select', 'is_active']
     list_filter = ['is_active']
     search_fields = ['folder__name', 'group__name']
+
+
+@admin.register(AnswerToggleHistory)
+class AnswerToggleHistoryAdmin(admin.ModelAdmin):
+    list_display = ['id', 'user', 'quiz_result', 'question_id', 'blank_num', 'was_correct', 'now_correct', 'changed_at']
+    list_filter = ['was_correct', 'now_correct', 'changed_at']
+    search_fields = ['question_id', 'user__username', 'quiz_result__student_name_saved']
+    readonly_fields = ['user', 'quiz_result', 'question_id', 'blank_num', 'was_correct', 'now_correct', 'changed_at']

@@ -1,0 +1,81 @@
+{% extends 'groups/base.html' %}
+
+{% block title %}Savolni tahrirlash{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-3xl mx-auto px-4">
+        <div class="mb-6">
+            <a href="{% url 'quiz_admin' %}" class="text-gray-500 hover:text-gray-700 text-sm inline-block">
+                <i class="fas fa-arrow-left mr-1"></i> Quiz administratsiyasiga qaytish
+            </a>
+            <h1 class="text-2xl font-bold text-gray-900 mt-2">Savolni tahrirlash</h1>
+            <p class="text-gray-500 text-sm">ID: {{ question.id }} | Turi: {{ question.get_question_type_display }}</p>
+        </div>
+
+        <div class="bg-white rounded-lg border border-gray-200">
+            <form method="POST" class="p-6">
+                {% csrf_token %}
+
+                <!-- Kategoriya -->
+                <div class="mb-5">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Kategoriya</label>
+                    <select name="category_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-200 focus:border-gray-400 outline-none transition">
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if question.category.id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Savol turi -->
+                <div class="mb-5">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Savol turi</label>
+                    <select name="question_type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-200 focus:border-gray-400 outline-none transition">
+                        <option value="fill_blank" {% if question.question_type == 'fill_blank' %}selected{% endif %}>Bo'sh joy to'ldirish</option>
+                        <option value="fill_blank_no_word" {% if question.question_type == 'fill_blank_no_word' %}selected{% endif %}>Bo'sh joy (Variantlarsiz)</option>
+                        <option value="sentence_arrangement" {% if question.question_type == 'sentence_arrangement' %}selected{% endif %}>So'zlarni tartibga solish</option>
+                        <option value="multiple_choice" {% if question.question_type == 'multiple_choice' %}selected{% endif %}>Test varianti</option>
+                        <option value="true_false" {% if question.question_type == 'true_false' %}selected{% endif %}>To'g'ri/Noto'g'ri</option>
+                        <option value="underline_correct" {% if question.question_type == 'underline_correct' %}selected{% endif %}>To'g'ri so'zni tanlash</option>
+                        <option value="matching" {% if question.question_type == 'matching' %}selected{% endif %}>Moslashtirish</option>
+                        <option value="cloze_multiple_blanks" {% if question.question_type == 'cloze_multiple_blanks' %}selected{% endif %}>Matn ichidagi bo'sh joylar</option>
+                        <option value="complete_the_words" {% if question.question_type == 'complete_the_words' %}selected{% endif %}>So'zlarni to'ldirish</option>
+                        <option value="writing" {% if question.question_type == 'writing' %}selected{% endif %}>Yozma ish (Writing)</option>
+                        <option value="speaking" {% if question.question_type == 'speaking' %}selected{% endif %}>Og'zaki (Speaking)</option>
+                        <option value="plain_text" {% if question.question_type == 'plain_text' %}selected{% endif %}>Oddiy matn</option>
+                    </select>
+                </div>
+
+                <div class="mb-5">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Savol matni <span class="text-red-500">*</span></label>
+                    <textarea name="question_text" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-200 focus:border-gray-400 outline-none transition" placeholder="Savolni kiriting...">{{ question.question_text|default:'' }}</textarea>
+                </div>
+
+                {% if question.question_type != 'plain_text' %}
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">To'g'ri javob <span class="text-red-500">*</span></label>
+                    <input type="text" name="correct_answer" value="{{ question.correct_answer|default:'' }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-200 focus:border-gray-400 outline-none transition" placeholder="Masalan: 42, A, True, JavaScript" required>
+                    <p class="text-xs text-gray-400 mt-1">Javobni kichik harflarda kiriting (case-sensitive emas)</p>
+                </div>
+                {% else %}
+                <input type="hidden" name="correct_answer" value="">
+                {% endif %}
+
+                <!-- Ball -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Ball <span class="text-red-500">*</span></label>
+                    <input type="number" name="points" value="{{ question.points|default:1 }}" min="0" max="100" class="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-200 focus:border-gray-400 outline-none transition">
+                    <p class="text-xs text-gray-400 mt-1">Bu savol necha ballik ekanligini kiriting (plain_text uchun 0)</p>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-4 border-t border-gray-100">
+                    <a href="{% url 'quiz_admin' %}" class="px-4 py-2 text-gray-600 hover:text-gray-800">Bekor qilish</a>
+                    <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white px-6 py-2 rounded-lg">
+                        <i class="fas fa-save mr-2"></i> Saqlash
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
