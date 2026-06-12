@@ -211,6 +211,13 @@
                     <div class="p-3 bg-purple-50 border border-purple-200 rounded text-xs text-purple-700 mb-6">
                         🎤 Bu savol turida ball o'qituvchi tomonidan qo'lda qo'yiladi.
                     </div>
+
+                {% elif question.question_type == 'plain_text' %}
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Matn</label>
+                        <textarea name="pt_text" rows="6" class="w-full border border-gray-200 rounded-lg px-4 py-2">{{ question.question_text }}</textarea>
+                        <p class="text-xs text-gray-400 mt-1">📌 Bu matn kategoriya boshida ko'rinadi. Ball berilmaydi.</p>
+                    </div>
                 {% endif %}
                 
                 <!-- Ball -->

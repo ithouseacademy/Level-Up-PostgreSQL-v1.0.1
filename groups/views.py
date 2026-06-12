@@ -1044,9 +1044,15 @@ def quiz_take(request, group_id):
             all_cat_questions = list(QuizQuestion.objects.filter(category=category))
             total_available = len(all_cat_questions)
 
-            if total_available > 0:
-                take_count = min(questions_per_category, total_available)
-                selected = random.sample(all_cat_questions, take_count)
+            # Plain text questions always included
+            plain_text_qs = [q for q in all_cat_questions if q.question_type == 'plain_text']
+            non_plain_qs = [q for q in all_cat_questions if q.question_type != 'plain_text']
+
+            questions_list.extend(plain_text_qs)
+
+            if non_plain_qs:
+                take_count = min(questions_per_category, len(non_plain_qs))
+                selected = random.sample(non_plain_qs, take_count)
                 questions_list.extend(selected)
 
         # Fallback
@@ -2071,6 +2077,12 @@ def _calculate_score_for_attempt(attempt, group):
                 'max_points': question.points
             }
 
+        elif question.question_type == 'plain_text':
+            question_results[qid] = {
+                'type': 'plain_text',
+                'text': question.question_text,
+            }
+
         else:
             user_answer = user_answers.get(f'q_{question.id}', '')
             if not user_answer:
@@ -2662,6 +2674,21 @@ def quiz_result_details_api(request, result_id):
                                 'correct_answer': str(correct_ans),
                                 'has_blanks': True
                             })
+                    elif answer.get('type') == 'plain_text':
+                        text = answer.get('text', '')
+                        answers_html += f'''
+                        <div class="border-l-4 border-gray-300 bg-gray-50 p-3 rounded">
+                            <p class="text-sm text-gray-500">
+                                <span class="text-gray-400">📄 Oddiy matn ({qid}):</span><br>
+                                <span class="text-gray-700">{text}</span>
+                            </p>
+                        </div>'''
+                        questions_data.append({
+                            'qid': qid,
+                            'type': 'plain_text',
+                            'text': text,
+                            'has_blanks': False
+                        })
                     else:
                         is_correct = answer.get('is_correct', False)
                         user_answer = answer.get('user_answer', 'Javob berilmagan')
@@ -2749,6 +2776,8 @@ def admin_toggle_answer_api(request):
             blank = ans_data['blanks'][bnum]
             blank['is_correct'] = True
             blank['user_answer'] = blank.get('correct_answer', blank.get('user_answer', ''))
+            ans_data['blanks_correct'] = sum(1 for b in ans_data['blanks'].values() if b.get('is_correct'))
+            ans_data['blanks_total'] = len(ans_data['blanks'])
         elif isinstance(ans_data, dict):
             if ans_data.get('type') in ('writing', 'speaking'):
                 return JsonResponse({'success': False, 'message': 'Writing/Speaking savollarini baholash bo\'limida baholang'})
@@ -2771,6 +2800,9 @@ def admin_toggle_answer_api(request):
                 continue
             q = q_map.get(qid_str)
             if not q:
+                continue
+
+            if a.get('type') == 'plain_text':
                 continue
 
             total_possible += q.points
@@ -3183,7 +3215,18 @@ def category_question_add(request, category_id):
     if request.method == 'POST':
         question_text = request.POST.get('question_text', '').strip()
         correct_answer = request.POST.get('correct_answer', '').strip().lower()
-        if not question_text or not correct_answer:
+        question_type = request.POST.get('question_type', '')
+        if question_type == 'plain_text':
+            if not question_text:
+                messages.error(request, 'Matn kiritilishi shart!')
+            else:
+                QuizQuestion.objects.create(
+                    category=category, question_type='plain_text',
+                    question_text=question_text, correct_answer='', points=0
+                )
+                messages.success(request, f'✅ "{category.name}" kategoriyasiga oddiy matn qo\'shildi!')
+                return redirect('category_questions_list', category_id=category.id)
+        elif not question_text or not correct_answer:
             messages.error(request, 'Savol matni va to\'g\'ri javob kiritilishi shart!')
         else:
             QuizQuestion.objects.create(
@@ -3204,7 +3247,17 @@ def category_question_edit(request, question_id):
     if request.method == 'POST':
         question_text = request.POST.get('question_text', '').strip()
         correct_answer = request.POST.get('correct_answer', '').strip().lower()
-        if not question_text or not correct_answer:
+        if question.question_type == 'plain_text':
+            if not question_text:
+                messages.error(request, 'Matn kiritilishi shart!')
+            else:
+                question.question_text = question_text
+                question.correct_answer = ''
+                question.points = 0
+                question.save()
+                messages.success(request, '✅ Oddiy matn tahrirlandi!')
+                return redirect('category_questions_list', category_id=category.id)
+        elif not question_text or not correct_answer:
             messages.error(request, 'Savol matni va to\'g\'ri javob kiritilishi shart!')
         else:
             question.question_text = question_text
@@ -4181,6 +4234,12 @@ def admin_question_edit(request, pk):
                 mf_answers_json = request.POST.get('mf_correct_answers', '{}')
                 question.scrambled_words = mf_words_json
                 question.correct_answer = mf_answers_json
+            elif question_type == 'plain_text':
+                question.question_text = request.POST.get('pt_text', '').strip()
+                question.correct_answer = ''
+                question.scrambled_words = ''
+                question.correct_sentence = ''
+                question.points = 0
             else:
                 question.scrambled_words = request.POST.get('scrambled_words')
                 question.correct_sentence = request.POST.get('correct_sentence')
@@ -4816,14 +4875,18 @@ def admin_writing_grade_api(request, result_id, question_id):
 
         for q in questions:
             sqid = str(q.id)
+            a = result.answers.get(sqid)
+            if isinstance(a, dict) and a.get('type') == 'plain_text':
+                continue
             total_possible += q.points
-            a = result.answers[sqid]
             if isinstance(a, dict):
                 if a.get('type') == 'writing':
                     total_score += a.get('earned_points', 0)
                 elif 'blanks' in a:
-                    pts_per = round(q.points / max(a.get('blanks_total', 1), 1), 2)
-                    total_score += a.get('blanks_correct', 0) * pts_per
+                    blanks = a.get('blanks', {})
+                    blanks_correct = sum(1 for b in blanks.values() if b.get('is_correct'))
+                    pts_per = round(q.points / max(len(blanks), 1), 2)
+                    total_score += blanks_correct * pts_per
                 elif a.get('is_correct'):
                     total_score += q.points
 
@@ -5577,14 +5640,18 @@ def speaking_save_score_api(request):
         questions = QuizQuestion.objects.filter(id__in=qids_in_answers) if qids_in_answers else QuizQuestion.objects.none()
         for q in questions:
             sqid = str(q.id)
+            a = result.answers.get(sqid)
+            if isinstance(a, dict) and a.get('type') == 'plain_text':
+                continue
             total_possible += q.points
-            a = result.answers[sqid]
             if isinstance(a, dict):
                 if a.get('type') in ('writing', 'speaking'):
                     total_score += a.get('earned_points', 0)
                 elif 'blanks' in a:
-                    pts_per = round(q.points / max(a.get('blanks_total', 1), 1), 2)
-                    total_score += a.get('blanks_correct', 0) * pts_per
+                    blanks = a.get('blanks', {})
+                    blanks_correct = sum(1 for b in blanks.values() if b.get('is_correct'))
+                    pts_per = round(q.points / max(len(blanks), 1), 2)
+                    total_score += blanks_correct * pts_per
                 elif a.get('is_correct'):
                     total_score += q.points
 
