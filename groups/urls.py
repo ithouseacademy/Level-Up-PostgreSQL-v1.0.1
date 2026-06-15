@@ -33,6 +33,9 @@ urlpatterns = [
     path('categories/add/', views.category_add, name='category_add'),
     path('categories/-/<int:pk>/edit/', views.category_edit, name='category_edit'),
     path('categories/<int:pk>/delete/', views.category_delete, name='category_delete'),
+    path('categories/<int:category_id>/audios/', views.category_audios, name='category_audios'),
+    path('categories/<int:category_id>/audios/add/', views.category_audio_add, name='category_audio_add'),
+    path('categories/audios/<int:audio_id>/delete/', views.category_audio_delete, name='category_audio_delete'),
 
     # PAPKALAR (FOLDERS)
     path('folders/', views.folder_list, name='folder_list'),

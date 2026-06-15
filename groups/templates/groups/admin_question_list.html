@@ -31,17 +31,17 @@
                     <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Savol turi</label>
                     <select name="type" class="w-full border border-gray-200 px-3 py-2 text-sm focus:border-black focus:outline-none">
                         <option value="">Hammasi</option>
-                        <option value="fill_blank" {% if selected_type == 'fill_blank' %}selected{% endif %}>📝 Bo'sh joy (Word Bank)</option>
-                        <option value="fill_blank_no_word" {% if selected_type == 'fill_blank_no_word' %}selected{% endif %}>📝 Bo'sh joy (Variantlarsiz)</option>
-                        <option value="sentence_arrangement" {% if selected_type == 'sentence_arrangement' %}selected{% endif %}>🔀 So'z tartib</option>
-                        <option value="reading_comprehension" {% if selected_type == 'reading_comprehension' %}selected{% endif %}>📖 Matnli</option>
-                        <option value="true_false" {% if selected_type == 'true_false' %}selected{% endif %}>✓✗ To'g'ri/Noto'g'ri</option>
-                        <option value="multiple_choice" {% if selected_type == 'multiple_choice' %}selected{% endif %}>🔘 Test</option>
-                        <option value="underline_correct" {% if selected_type == 'underline_correct' %}selected{% endif %}>✏️ To'g'ri so'z</option>
-                        <option value="matching" {% if selected_type == 'matching' %}selected{% endif %}>🔗 Moslashtirish</option>
-                        <option value="cloze_multiple_blanks" {% if selected_type == 'cloze_multiple_blanks' %}selected{% endif %}>📄 Matn ichidagi bo'sh joylar</option>
-                        <option value="complete_the_words" {% if selected_type == 'complete_the_words' %}selected{% endif %}>🔤 So'zlarni to'ldirish</option>
-                        <option value="match_fill" {% if selected_type == 'match_fill' %}selected{% endif %}>🧩 So'zlarni matnga mos qo'yish</option>
+                        <option value="fill_blank" {% if selected_type == 'fill_blank' %}selected{% endif %}>Bo'sh joy (Word Bank)</option>
+                        <option value="fill_blank_no_word" {% if selected_type == 'fill_blank_no_word' %}selected{% endif %}>Bo'sh joy (Variantlarsiz)</option>
+                        <option value="sentence_arrangement" {% if selected_type == 'sentence_arrangement' %}selected{% endif %}>So'z tartib</option>
+                        <option value="reading_comprehension" {% if selected_type == 'reading_comprehension' %}selected{% endif %}>Matnli</option>
+                        <option value="true_false" {% if selected_type == 'true_false' %}selected{% endif %}>To'g'ri/Noto'g'ri</option>
+                        <option value="multiple_choice" {% if selected_type == 'multiple_choice' %}selected{% endif %}>Test</option>
+                        <option value="underline_correct" {% if selected_type == 'underline_correct' %}selected{% endif %}>To'g'ri so'z</option>
+                        <option value="matching" {% if selected_type == 'matching' %}selected{% endif %}>Moslashtirish</option>
+                        <option value="cloze_multiple_blanks" {% if selected_type == 'cloze_multiple_blanks' %}selected{% endif %}>Matn ichidagi bo'sh joylar</option>
+                        <option value="complete_the_words" {% if selected_type == 'complete_the_words' %}selected{% endif %}>So'zlarni to'ldirish</option>
+                        <option value="match_fill" {% if selected_type == 'match_fill' %}selected{% endif %}>So'zlarni matnga mos qo'yish</option>
                     </select>
                 </div>
                 <div class="w-48">
@@ -55,7 +55,7 @@
                 </div>
                 <div>
                     <button type="submit" class="bg-black hover:bg-gray-800 text-white px-5 py-2 text-sm transition">
-                        🔍 Filter
+                        <i class="fas fa-search"></i> Filter
                     </button>
                     <a href="{% url 'admin_question_list' %}" class="border border-gray-300 bg-white hover:bg-gray-50 text-gray-600 px-5 py-2 text-sm transition ml-2">
                         ✕ Tozalash
@@ -105,31 +105,31 @@
                             </td>
                             <td class="px-4 py-3">
                                 {% if question.question_type == 'fill_blank' %}
-                                <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs">📝 Bo'sh joy</span>
+                                <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs"><i class="fas fa-pen"></i> Bo'sh joy</span>
                                 {% elif question.question_type == 'fill_blank_no_word' %}
-                                <span class="bg-cyan-50 text-cyan-700 px-2 py-1 rounded text-xs">📝 Bo'sh joy (Variantlarsiz)</span>
+                                <span class="bg-cyan-50 text-cyan-700 px-2 py-1 rounded text-xs"><i class="fas fa-pen"></i> Bo'sh joy (Variantlarsiz)</span>
                                 {% elif question.question_type == 'sentence_arrangement' %}
-                                <span class="bg-purple-50 text-purple-700 px-2 py-1 rounded text-xs">🔀 So'z tartib</span>
+                                <span class="bg-purple-50 text-purple-700 px-2 py-1 rounded text-xs"><i class="fas fa-random"></i> So'z tartib</span>
                                 {% elif question.question_type == 'reading_comprehension' %}
-                                <span class="bg-indigo-50 text-indigo-700 px-2 py-1 rounded text-xs">📖 Matnli</span>
+                                <span class="bg-indigo-50 text-indigo-700 px-2 py-1 rounded text-xs"><i class="fas fa-book"></i> Matnli</span>
                                 {% elif question.question_type == 'true_false' %}
-                                <span class="bg-green-50 text-green-700 px-2 py-1 rounded text-xs">✓✗ To'g'ri/Noto'g'ri</span>
+                                <span class="bg-green-50 text-green-700 px-2 py-1 rounded text-xs"><i class="fas fa-check"></i><i class="fas fa-times"></i> To'g'ri/Noto'g'ri</span>
                                 {% elif question.question_type == 'multiple_choice' %}
-                                <span class="bg-orange-50 text-orange-700 px-2 py-1 rounded text-xs">🔘 Test</span>
+                                <span class="bg-orange-50 text-orange-700 px-2 py-1 rounded text-xs"><i class="fas fa-dot-circle"></i> Test</span>
                                 {% elif question.question_type == 'underline_correct' %}
-                                <span class="bg-yellow-50 text-yellow-700 px-2 py-1 rounded text-xs">✏️ To'g'ri so'z</span>
+                                <span class="bg-yellow-50 text-yellow-700 px-2 py-1 rounded text-xs"><i class="fas fa-pencil-alt"></i> To'g'ri so'z</span>
                                 {% elif question.question_type == 'matching' %}
-                                <span class="bg-pink-50 text-pink-700 px-2 py-1 rounded text-xs">🔗 Moslashtirish</span>
+                                <span class="bg-pink-50 text-pink-700 px-2 py-1 rounded text-xs"><i class="fas fa-link"></i> Moslashtirish</span>
                                 {% elif question.question_type == 'cloze_multiple_blanks' %}
-                                <span class="bg-teal-50 text-teal-700 px-2 py-1 rounded text-xs">📄 Ko'p bo'sh joy</span>
+                                <span class="bg-teal-50 text-teal-700 px-2 py-1 rounded text-xs"><i class="fas fa-file-alt"></i> Ko'p bo'sh joy</span>
                                 {% elif question.question_type == 'complete_the_words' %}
-                                <span class="bg-emerald-50 text-emerald-700 px-2 py-1 rounded text-xs">🔤 So'zlarni to'ldirish</span>
+                                <span class="bg-emerald-50 text-emerald-700 px-2 py-1 rounded text-xs"><i class="fas fa-font"></i> So'zlarni to'ldirish</span>
                                 {% elif question.question_type == 'writing' %}
-                                <span class="bg-amber-50 text-amber-700 px-2 py-1 rounded text-xs">✍️ Yozma ish</span>
+                                <span class="bg-amber-50 text-amber-700 px-2 py-1 rounded text-xs"><i class="fas fa-edit"></i> Yozma ish</span>
                                 {% elif question.question_type == 'match_fill' %}
-                                <span class="bg-indigo-50 text-indigo-700 px-2 py-1 rounded text-xs">🧩 So'zlarni matnga mos qo'yish</span>
+                                <span class="bg-indigo-50 text-indigo-700 px-2 py-1 rounded text-xs"><i class="fas fa-puzzle-piece"></i> So'zlarni matnga mos qo'yish</span>
                                 {% elif question.question_type == 'plain_text' %}
-                                <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">📄 Oddiy matn</span>
+                                <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs"><i class="fas fa-file-alt"></i> Oddiy matn</span>
                                 {% endif %}
                             </td>
                             <td class="px-4 py-3">
@@ -138,7 +138,7 @@
                                         {{ question.question_text|truncatechars:80 }}
                                     </div>
                                     <div class="text-xs text-gray-500 mt-1">
-                                        ✓ Javob: {{ question.correct_answer }}
+                                        <i class="fas fa-check text-green-500"></i> Javob: {{ question.correct_answer }}
                                     </div>
                                     
                                 {% elif question.question_type == 'fill_blank_no_word' %}
@@ -146,65 +146,75 @@
                                         {{ question.question_text|truncatechars:80 }}
                                     </div>
                                     <div class="text-xs text-gray-500 mt-1">
-                                        ✓ Javob: {{ question.correct_answer }}
+                                        <i class="fas fa-check text-green-500"></i> Javob: {{ question.correct_answer }}
                                     </div>
                                     
                                 {% elif question.question_type == 'sentence_arrangement' %}
                                     <div class="text-sm text-gray-800 max-w-md">
-                                        📌 {{ question.correct_sentence|truncatechars:60 }}
+                                        <i class="fas fa-thumbtack text-blue-500"></i> {{ question.correct_sentence|truncatechars:60 }}
                                     </div>
                                     <div class="text-xs text-gray-500 mt-1">
-                                        🔀 So'zlar: {{ question.scrambled_words|truncatechars:50 }}
+                                        <i class="fas fa-random"></i> So'zlar: {{ question.scrambled_words|truncatechars:50 }}
                                     </div>
                                     
                                 {% elif question.question_type == 'reading_comprehension' %}
                                     <div class="text-sm text-gray-800 max-w-md">
-                                        📖 {{ question.reading_text.title|default:"Matn"|truncatechars:50 }}
+                                        <i class="fas fa-book"></i> {{ question.reading_text.title|default:"Matn"|truncatechars:50 }}
                                     </div>
                                     <div class="text-xs text-gray-500 mt-1">
-                                        📄 {{ question.reading_text.reading_questions.count }} ta savol
+                                        <i class="fas fa-file-alt"></i> {{ question.reading_text.reading_questions.count }} ta savol
                                     </div>
                                     
                                 {% elif question.question_type == 'true_false' %}
-                                    <div class="text-sm text-gray-800 max-w-md">
-                                        {{ question.question_text|truncatechars:80 }}
-                                    </div>
-                                    <div class="text-xs mt-1">
-                                        {% if question.correct_answer == 'true' %}
-                                        <span class="text-green-600">✅ To'g'ri</span>
-                                        {% else %}
-                                        <span class="text-red-600">❌ Noto'g'ri</span>
-                                        {% endif %}
-                                    </div>
+                                    {% if question.blank_options and question.blank_options|length > 0 %}
+                                        <div class="text-sm text-gray-800 max-w-md">{{ question.question_text }}</div>
+                                        <div class="text-xs text-gray-500 mt-1"><i class="fas fa-pen"></i> {{ question.blank_options|length }} ta savol</div>
+                                    {% else %}
+                                        <div class="text-sm text-gray-800 max-w-md">
+                                            {{ question.question_text|truncatechars:80 }}
+                                        </div>
+                                        <div class="text-xs mt-1">
+                                            {% if question.correct_answer == 'true' %}
+                                            <span class="text-green-600"><i class="fas fa-check-circle text-green-500"></i> To'g'ri</span>
+                                            {% else %}
+                                            <span class="text-red-600"><i class="fas fa-times-circle text-red-500"></i> Noto'g'ri</span>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
                                     
                                 {% elif question.question_type == 'multiple_choice' %}
-                                    <div class="text-sm text-gray-800 max-w-md">
-                                        {{ question.question_text|truncatechars:60 }}
-                                    </div>
-                                    <div class="text-xs text-green-600 mt-1">
-                                        ✓ To'g'ri javob: {{ question.correct_answer }}
-                                    </div>
-                                    <div class="text-xs text-gray-400 mt-1">
-                                        📋 {{ question.get_options_list|length }} ta variant
-                                    </div>
+                                    {% if question.blank_options and question.blank_options|length > 0 %}
+                                        <div class="text-sm text-gray-800 max-w-md">{{ question.question_text }}</div>
+                                        <div class="text-xs text-gray-500 mt-1"><i class="fas fa-pen"></i> {{ question.blank_options|length }} ta savol</div>
+                                    {% else %}
+                                        <div class="text-sm text-gray-800 max-w-md">
+                                            {{ question.question_text|truncatechars:60 }}
+                                        </div>
+                                        <div class="text-xs text-green-600 mt-1">
+                                            <i class="fas fa-check text-green-500"></i> To'g'ri javob: {{ question.correct_answer }}
+                                        </div>
+                                        <div class="text-xs text-gray-400 mt-1">
+                                            <i class="fas fa-clipboard-list"></i> {{ question.get_options_list|length }} ta variant
+                                        </div>
+                                    {% endif %}
                                     
                                 {% elif question.question_type == 'underline_correct' %}
                                     <div class="text-sm text-gray-800 max-w-md">
                                         {{ question.question_text|truncatechars:80 }}
                                     </div>
                                     <div class="text-xs text-green-600 mt-1">
-                                        ✓ Javob: {{ question.correct_answer }}
+                                        <i class="fas fa-check text-green-500"></i> Javob: {{ question.correct_answer }}
                                     </div>
                                     
                                 {% elif question.question_type == 'matching' %}
                                     <div class="text-sm text-gray-800 max-w-md">
-                                        🔗 Moslashtirish
+                                        <i class="fas fa-link"></i> Moslashtirish
                                     </div>
                                     <div class="text-xs text-gray-500 mt-1">
-                                        📊 Chap: {{ question.get_matching_left_items|length }} ta | O'ng: {{ question.get_matching_right_items|length }} ta
+                                        <i class="fas fa-chart-bar"></i> Chap: {{ question.get_matching_left_items|length }} ta | O'ng: {{ question.get_matching_right_items|length }} ta
                                     </div>
                                     <div class="text-xs text-green-600 mt-1">
-                                        ✓ {{ question.get_matching_correct_answers|length }} ta moslik
+                                        <i class="fas fa-check text-green-500"></i> {{ question.get_matching_correct_answers|length }} ta moslik
                                     </div>
                                     
                                 {% elif question.question_type == 'cloze_multiple_blanks' %}
@@ -212,10 +222,10 @@
                                         {{ question.question_text|truncatechars:100 }}
                                     </div>
                                     <div class="text-xs text-gray-500 mt-1">
-                                        📝 {{ question.get_cloze_blanks|length }} ta bo'sh joy
+                                        <i class="fas fa-pen"></i> {{ question.get_cloze_blanks|length }} ta bo'sh joy
                                     </div>
                                     <div class="text-xs text-green-600 mt-1">
-                                        ✓ {{ question.get_cloze_correct_answers|length }} ta to'g'ri javob
+                                        <i class="fas fa-check text-green-500"></i> {{ question.get_cloze_correct_answers|length }} ta to'g'ri javob
                                     </div>
                                     
                                 {% elif question.question_type == 'complete_the_words' %}
@@ -223,10 +233,10 @@
                                         {{ question.question_text|truncatechars:80 }}
                                     </div>
                                     <div class="text-xs text-green-600 mt-1">
-                                        ✓ To'liq so'z: {{ question.correct_answer }}
+                                        <i class="fas fa-check text-green-500"></i> To'liq so'z: {{ question.correct_answer }}
                                     </div>
                                     <div class="text-xs text-gray-400 mt-1">
-                                        💡 Berilgan harfga mos so'zni to'liq yozish
+                                        <i class="fas fa-lightbulb text-yellow-500"></i> Berilgan harfga mos so'zni to'liq yozish
                                     </div>
                                     
                                 {% elif question.question_type == 'match_fill' %}
@@ -234,10 +244,10 @@
                                         {{ question.question_text|truncatechars:80 }}
                                     </div>
                                     <div class="text-xs text-gray-500 mt-1">
-                                        📝 {{ question.get_match_fill_words|length }} ta so'z
+                                        <i class="fas fa-pen"></i> {{ question.get_match_fill_words|length }} ta so'z
                                     </div>
                                     <div class="text-xs text-green-600 mt-1">
-                                        ✓ {{ question.get_match_fill_correct_answers|length }} ta moslik
+                                        <i class="fas fa-check text-green-500"></i> {{ question.get_match_fill_correct_answers|length }} ta moslik
                                     </div>
                                     
                                 {% elif question.question_type == 'writing' %}
@@ -245,14 +255,14 @@
                                         {{ question.question_text|truncatechars:80 }}
                                     </div>
                                     <div class="text-xs text-amber-600 mt-1">
-                                        ✍️ Admin tomonidan baholanadi
+                                        <i class="fas fa-edit"></i> Admin tomonidan baholanadi
                                     </div>
                                 {% elif question.question_type == 'plain_text' %}
                                     <div class="text-sm text-gray-600 max-w-md italic">
                                         {{ question.question_text|truncatechars:100 }}
                                     </div>
                                     <div class="text-xs text-gray-400 mt-1">
-                                        📄 Ball berilmaydi
+                                        <i class="fas fa-file-alt"></i> Ball berilmaydi
                                     </div>
                                 {% endif %}
                              </td>
@@ -325,7 +335,7 @@ function getCSRFToken() {
 
 // Savolni o'chirish funksiyasi
 async function deleteQuestion(questionId) {
-    if (!confirm('⚠️ Savolni o\'chirmoqchimisiz? Bu amalni qaytarib bo\'lmaydi!')) {
+    if (!confirm('Savolni o\'chirmoqchimisiz? Bu amalni qaytarib bo\'lmaydi!')) {
         return;
     }
     
@@ -353,7 +363,7 @@ async function deleteQuestion(questionId) {
             if (row) {
                 row.remove();
             }
-            alert('✅ Savol muvaffaqiyatli o\'chirildi!');
+            alert('Savol muvaffaqiyatli o\'chirildi!');
             
             // Agar hech qanday qator qolmasa, sahifani qayta yuklash
             const remainingRows = document.querySelectorAll('tbody tr:not(.empty-row)');
@@ -361,7 +371,7 @@ async function deleteQuestion(questionId) {
                 location.reload();
             }
         } else {
-            alert('❌ Xatolik: ' + data.message);
+            alert('Xatolik: ' + data.message);
             if (row) {
                 row.style.opacity = '1';
                 row.style.pointerEvents = 'auto';
@@ -369,7 +379,7 @@ async function deleteQuestion(questionId) {
         }
     } catch (error) {
         console.error('Delete error:', error);
-        alert('❌ Xatolik yuz berdi! Qaytadan urinib ko\'ring.');
+        alert('Xatolik yuz berdi! Qaytadan urinib ko\'ring.');
         if (row) {
             row.style.opacity = '1';
             row.style.pointerEvents = 'auto';
@@ -388,7 +398,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Loading holati
             const submitBtn = this.querySelector('button[type="submit"]');
             if (submitBtn) {
-                submitBtn.innerHTML = '⏳ Yuklanmoqda...';
+                submitBtn.innerHTML = 'Yuklanmoqda...';
                 submitBtn.disabled = true;
             }
         });

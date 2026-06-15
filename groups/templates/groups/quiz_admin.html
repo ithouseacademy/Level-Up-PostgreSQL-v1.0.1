@@ -50,8 +50,8 @@
                                 <i class="fas fa-layer-group mr-1 text-gray-500"></i> Savol turi
                             </label>
                             <select name="question_type" id="questionTypeSelect" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                                <option value="fill_blank">📝 Bo'sh joy to'ldirish (Fill Blank)</option>
-                                <option value="sentence_arrangement">🔀 So'zlarni tartibga solish (Sentence Arrangement)</option>
+                                <option value="fill_blank">Bo'sh joy to'ldirish (Fill Blank)</option>
+                                <option value="sentence_arrangement">So'zlarni tartibga solish (Sentence Arrangement)</option>
                             </select>
                         </div>
                         
@@ -173,18 +173,18 @@
                             <td class="px-6 py-3 text-gray-500">{{ forloop.counter }}</td>
                             <td class="px-6 py-3">
                                 {% if q.question_type == 'fill_blank' %}
-                                <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs">📝 Bo'sh joy</span>
+                                <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs"><i class="fas fa-pen"></i> Bo'sh joy</span>
                                 {% else %}
-                                <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs">🔀 So'z tartibi</span>
+                                <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs"><i class="fas fa-random"></i> So'z tartibi</span>
                                 {% endif %}
                             </td>
                             <td class="px-6 py-3 max-w-md">
                                 {% if q.question_type == 'fill_blank' %}
                                     <div class="text-gray-900">{{ q.question_text|truncatechars:80 }}</div>
-                                    <div class="text-xs text-green-600 mt-1">✓ {{ q.correct_answer }}</div>
+                                    <div class="text-xs text-green-600 mt-1"><i class="fas fa-check text-green-500"></i> {{ q.correct_answer }}</div>
                                 {% else %}
                                     <div class="text-gray-900">📌 {{ q.correct_sentence|truncatechars:60 }}</div>
-                                    <div class="text-xs text-gray-500 mt-1">🔀 {{ q.scrambled_words|truncatechars:50 }}</div>
+                                    <div class="text-xs text-gray-500 mt-1"><i class="fas fa-random"></i> {{ q.scrambled_words|truncatechars:50 }}</div>
                                 {% endif %}
                             </td>
                             <td class="px-6 py-3">

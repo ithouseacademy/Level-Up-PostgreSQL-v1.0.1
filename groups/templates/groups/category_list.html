@@ -17,33 +17,43 @@
             </a>
         </div>
 
-        <div class="bg-white rounded-lg border border-gray-200">
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-gray-50 border-b border-gray-200">
-                        <tr class="text-left text-sm text-gray-500">
-                            <th class="px-6 py-3">#</th>
-                            <th class="px-6 py-3">Nomi</th>
-                            <th class="px-6 py-3">Tavsif</th>
-                            <th class="px-6 py-3">Savollar</th>
-                            <th class="px-6 py-3">Ball taqsimoti</th>
-                            <th class="px-6 py-3">Guruhlar</th>
-                            <th class="px-6 py-3 text-center">Amallar</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        {% for cat in categories %}
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-3 text-sm text-gray-500">{{ forloop.counter }}</td>
-                            <td class="px-6 py-3 font-medium text-gray-900">{{ cat.name }}</td>
-                            <td class="px-6 py-3 text-sm text-gray-500">{{ cat.description|truncatechars:40|default:"-" }}</td>
-                            <td class="px-6 py-3 text-sm">
-                                <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">{{ cat.questions_count }}</span>
-                            </td>
-                            <td class="px-6 py-3 text-sm">
-                                {% with stats=category_point_stats|default:"" %}
-                                {% if stats and cat.id in stats %}
-                                    {% if stats|get_item:cat.id %}
+        {% for type_key, group in grouped_categories.items %}
+        <div class="mb-8">
+            <div class="flex items-center gap-3 mb-4">
+                <h2 class="text-lg font-semibold text-gray-800">{{ group.label }}</h2>
+                <span class="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{{ group.categories|length }}</span>
+            </div>
+            
+            <div class="bg-white rounded-lg border border-gray-200">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr class="text-left text-sm text-gray-500">
+                                <th class="px-6 py-3">#</th>
+                                <th class="px-6 py-3">Nomi</th>
+                                <th class="px-6 py-3">Tavsif</th>
+                                <th class="px-6 py-3">Savollar</th>
+                                <th class="px-6 py-3">Audiolar</th>
+                                <th class="px-6 py-3">Ball taqsimoti</th>
+                                <th class="px-6 py-3">Guruhlar</th>
+                                <th class="px-6 py-3 text-center">Amallar</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            {% for cat in group.categories %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-3 text-sm text-gray-500">{{ forloop.counter }}</td>
+                                <td class="px-6 py-3 font-medium text-gray-900">{{ cat.name }}</td>
+                                <td class="px-6 py-3 text-sm text-gray-500">{{ cat.description|truncatechars:40|default:"-" }}</td>
+                                <td class="px-6 py-3 text-sm">
+                                    <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">{{ cat.questions_count }}</span>
+                                </td>
+                                <td class="px-6 py-3 text-sm">
+                                    <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs">{{ cat.audios.count }}</span>
+                                </td>
+                                <td class="px-6 py-3 text-sm">
+                                    {% with stats=category_point_stats|default:"" %}
+                                    {% if stats and cat.id in stats %}
                                         {% with data=stats|get_item:cat.id %}
                                             {% if data.distribution %}
                                                 <div class="flex flex-wrap gap-1">
@@ -62,43 +72,51 @@
                                                 <span class="text-gray-400 text-xs">-</span>
                                             {% endif %}
                                         {% endwith %}
+                                    {% else %}
+                                        <span class="text-gray-400 text-xs">-</span>
                                     {% endif %}
-                                {% else %}
-                                    <span class="text-gray-400 text-xs">-</span>
-                                {% endif %}
-                                {% endwith %}
-                            </td>
-                            
-                            <td class="px-6 py-3 text-sm">
-                                <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">{{ cat.groups_count }}</span>
-                            </td>
-                            <td class="px-6 py-3 text-center">
-                                <div class="flex items-center justify-center space-x-3">
-                                    <a href="{% url 'category_questions_list' cat.id %}" class="text-blue-400 hover:text-blue-600" title="Savollarni ko'rish">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                        
-                                    <a href="{% url 'category_edit' cat.id %}" class="text-gray-400 hover:text-gray-600" title="Tahrirlash">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <a href="{% url 'category_delete' cat.id %}" class="text-red-400 hover:text-red-600" title="O'chirish">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="6" class="px-6 py-12 text-center text-gray-500">
-                                <i class="fas fa-folder-open text-gray-300 text-4xl mb-3 block"></i>
-                                Hech qanday kategoriya mavjud emas
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                                    {% endwith %}
+                                </td>
+                                
+                                <td class="px-6 py-3 text-sm">
+                                    <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">{{ cat.groups_count }}</span>
+                                </td>
+                                <td class="px-6 py-3 text-center">
+                                    <div class="flex items-center justify-center space-x-3">
+                                        <a href="{% url 'category_questions_list' cat.id %}" class="text-blue-400 hover:text-blue-600" title="Savollarni ko'rish">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'category_audios' cat.id %}" class="text-purple-400 hover:text-purple-600" title="Audiolarni boshqarish">
+                                            <i class="fas fa-music"></i>
+                                        </a>
+                                        <a href="{% url 'category_edit' cat.id %}" class="text-gray-400 hover:text-gray-600" title="Tahrirlash">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'category_delete' cat.id %}" class="text-red-400 hover:text-red-600" title="O'chirish">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="px-6 py-12 text-center text-gray-500">
+                                    <i class="fas fa-folder-open text-gray-300 text-4xl mb-3 block"></i>
+                                    Bu bo'limda kategoriya mavjud emas
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
+        {% empty %}
+        <div class="bg-white rounded-lg border border-gray-200 p-12 text-center text-gray-500">
+            <i class="fas fa-folder-open text-gray-300 text-4xl mb-3 block"></i>
+            Hech qanday kategoriya mavjud emas
+        </div>
+        {% endfor %}
     </div>
 </div>
 {% endblock %}

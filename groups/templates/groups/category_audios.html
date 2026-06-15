@@ -1,0 +1,98 @@
+{% extends 'groups/base.html' %}
+{% load static %}
+
+{% block title %}{{ category.name }} - Audio sozlamalari{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-3xl mx-auto px-4">
+        
+        <div class="mb-6">
+            <a href="{% url 'category_list' %}" class="text-gray-500 hover:text-gray-700 text-sm">← Kategoriyalarga qaytish</a>
+            <h1 class="text-2xl font-bold text-gray-900 mt-2">{{ category.name }}</h1>
+            <p class="text-gray-500 text-sm">Kategoriya audio fayllarini boshqarish</p>
+        </div>
+
+        <!-- Yangi audio qo'shish -->
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm mb-6">
+            <div class="p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4"><i class="fas fa-music"></i> Yangi audio qo'shish</h2>
+                <form method="POST" enctype="multipart/form-data" action="{% url 'category_audio_add' category.id %}">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Audio fayl <span class="text-red-500">*</span></label>
+                        <input type="file" name="audio_file" accept="audio/mpeg,audio/wav,audio/ogg" required
+                               class="w-full border border-gray-300 rounded-lg p-2 text-sm">
+                        <p class="text-xs text-gray-400 mt-1">MP3, WAV, OGG formatlari. Maksimal 10MB.</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2"><i class="fas fa-volume-up"></i> Maksimal eshitish soni</label>
+                            <input type="number" name="max_audio_plays" value="1" min="0" max="10"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                            <p class="text-xs text-gray-400 mt-1">0 = cheksiz</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2"><i class="fas fa-pen"></i> Qo'shimcha ko'rsatma</label>
+                            <textarea name="audio_instruction" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                                      placeholder="Masalan: Matnni diqqat bilan tinglang"></textarea>
+                        </div>
+                    </div>
+                    <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white px-6 py-2 rounded-lg text-sm transition">
+                        <i class="fas fa-upload mr-2"></i> Yuklash
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Mavjud audiolar ro'yxati -->
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div class="p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-list mr-2"></i> Mavjud audiolar ({{ audios|length }})
+                </h2>
+                
+                {% if audios %}
+                <div class="space-y-4">
+                    {% for audio in audios %}
+                    <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
+                        <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center shrink-0">
+                            <i class="fas fa-music text-purple-600"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-800">{{ audio.audio_file.name|cut:"category_audio/" }}</p>
+                            <div class="flex flex-wrap gap-3 mt-1 text-xs text-gray-500">
+                                <span><i class="fas fa-volume-up"></i> 
+                                    {% if audio.max_audio_plays == 0 %}<i class="fas fa-infinity"></i> Cheksiz
+                                    {% else %}{{ audio.max_audio_plays }} marta{% endif %}
+                                </span>
+                                {% if audio.audio_instruction %}
+                                <span><i class="fas fa-lightbulb text-yellow-500"></i> {{ audio.audio_instruction|truncatechars:50 }}</span>
+                                {% endif %}
+                            </div>
+                            <audio controls class="mt-2 w-full max-w-xs h-8">
+                                <source src="{{ audio.audio_file.url }}" type="audio/mpeg">
+                            </audio>
+                        </div>
+                        <form method="POST" action="{% url 'category_audio_delete' audio.id %}" 
+                              onsubmit="return confirm('Bu audio faylni o\'chirishni xohlaysizmi?')">
+                            {% csrf_token %}
+                            <button type="submit" class="text-red-400 hover:text-red-600 p-2" title="O'chirish">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-12">
+                    <i class="fas fa-music text-gray-200 text-5xl mb-4 block"></i>
+                    <p class="text-gray-400">Hozircha audio fayllar mavjud emas</p>
+                    <p class="text-xs text-gray-300 mt-1">Yuqoridagi formadan yangi audio yuklang</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

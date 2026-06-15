@@ -60,21 +60,8 @@ class Student(models.Model):
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True, verbose_name="Kategoriya nomi")
     description = models.TextField(blank=True, null=True, verbose_name="Tavsif")
+    rules = models.TextField(blank=True, null=True, verbose_name="Kategoriya sharti (userlarga ko'rinadi)")
     created_at = models.DateTimeField(auto_now_add=True)
-
-    # Audio sozlamalari
-    audio_file = models.FileField(
-        upload_to='category_audio/', blank=True, null=True,
-        verbose_name="Kategoriya audio fayli"
-    )
-    max_audio_plays = models.IntegerField(
-        default=1,
-        verbose_name="Audio necha marta eshitilishi mumkin (0=cheksiz)"
-    )
-    audio_instruction = models.TextField(
-        blank=True, null=True,
-        verbose_name="Audio uchun qo'shimcha ko'rsatma"
-    )
 
     class Meta:
         verbose_name = "Kategoriya"
@@ -83,6 +70,29 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class CategoryAudio(models.Model):
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='audios')
+    audio_file = models.FileField(
+        upload_to='category_audio/', verbose_name="Audio fayl"
+    )
+    max_audio_plays = models.IntegerField(
+        default=1, verbose_name="Necha marta eshitish mumkin (0=cheksiz)"
+    )
+    audio_instruction = models.TextField(
+        blank=True, null=True, verbose_name="Qo'shimcha ko'rsatma"
+    )
+    order = models.IntegerField(default=0, verbose_name="Tartib")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Kategoriya audio"
+        verbose_name_plural = "Kategoriya audiolari"
+        ordering = ['order', 'created_at']
+
+    def __str__(self):
+        return f"{self.category.name} - Audio #{self.id}"
 
 
 class Folder(models.Model):
@@ -209,7 +219,7 @@ class QuizQuestion(models.Model):
     reading_text = models.ForeignKey('ReadingText', on_delete=models.CASCADE, null=True, blank=True, related_name='quiz_questions', verbose_name="Matn")
     blank_options = models.JSONField(default=dict, blank=True, null=True, verbose_name="Bo'sh joy variantlari")
     blank_positions = models.JSONField(default=dict, blank=True, null=True, verbose_name="Bo'sh joy pozitsiyalari")
-    points = models.IntegerField(default=1, verbose_name="Ball")
+    points = models.FloatField(default=1.0, verbose_name="Ball")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -701,14 +711,25 @@ class Rules(models.Model):
 3. Ko'chirish qat'iyan man etiladi
 4. Texnik muammoda o'qituvchiga murojaat qiling
 5. Natijalar tekshiruvdan keyin e'lon qilinadi""")
+    alarm_audio = models.FileField(
+        upload_to='alarm_audio/', blank=True, null=True,
+        verbose_name="Signalizatsiya musiqasi"
+    )
+    certificate_bg = models.ImageField(
+        upload_to='certificate_bg/', blank=True, null=True,
+        verbose_name="Sertifikat fon rasmi"
+    )
+    certificate_threshold = models.IntegerField(
+        default=50, verbose_name="Sertifikat olish uchun minimal ball (%)"
+    )
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Qonun va qoidalar"
-        verbose_name_plural = "Qonun va qoidalar"
+        verbose_name = "Sozlama"
+        verbose_name_plural = "Sozlamalar"
 
     def __str__(self):
-        return "Qonun va qoidalar"
+        return "Sayt sozlamalari"
 
     def get_video_url(self):
         if self.video_url:
@@ -751,6 +772,7 @@ class Device(models.Model):
     last_seen = models.DateTimeField(auto_now=True, verbose_name="Oxirgi ko'rilgan")
     first_seen = models.DateTimeField(auto_now_add=True, verbose_name="Birinchi ko'rilgan")
     is_active = models.BooleanField(default=True, verbose_name="Faol")
+    battery_level = models.IntegerField(null=True, blank=True, verbose_name="Batareya (%)")
 
     class Meta:
         verbose_name = "Qurilma"
@@ -835,6 +857,7 @@ class StudentAudioPlay(models.Model):
     - student: kimning hisobi
     - group: qaysi guruh
     - category: qaysi kategoriya audiosini eshitilyapti
+    - audio: qaysi audio (CategoryAudio modeliga FK, nullable)
     - exam_session: qaysi sessiyada (nullable)
     - play_count: necha marta eshitgan
     - max_plays: maksimal ruxsat etilgan marta (0=cheksiz)
@@ -842,6 +865,10 @@ class StudentAudioPlay(models.Model):
     student = models.ForeignKey(Student, on_delete=models.SET_NULL, null=True, blank=True, related_name='audio_plays')
     group = models.ForeignKey(Group, on_delete=models.SET_NULL, null=True, blank=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    audio = models.ForeignKey(
+        'CategoryAudio', on_delete=models.CASCADE,
+        null=True, blank=True, related_name='student_plays'
+    )
     exam_session = models.ForeignKey(
         'QuizSession', on_delete=models.SET_NULL,
         null=True, blank=True
@@ -854,8 +881,8 @@ class StudentAudioPlay(models.Model):
     class Meta:
         verbose_name = "Student audio ijrosi"
         verbose_name_plural = "Student audio ijrolari"
-        # Har bir student + group + category + session kombinatsiyasi unique
-        unique_together = ['student', 'group', 'category', 'exam_session']
+        # Har bir student + group + audio + session kombinatsiyasi unique
+        unique_together = ['student', 'group', 'audio', 'exam_session']
 
     def __str__(self):
         max_display = self.max_plays if self.max_plays > 0 else '∞'

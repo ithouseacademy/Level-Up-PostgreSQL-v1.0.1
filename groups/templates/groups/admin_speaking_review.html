@@ -6,7 +6,7 @@
         <div class="bg-white rounded-none border border-gray-200 shadow-sm">
             <div class="px-6 py-4 border-b border-gray-200 bg-white flex items-center justify-between">
                 <div>
-                    <h1 class="text-xl font-bold text-gray-800">🎤 Og'zaki (Speaking) baholash</h1>
+                    <h1 class="text-xl font-bold text-gray-800"><i class="fas fa-microphone"></i> Og'zaki (Speaking) baholash</h1>
                     <p class="text-sm text-gray-400 mt-1">{{ group.name }}</p>
                 </div>
                 <a href="{% url 'quiz_results' group.id %}" class="text-sm text-gray-500 hover:text-gray-800 border border-gray-300 px-4 py-2 rounded">← Natijalarga qaytish</a>
@@ -26,9 +26,9 @@
                                 </div>
                                 <div class="text-right">
                                     {% if entry.graded %}
-                                        <span class="text-sm font-semibold text-green-700">✅ Baholangan: {{ entry.earned_points }}/{{ entry.max_points }}</span>
+                                        <span class="text-sm font-semibold text-green-700"><i class="fas fa-check text-green-500"></i> Baholangan: {{ entry.earned_points }}/{{ entry.max_points }}</span>
                                     {% else %}
-                                        <span class="text-sm font-semibold text-purple-700">⏳ Baholanmagan</span>
+                                        <span class="text-sm font-semibold text-purple-700"><i class="fas fa-hourglass-half"></i> Baholanmagan</span>
                                     {% endif %}
                                 </div>
                             </div>
@@ -53,7 +53,7 @@
                     </div>
                 {% else %}
                     <div class="text-center py-16">
-                        <p class="text-gray-400 text-lg">🎤 Hech qanday speaking savoli topilmadi</p>
+                        <p class="text-gray-400 text-lg"><i class="fas fa-microphone"></i> Hech qanday speaking savoli topilmadi</p>
                         <p class="text-xs text-gray-300 mt-2">Avval Speaking turidagi savol yarating va guruhga kategoriya biriktiring</p>
                     </div>
                 {% endif %}
@@ -95,7 +95,7 @@ function saveSpeakingScore(btn) {
         if (data.success) {
             card.classList.remove('bg-purple-50', 'border-purple-200');
             card.classList.add('bg-green-50', 'border-green-200');
-            btn.parentElement.innerHTML = `<span class="text-sm font-semibold text-green-700">✅ Baholangan: ${earned}/${maxPts}</span>`;
+            btn.parentElement.innerHTML = `<span class="text-sm font-semibold text-green-700"><i class="fas fa-check text-green-500"></i> Baholangan: ${earned}/${maxPts}</span>`;
         } else {
             alert('Xatolik: ' + data.message);
             btn.disabled = false;

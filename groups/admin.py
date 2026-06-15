@@ -100,22 +100,22 @@ class QuizQuestionAdmin(admin.ModelAdmin):
     
     def question_type_badge(self, obj):
         if obj.question_type == 'fill_blank':
-            return '📝 Bo\'sh joy'
+            return '<i class="fas fa-pen"></i> Bo\'sh joy'
         elif obj.question_type == 'sentence_arrangement':
-            return '🔀 So\'z tartibi'
+            return '<i class="fas fa-random"></i> So\'z tartibi'
         else:
-            return '❓ Boshqa'
+            return '<i class="fas fa-question-circle"></i> Boshqa'
     question_type_badge.short_description = 'Savol turi belgisi'
     
     def preview(self, obj):
         if obj.question_type == 'fill_blank':
             text = obj.question_text[:60] if obj.question_text else '-'
-            return f'📝 {text}'
+            return f'<i class="fas fa-pen"></i> {text}'
         else:
             text = obj.correct_sentence[:60] if obj.correct_sentence else '-'
             words = obj.get_scrambled_words_list() if hasattr(obj, 'get_scrambled_words_list') else []
             words_str = ' / '.join(words[:5]) + ('...' if len(words) > 5 else '')
-            return f'🔀 {text}<br><span style="color:gray;font-size:11px;">🔀 {words_str}</span>'
+            return f'<i class="fas fa-random"></i> {text}<br><span style="color:gray;font-size:11px;"><i class="fas fa-random"></i> {words_str}</span>'
     preview.short_description = 'Savol'
     preview.allow_tags = True
     
@@ -321,8 +321,8 @@ class ExamControlAdmin(admin.ModelAdmin):
     
     def status_badge(self, obj):
         if obj.is_active:
-            return '🟢 Faol'
-        return '🔴 Faol emas'
+            return '<i class="fas fa-circle text-green-500"></i> Faol'
+        return '<i class="fas fa-circle text-red-500"></i> Faol emas'
     status_badge.short_description = 'Holat'
 
 
@@ -371,14 +371,19 @@ class AdminPasswordAdmin(admin.ModelAdmin):
         return request.user.is_superuser
 
 
-# ============ RULES ADMIN ============
+# ============ SOZLAMALAR (SETTINGS) ADMIN ============
 @admin.register(Rules)
 class RulesAdmin(admin.ModelAdmin):
-    """Qonun va qoidalar admin paneli"""
-    list_display = ['id', 'video_preview', 'images_status', 'rules_preview', 'updated_at']
+    """Sozlamalar admin paneli"""
+    list_display = ['id', 'video_preview', 'alarm_status', 'images_status', 'rules_preview', 'updated_at']
     readonly_fields = ['updated_at']
     
     fieldsets = (
+        ('Signalizatsiya (Alarm)', {
+            'fields': ('alarm_audio',),
+            'description': 'Imtihon vaqtida signalizatsiya rejimida o\'ynaydigan musiqa fayli',
+            'classes': ('wide',)
+        }),
         ('Video', {
             'fields': ('video_url', 'video_file'),
             'classes': ('wide',)
@@ -392,6 +397,10 @@ class RulesAdmin(admin.ModelAdmin):
         ('Qoidalar matni', {
             'fields': ('rules_text',),
         }),
+        ('Sertifikat sozlamalari', {
+            'fields': ('certificate_bg', 'certificate_threshold'),
+            'classes': ('wide',)
+        }),
         ('Vaqt', {
             'fields': ('updated_at',),
             'classes': ('collapse',)
@@ -400,23 +409,29 @@ class RulesAdmin(admin.ModelAdmin):
     
     def video_preview(self, obj):
         if obj.video_url:
-            return f'<a href="{obj.video_url}" target="_blank">📹 YouTube</a>'
+            return f'<a href="{obj.video_url}" target="_blank"><i class="fas fa-video"></i> YouTube</a>'
         elif obj.video_file:
             return '📁 Video fayl'
-        return '❌ Video yo\'q'
+            return '<i class="fas fa-times-circle"></i> Video yo\'q'
     video_preview.short_description = 'Video'
     video_preview.allow_tags = True
+    
+    def alarm_status(self, obj):
+        if obj.alarm_audio:
+            return '<i class="fas fa-check-circle"></i> Musiqa bor'
+            return '<i class="fas fa-times-circle"></i> Musiqa yo\'q'
+    alarm_status.short_description = 'Signalizatsiya'
     
     def images_status(self, obj):
         images = []
         if obj.image1:
-            images.append('✅ Rasm 1')
+            images.append('<i class="fas fa-check-circle"></i> Rasm 1')
         else:
-            images.append('❌ Rasm 1')
+            images.append('<i class="fas fa-times-circle"></i> Rasm 1')
         if obj.image2:
-            images.append('✅ Rasm 2')
+            images.append('<i class="fas fa-check-circle"></i> Rasm 2')
         else:
-            images.append('❌ Rasm 2')
+            images.append('<i class="fas fa-times-circle"></i> Rasm 2')
         return ' | '.join(images)
     images_status.short_description = 'Rasmlar holati'
     

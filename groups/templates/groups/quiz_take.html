@@ -76,60 +76,61 @@
                         {% for cat in category_list %}
                             <div class="category-page" data-page="{{ forloop.counter0 }}" data-category-id="{{ cat.grouper.id }}" style="display: {% if forloop.first %}block{% else %}none{% endif %}">
                                 
-                                <!-- KATEGORIYA NOMI -->
+                                 <!-- KATEGORIYA SHARTI (name/description emas) -->
                                 <div class="text-center mb-6">
                                     <div class="inline-flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full text-xs text-gray-500 mb-3">
-                                        <span>📖 {{ forloop.counter }} / {{ category_list|length }}</span>
+                                        <span><i class="fas fa-book"></i> {{ forloop.counter }} / {{ category_list|length }}</span>
                                         <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
                                         <span>{{ cat.list|length }} ta savol</span>
                                     </div>
-                                    <h2 class="text-2xl font-bold text-gray-800">{{ cat.grouper.name }}</h2>
-                                    {% if cat.grouper.description %}
-                                        <p class="text-gray-500 text-sm mt-2 max-w-md mx-auto">{{ cat.grouper.description }}</p>
+                                    {% if cat.grouper.rules %}
+                                        <div class="text-gray-600 text-sm mt-2 max-w-md mx-auto">{{ cat.grouper.rules|linebreaks }}</div>
                                     {% endif %}
                                 </div>
 
-                                <!-- KATEGORIYA AUDIO -->
-                                {% if cat.grouper.audio_file %}
-                                <div class="audio-card mb-6 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-100">
-                                    <div class="flex items-center justify-between flex-wrap gap-3">
-                                        <div class="flex items-center gap-4">
-                                            <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                                                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path>
+                                <!-- KATEGORIYA AUDIOLARI (bir nechta bo'lishi mumkin) -->
+                                {% if cat.grouper.audios.all %}
+                                <div class="space-y-3 mb-6">
+                                    {% for audio in cat.grouper.audios.all %}
+                                    <div class="audio-card bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-100">
+                                        <div class="flex items-center justify-between flex-wrap gap-3">
+                                            <div class="flex items-center gap-4">
+                                                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                                                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path>
+                                                    </svg>
+                                                </div>
+                                                <div>
+                                                    <h3 class="font-medium text-gray-800">Audio {{ forloop.counter }}</h3>
+                                                    {% if audio.audio_instruction %}
+                                                        <p class="text-xs text-gray-500">💡 {{ audio.audio_instruction|truncatewords:10 }}</p>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <button type="button" class="play-audio-btn bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-full text-sm font-medium transition flex items-center gap-2 shadow-sm"
+                                                    data-category-id="{{ cat.grouper.id }}" data-audio-id="{{ audio.id }}">
+                                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M3 9v6h4l5 5V4L7 9H3z"/>
                                                 </svg>
-                                            </div>
-                                            <div>
-                                                <h3 class="font-medium text-gray-800">Audio material</h3>
-                                                <p class="text-xs text-gray-500">{{ cat.grouper.name }} uchun audio</p>
+                                                Boshlash
+                                            </button>
+                                        </div>
+                                        <div class="mt-3 flex items-center gap-3">
+                                            <div class="flex-1">
+                                                <div class="text-xs text-gray-500 flex justify-between mb-1">
+                                                    <span>Eshitilgan:</span>
+                                                    <span class="audio-play-count font-medium" data-category-id="{{ cat.grouper.id }}" data-audio-id="{{ audio.id }}">0/{% if audio.max_audio_plays == 0 %}∞{% else %}{{ audio.max_audio_plays }}{% endif %}</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                                    <div class="audio-progress bg-purple-500 h-1.5 rounded-full" style="width: 0%" data-category-id="{{ cat.grouper.id }}" data-audio-id="{{ audio.id }}"></div>
+                                                </div>
                                             </div>
                                         </div>
-                                        <button type="button" class="play-audio-btn bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-full text-sm font-medium transition flex items-center gap-2 shadow-sm" data-category-id="{{ cat.grouper.id }}">
-                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                                <path d="M3 9v6h4l5 5V4L7 9H3z"/>
-                                            </svg>
-                                            Boshlash
-                                        </button>
+                                        <audio class="category-audio hidden" data-category-id="{{ cat.grouper.id }}" data-audio-id="{{ audio.id }}" preload="auto">
+                                            <source src="{{ audio.audio_file.url }}" type="audio/mpeg">
+                                        </audio>
                                     </div>
-                                    <div class="mt-3 flex items-center gap-3">
-                                        <div class="flex-1">
-                                            <div class="text-xs text-gray-500 flex justify-between mb-1">
-                                                <span>Eshitilgan:</span>
-                                                <span class="audio-play-count font-medium" data-category-id="{{ cat.grouper.id }}">0/{% if cat.grouper.max_audio_plays == 0 %}∞{% else %}{{ cat.grouper.max_audio_plays }}{% endif %}</span>
-                                            </div>
-                                            <div class="w-full bg-gray-200 rounded-full h-1.5">
-                                                <div class="audio-progress bg-purple-500 h-1.5 rounded-full" style="width: 0%"></div>
-                                            </div>
-                                        </div>
-                                        {% if cat.grouper.audio_instruction %}
-                                        <div class="text-xs text-gray-400 max-w-[200px]">
-                                            💡 {{ cat.grouper.audio_instruction|truncatewords:10 }}
-                                        </div>
-                                        {% endif %}
-                                    </div>
-                                    <audio class="category-audio hidden" data-category-id="{{ cat.grouper.id }}" preload="auto">
-                                        <source src="{{ cat.grouper.audio_file.url }}" type="audio/mpeg">
-                                    </audio>
+                                    {% endfor %}
                                 </div>
                                 {% endif %}
 
@@ -161,20 +162,20 @@
                                                 <div class="flex items-center gap-2">
                                                     <span class="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center text-xs font-medium text-gray-600">{{ forloop.counter }}</span>
                                                     <span class="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full">
-                                                        {% if q.question_type == 'fill_blank' %}📝 Word Bank
-                                                        {% elif q.question_type == 'fill_blank_no_word' %}📝 Bo'sh joy
-                                                        {% elif q.question_type == 'sentence_arrangement' %}🔀 So'z tartib
-                                                        {% elif q.question_type == 'reading_comprehension' %}📖 Matnli
-                                                        {% elif q.question_type == 'true_false' %}✓✗ True/False
-                                                        {% elif q.question_type == 'multiple_choice' %}🔘 Test
-                                                        {% elif q.question_type == 'underline_correct' %}✏️ To'g'ri so'z
-                                                        {% elif q.question_type == 'matching' %}🔗 Moslashtirish
-                                                        {% elif q.question_type == 'cloze_multiple_blanks' %}📄 Ko'p bo'sh joy
-                                                        {% elif q.question_type == 'complete_the_words' %}🔤 So'zlarni to'ldirish
-                                                        {% elif q.question_type == 'match_fill' %}🧩 So'zlarni mos qo'yish
-                                                        {% elif q.question_type == 'writing' %}✍️ Yozma ish
-                                                        {% elif q.question_type == 'speaking' %}🎤 Og'zaki
-                                                        {% elif q.question_type == 'plain_text' %}📄 Oddiy matn
+                                                        {% if q.question_type == 'fill_blank' %}<i class="fas fa-pen"></i> Word Bank
+                                                        {% elif q.question_type == 'fill_blank_no_word' %}<i class="fas fa-pen"></i> Bo'sh joy
+                                                        {% elif q.question_type == 'sentence_arrangement' %}<i class="fas fa-random"></i> So'z tartib
+                                                        {% elif q.question_type == 'reading_comprehension' %}<i class="fas fa-book"></i> Matnli
+                                                        {% elif q.question_type == 'true_false' %}<i class="fas fa-check"></i><i class="fas fa-times"></i> True/False
+                                                        {% elif q.question_type == 'multiple_choice' %}<i class="fas fa-dot-circle"></i> Test
+                                                        {% elif q.question_type == 'underline_correct' %}<i class="fas fa-pencil-alt"></i> To'g'ri so'z
+                                                        {% elif q.question_type == 'matching' %}<i class="fas fa-link"></i> Moslashtirish
+                                                        {% elif q.question_type == 'cloze_multiple_blanks' %}<i class="fas fa-file-alt"></i> Ko'p bo'sh joy
+                                                        {% elif q.question_type == 'complete_the_words' %}<i class="fas fa-font"></i> So'zlarni to'ldirish
+                                                        {% elif q.question_type == 'match_fill' %}<i class="fas fa-puzzle-piece"></i> So'zlarni mos qo'yish
+                                                        {% elif q.question_type == 'writing' %}<i class="fas fa-edit"></i> Yozma ish
+                                                        {% elif q.question_type == 'speaking' %}<i class="fas fa-microphone"></i> Og'zaki
+                                                        {% elif q.question_type == 'plain_text' %}<i class="fas fa-file-alt"></i> Oddiy matn
                                                         {% endif %}
                                                     </span>
                                                     {% if q.question_type != 'plain_text' and config.show_points_to_student %}
@@ -231,29 +232,63 @@
 
                                             <!-- 4. MULTIPLE CHOICE -->
                                             {% elif q.question_type == 'multiple_choice' %}
-                                                <p class="text-gray-800 font-medium mb-3">{{ q.question_text }}</p>
-                                                <div class="space-y-2">
-                                                    {% for opt in q.get_options_list %}
-                                                        <label class="flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-gray-50 transition">
-                                                            <input type="radio" name="q_{{ q.id }}" value="{{ opt }}" class="w-4 h-4 accent-black" {% if user_answers|get_item:q.id == opt %}checked{% endif %}>
-                                                            <span class="text-sm text-gray-700">{{ opt }}</span>
-                                                        </label>
+                                                {% if q.blank_options and q.blank_options|length > 0 %}
+                                                    {% for sq in q.blank_options %}
+                                                        <div class="mb-4 p-3 border border-gray-100 rounded">
+                                                            <p class="text-gray-800 font-medium mb-3">{{ forloop.counter }}. {{ sq.text }}</p>
+                                                            <div class="space-y-2 ml-4">
+                                                                {% for opt in sq.options %}
+                                                                    <label class="flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                                                                        <input type="radio" name="q_{{ q.id }}_{{ forloop.parentloop.counter0 }}" value="{{ opt }}" class="w-4 h-4 accent-black">
+                                                                        <span class="text-sm text-gray-700">{{ opt }}</span>
+                                                                    </label>
+                                                                {% endfor %}
+                                                            </div>
+                                                        </div>
                                                     {% endfor %}
-                                                </div>
+                                                {% else %}
+                                                    <p class="text-gray-800 font-medium mb-3">{{ q.question_text }}</p>
+                                                    <div class="space-y-2">
+                                                        {% for opt in q.get_options_list %}
+                                                            <label class="flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                                                                <input type="radio" name="q_{{ q.id }}" value="{{ opt }}" class="w-4 h-4 accent-black" {% if user_answers|get_item:q.id == opt %}checked{% endif %}>
+                                                                <span class="text-sm text-gray-700">{{ opt }}</span>
+                                                            </label>
+                                                        {% endfor %}
+                                                    </div>
+                                                {% endif %}
 
                                             <!-- 5. TRUE/FALSE -->
                                             {% elif q.question_type == 'true_false' %}
-                                                <p class="text-gray-800 mb-3">{{ q.question_text }}</p>
-                                                <div class="flex gap-4">
-                                                    <label class="flex items-center gap-2 cursor-pointer">
-                                                        <input type="radio" name="q_{{ q.id }}" value="true" class="w-4 h-4" {% if user_answers|get_item:q.id == 'true' %}checked{% endif %}> 
-                                                        <span class="text-green-600">✅ To'g'ri</span>
-                                                    </label>
-                                                    <label class="flex items-center gap-2 cursor-pointer">
-                                                        <input type="radio" name="q_{{ q.id }}" value="false" class="w-4 h-4" {% if user_answers|get_item:q.id == 'false' %}checked{% endif %}> 
-                                                        <span class="text-red-600">❌ Noto'g'ri</span>
-                                                    </label>
-                                                </div>
+                                                {% if q.blank_options and q.blank_options|length > 0 %}
+                                                    {% for sq in q.blank_options %}
+                                                        <div class="mb-4 p-3 border border-gray-100 rounded">
+                                                            <p class="text-gray-800 font-medium mb-3">{{ forloop.counter }}. {{ sq.text }}</p>
+                                                            <div class="flex gap-4 ml-4">
+                                                                <label class="flex items-center gap-2 cursor-pointer">
+                                                                    <input type="radio" name="q_{{ q.id }}_{{ forloop.counter0 }}" value="true" class="w-4 h-4">
+                                                                    <span class="text-green-600">✅ To'g'ri</span>
+                                                                </label>
+                                                                <label class="flex items-center gap-2 cursor-pointer">
+                                                                    <input type="radio" name="q_{{ q.id }}_{{ forloop.counter0 }}" value="false" class="w-4 h-4">
+                                                                    <span class="text-red-600">❌ Noto'g'ri</span>
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    <p class="text-gray-800 mb-3">{{ q.question_text }}</p>
+                                                    <div class="flex gap-4">
+                                                        <label class="flex items-center gap-2 cursor-pointer">
+                                                            <input type="radio" name="q_{{ q.id }}" value="true" class="w-4 h-4" {% if user_answers|get_item:q.id == 'true' %}checked{% endif %}> 
+                                                            <span class="text-green-600">✅ To'g'ri</span>
+                                                        </label>
+                                                        <label class="flex items-center gap-2 cursor-pointer">
+                                                            <input type="radio" name="q_{{ q.id }}" value="false" class="w-4 h-4" {% if user_answers|get_item:q.id == 'false' %}checked{% endif %}> 
+                                                            <span class="text-red-600">❌ Noto'g'ri</span>
+                                                        </label>
+                                                    </div>
+                                                {% endif %}
 
                                             <!-- 6. UNDERLINE CORRECT -->
                                             {% elif q.question_type == 'underline_correct' %}
@@ -373,7 +408,7 @@
                                             {% elif q.question_type == 'speaking' %}
                                                 <div class="mb-4">
                                                     <p class="text-gray-800 font-medium mb-3">{{ q.question_text }}</p>
-                                                    <p class="text-sm text-gray-500 italic">🎤 Ushbu savolga og'zaki javob bering. O'qituvchingiz ball qo'yadi.</p>
+                                                    <p class="text-sm text-gray-500 italic"><i class="fas fa-microphone"></i> Ushbu savolga og'zaki javob bering. O'qituvchingiz ball qo'yadi.</p>
                                                     <input type="hidden" name="q_{{ q.id }}" value="spoken">
                                                 </div>
 
@@ -1438,22 +1473,30 @@ document.querySelectorAll('.next-page').forEach(btn => {
 // ============================================================
 // AUDIO
 // ============================================================
-async function checkAudioPlay(categoryId) {
+async function checkAudioPlay(categoryId, audioId) {
     if (isBlocked) return false;
     try {
+        const body = { group_id: {{ group.id }}, category_id: categoryId };
+        if (audioId) body.audio_id = audioId;
         const response = await fetch('/quiz/check-audio-play/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
-            body: JSON.stringify({ group_id: {{ group.id }}, category_id: categoryId })
+            body: JSON.stringify(body)
         });
         const data = await response.json();
         if (data.success) {
-            const countSpan = document.querySelector(`.audio-play-count[data-category-id="${categoryId}"]`);
-            const progressBar = document.querySelector(`.audio-progress[data-category-id="${categoryId}"]`);
+            const selector = audioId
+                ? `.audio-play-count[data-category-id="${categoryId}"][data-audio-id="${audioId}"]`
+                : `.audio-play-count[data-category-id="${categoryId}"]`;
+            const countSpan = document.querySelector(selector);
             if (countSpan) {
                 const maxPlays = data.max_plays === 0 ? '∞' : data.max_plays;
                 countSpan.textContent = `${data.play_count}/${maxPlays}`;
             }
+            const progressSelector = audioId
+                ? `.audio-progress[data-category-id="${categoryId}"][data-audio-id="${audioId}"]`
+                : `.audio-progress[data-category-id="${categoryId}"]`;
+            const progressBar = document.querySelector(progressSelector);
             if (progressBar && data.max_plays > 0) {
                 progressBar.style.width = `${(data.play_count / data.max_plays) * 100}%`;
             }
@@ -1463,17 +1506,22 @@ async function checkAudioPlay(categoryId) {
     } catch (error) { return false; }
 }
 
-async function recordAudioPlay(categoryId) {
+async function recordAudioPlay(categoryId, audioId) {
     if (isBlocked) return false;
     try {
+        const body = { group_id: {{ group.id }}, category_id: categoryId };
+        if (audioId) body.audio_id = audioId;
         const response = await fetch('/quiz/record-audio-play/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
-            body: JSON.stringify({ group_id: {{ group.id }}, category_id: categoryId })
+            body: JSON.stringify(body)
         });
         const data = await response.json();
         if (data.success) {
-            const countSpan = document.querySelector(`.audio-play-count[data-category-id="${categoryId}"]`);
+            const selector = audioId
+                ? `.audio-play-count[data-category-id="${categoryId}"][data-audio-id="${audioId}"]`
+                : `.audio-play-count[data-category-id="${categoryId}"]`;
+            const countSpan = document.querySelector(selector);
             if (countSpan) {
                 const maxPlays = data.max_plays === 0 ? '∞' : data.max_plays;
                 countSpan.textContent = `${data.play_count}/${maxPlays}`;
@@ -1490,16 +1538,20 @@ document.querySelectorAll('.play-audio-btn').forEach(btn => {
     btn.addEventListener('click', async function() {
         if (isBlocked) return;
         const categoryId = this.dataset.categoryId;
-        const canPlay = await checkAudioPlay(categoryId);
+        const audioId = this.dataset.audioId || null;
+        const canPlay = await checkAudioPlay(categoryId, audioId);
         if (!canPlay) {
             alert('⚠️ Siz bu audio uchun maksimal eshitish limitiga yetdingiz!');
             return;
         }
-        const audio = document.querySelector(`.category-audio[data-category-id="${categoryId}"]`);
+        const audioSelector = audioId
+            ? `.category-audio[data-category-id="${categoryId}"][data-audio-id="${audioId}"]`
+            : `.category-audio[data-category-id="${categoryId}"]`;
+        const audio = document.querySelector(audioSelector);
         if (audio) {
             audio.currentTime = 0;
             audio.play().catch(e => console.log('Audio play error:', e));
-            await recordAudioPlay(categoryId);
+            await recordAudioPlay(categoryId, audioId);
         }
     });
 });
@@ -1570,7 +1622,8 @@ let alarmAudio = null;
 let isAlarmPlaying = false;
 
 function initAlarm() {
-    alarmAudio = new Audio("{% static 'SIGNALIZATSIYA.mp3' %}");
+    var alarmSrc = "{% if alarm_audio_url %}{{ alarm_audio_url }}{% else %}{% static 'SIGNALIZATSIYA.mp3' %}{% endif %}";
+    alarmAudio = new Audio(alarmSrc);
     alarmAudio.loop = true;
     alarmAudio.volume = 1.0;
 }
@@ -1880,20 +1933,35 @@ document.getElementById('quizForm')?.addEventListener('submit', async (e) => {
         localStorage.setItem('_dev_id', deviceId);
     }
 
+    function getBatteryLevel() {
+        if ('getBattery' in navigator) {
+            return navigator.getBattery().then(function(battery) {
+                return Math.round(battery.level * 100);
+            }).catch(function() { return null; });
+        }
+        return Promise.resolve(null);
+    }
+
     function registerDevice() {
-        fetch('/device/register/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCSRFToken()
-            },
-            body: JSON.stringify({
+        getBatteryLevel().then(function(batteryLevel) {
+            var data = {
                 device_id: deviceId,
                 platform: navigator.platform || navigator.userAgent || '',
                 user_agent: navigator.userAgent,
                 screen_resolution: screen.width + 'x' + screen.height
-            })
-        }).catch(function() {});
+            };
+            if (batteryLevel !== null) {
+                data.battery_level = batteryLevel;
+            }
+            fetch('/device/register/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify(data)
+            }).catch(function() {});
+        });
     }
 
     registerDevice();
