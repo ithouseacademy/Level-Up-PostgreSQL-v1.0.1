@@ -37,27 +37,32 @@ def split_cloze_blanks(text):
     if not text:
         return []
     
-    pattern = r'(___(\d+)___)'
+    if re.search(r'___(\d+)___', text):
+        pattern = r'(___(\d+)___)'
+    else:
+        pattern = r'(_{3,})'
+    
     parts = []
     last_end = 0
+    auto = [0]
     
     for match in re.finditer(pattern, text):
         start, end = match.span()
-        blank_num = match.group(2)
+        if match.lastindex and match.lastindex >= 2 and match.group(2):
+            blank_num = match.group(2)
+        else:
+            auto[0] += 1
+            blank_num = str(auto[0])
         
-        # Matn qismi (agar mavjud bo'lsa)
         if start > last_end:
             parts.append({'text': text[last_end:start], 'blank_num': None})
         
-        # Bo'sh joy qismi
         parts.append({'text': None, 'blank_num': blank_num})
         last_end = end
     
-    # Qolgan matn
     if last_end < len(text):
         parts.append({'text': text[last_end:], 'blank_num': None})
     
-    # Agar hech qanday bo'sh joy topilmasa, butun matnni qaytarish
     if not parts:
         parts.append({'text': text, 'blank_num': None})
     
@@ -106,7 +111,16 @@ def split_cloze_blanks(text):
         return []
     
     parts = []
-    pattern = r'(___\d+___)'
+    if re.search(r'___\d+___', text):
+        pattern = r'(___\d+___)'
+    else:
+        i = [0]
+        def repl(m):
+            i[0] += 1
+            return f'___{i[0]}___'
+        text = re.sub(r'_{3,}', repl, text)
+        pattern = r'(___\d+___)'
+    
     split_text = re.split(pattern, text)
     
     for part in split_text:

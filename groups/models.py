@@ -416,6 +416,13 @@ class QuizQuestion(models.Model):
             return self.question_text or ''
         words = self.get_match_fill_words()
         text = self.question_text
+        if not re.search(r'___(\d+)___', text):
+            i = 0
+            def auto_num(m):
+                nonlocal i
+                i += 1
+                return f'___{i}___'
+            text = re.sub(r'_{3,}', auto_num, text)
         blanks = re.findall(r'_{3,}(\d+)_{3,}', text)
         for blank_num in blanks:
             placeholder = '___' + blank_num + '___'
@@ -433,7 +440,10 @@ class QuizQuestion(models.Model):
     def get_cloze_blanks(self):
         if self.question_type == 'cloze_multiple_blanks' and self.question_text:
             blanks = re.findall(r'___(\d+)___', self.question_text)
-            return sorted(set(blanks), key=int)
+            if blanks:
+                return sorted(set(blanks), key=int)
+            blanks = re.findall(r'_{3,}', self.question_text)
+            return [str(i+1) for i in range(len(blanks))]
         return []
 
     def get_cloze_blank_options(self, blank_num):
@@ -466,6 +476,13 @@ class QuizQuestion(models.Model):
                     options_html += f'<option value="{opt}">{opt}</option>'
                 return f'<select name="{name_attr}" class="cloze-select border border-gray-300 px-2 py-1 mx-1" data-blank="{blank_num}">{options_html}</select>'
             return f'<input type="text" name="{name_attr}" class="cloze-input border border-gray-300 px-2 py-1 mx-1 w-32" data-blank="{blank_num}" placeholder="___{blank_num}___" autocomplete="off">'
+        if not re.search(r'___(\d+)___', text):
+            i = 0
+            def auto_num(m):
+                nonlocal i
+                i += 1
+                return f'___{i}___'
+            text = re.sub(r'_{3,}', auto_num, text)
         return re.sub(r'___(\d+)___', replace_match, text)
 
     # =========================================================

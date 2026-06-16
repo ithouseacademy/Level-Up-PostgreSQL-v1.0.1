@@ -325,10 +325,10 @@
                     <!-- ============================================================ -->
                     <div id="clozeMultipleBlanksFields" class="px-6 py-5 border-b border-gray-100" style="display: none;">
                         <div class="mb-5">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Matn (___1___, ___2___ shaklida belgilang) <span class="text-red-500">*</span></label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Matn (___1___, ___2___ yoki ___ bilan belgilang) <span class="text-red-500">*</span></label>
                             <textarea name="cloze_text" id="clozeText" rows="8" class="w-full border border-gray-200 px-3 py-2 font-mono text-sm" placeholder="Masalan:
-        London is ___1___ city. It is ___2___ than New York. The weather is ___3___ in summer."></textarea>
-                            <p class="text-xs text-gray-400 mt-1"><i class="fas fa-lightbulb text-yellow-500"></i> Bo'sh joylarni <code class="bg-gray-100 px-1">___1___</code>, <code class="bg-gray-100 px-1">___2___</code> shaklida belgilang</p>
+        London is ___ city. It is ___ than New York. The weather is ___ in summer."></textarea>
+                            <p class="text-xs text-gray-400 mt-1"><i class="fas fa-lightbulb text-yellow-500"></i> Bo'sh joylarni <code class="bg-gray-100 px-1">___</code>, <code class="bg-gray-100 px-1">__</code> yoki <code class="bg-gray-100 px-1">___1___</code> shaklida belgilang</p>
                         </div>
                         
                         <div class="border-t pt-4 mt-2">
@@ -403,10 +403,10 @@
                     <!-- ============================================================ -->
                     <div id="matchFillFields" class="px-6 py-5 border-b border-gray-100" style="display: none;">
                         <div class="mb-5">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Matn (___1___, ___2___ bilan belgilang) <span class="text-red-500">*</span></label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Matn (___, __ yoki ___1___ bilan belgilang) <span class="text-red-500">*</span></label>
                             <textarea name="mf_text" id="mfText" rows="5" class="w-full border border-gray-200 px-3 py-2 font-mono text-sm" placeholder="Masalan:
-        She got ___1___ . She was ___2___ . She visited ___3___ for ___4___ ."></textarea>
-                            <p class="text-xs text-gray-400 mt-1"><i class="fas fa-lightbulb text-yellow-500"></i> Bo'sh joylarni <code class="bg-gray-100 px-1">___1___</code>, <code class="bg-gray-100 px-1">___2___</code> shaklida belgilang</p>
+        She got ___ . She was ___ . She visited ___ for ___ ."></textarea>
+                            <p class="text-xs text-gray-400 mt-1"><i class="fas fa-lightbulb text-yellow-500"></i> Bo'sh joylarni <code class="bg-gray-100 px-1">___</code>, <code class="bg-gray-100 px-1">__</code> yoki <code class="bg-gray-100 px-1">___1___</code> shaklida belgilang</p>
                         </div>
                         <div class="mb-5">
                             <label class="block text-sm font-medium text-gray-700 mb-2">So'zlar banki (variantlar) <span class="text-red-500">*</span></label>
@@ -943,17 +943,16 @@
                 return;
             }
             
-            const pattern = /___(\d+)___/g;
-            const blanks = new Set();
+            const pattern = /_{2,}/g;
             let match;
+            let idx = 1;
+            const blankNumbers = [];
             while ((match = pattern.exec(text)) !== null) {
-                blanks.add(match[1]);
+                blankNumbers.push(String(idx++));
             }
             
-            const blankNumbers = Array.from(blanks).sort((a, b) => parseInt(a) - parseInt(b));
-            
             if (blankNumbers.length === 0) {
-                alert('Matn ichida ___1___, ___2___ shaklida bo\'sh joy belgisi topilmadi!');
+                alert('Matn ichida bo\'sh joy belgisi topilmadi! ___, __ shaklida belgilang.');
                 return;
             }
             
@@ -1039,6 +1038,21 @@
                     optionInput.setAttribute('data-opt-index', idx);
                 }
             });
+        }
+
+        function autoNumberBlanks(text) {
+            const pattern = /_{2,}/g;
+            let match;
+            let idx = 1;
+            let result = '';
+            let lastIndex = 0;
+            while ((match = pattern.exec(text)) !== null) {
+                result += text.slice(lastIndex, match.index) + '___' + idx + '___';
+                lastIndex = match.index + match[0].length;
+                idx++;
+            }
+            result += text.slice(lastIndex);
+            return result;
         }
 
         const detectBtn = document.getElementById('detectBlanksBtn');
@@ -1145,11 +1159,14 @@
 
         function getMfBlankNumbers() {
             const text = document.getElementById('mfText')?.value || '';
-            const pattern = /___(\d+)___/g;
-            const blanks = new Set();
+            const pattern = /_{2,}/g;
             let m;
-            while ((m = pattern.exec(text)) !== null) blanks.add(m[1]);
-            return Array.from(blanks).sort((a, b) => parseInt(a) - parseInt(b));
+            let idx = 1;
+            const blanks = [];
+            while ((m = pattern.exec(text)) !== null) {
+                blanks.push(String(idx++));
+            }
+            return blanks;
         }
 
         function updateMfAnswers() {
@@ -1159,7 +1176,7 @@
             if (!container) return;
             
             if (blankNums.length === 0) {
-                container.innerHTML = '<div class="text-gray-400 text-sm py-2">⚠️ Matnga ___1___, ___2___ shaklida bo\'sh joy belgilang</div>';
+                container.innerHTML = '<div class="text-gray-400 text-sm py-2">⚠️ Matnga ___, __ yoki ___1___ shaklida bo\'sh joy belgilang</div>';
                 return;
             }
 
@@ -1313,7 +1330,8 @@
             if (selectedType && selectedType.value === 'cloze_multiple_blanks') {
                 e.preventDefault();
                 
-                const clozeText = document.getElementById('clozeText').value;
+                let clozeText = document.getElementById('clozeText').value;
+                clozeText = autoNumberBlanks(clozeText);
                 if (!clozeText.trim()) {
                     alert('Matnni kiriting!');
                     return;
@@ -1383,7 +1401,8 @@
             if (selectedType && selectedType.value === 'match_fill') {
                 e.preventDefault();
 
-                const mfText = document.getElementById('mfText').value;
+                let mfText = document.getElementById('mfText').value;
+                mfText = autoNumberBlanks(mfText);
                 if (!mfText.trim()) {
                     alert('Matnni kiriting!');
                     return;
@@ -1397,7 +1416,7 @@
 
                 const blankNums = getMfBlankNumbers();
                 if (blankNums.length === 0) {
-                    alert('Matn ichida ___1___, ___2___ shaklida bo\'sh joy belgilang!');
+                    alert('Matn ichida ___, __ yoki ___1___ shaklida bo\'sh joy belgilang!');
                     return;
                 }
 
