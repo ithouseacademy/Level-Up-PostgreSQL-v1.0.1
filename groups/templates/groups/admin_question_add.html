@@ -443,6 +443,15 @@
                     </div>
 
                     <!-- ============================================================ -->
+                    <!-- SAVOL SHARTI -->
+                    <!-- ============================================================ -->
+                    <div class="px-6 py-5 border-b border-gray-100">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Savol sharti (ixtiyoriy)</label>
+                        <textarea name="condition" rows="2" class="w-full border border-gray-200 px-3 py-2 text-gray-700 focus:border-black focus:outline-none text-sm" placeholder="Masalan: Bu topshiriqni bajarish uchun sizga 10 daqiqa vaqt beriladi...">{{ request.POST.condition|default:'' }}</textarea>
+                        <p class="text-xs text-gray-400 mt-1"><i class="fas fa-info-circle"></i> Bu shart savolning yuqori qismida studentlarga ko'rinadi</p>
+                    </div>
+
+                    <!-- ============================================================ -->
                     <!-- FORM BUTTONLARI -->
                     <!-- ============================================================ -->
                     <div class="px-6 py-5 bg-gray-50 flex gap-3">

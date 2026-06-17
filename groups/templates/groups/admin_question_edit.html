@@ -262,6 +262,13 @@
                     </div>
                 {% endif %}
                 
+                <!-- Savol sharti -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Savol sharti (ixtiyoriy)</label>
+                    <textarea name="condition" rows="2" class="w-full border border-gray-200 rounded-lg px-4 py-2">{{ question.condition|default:'' }}</textarea>
+                    <p class="text-xs text-gray-400 mt-1"><i class="fas fa-info-circle"></i> Bu shart savolning yuqori qismida studentlarga ko'rinadi</p>
+                </div>
+
                 <!-- Ball -->
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Ball (necha ballik savol) <span class="text-red-500">*</span></label>

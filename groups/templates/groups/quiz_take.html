@@ -191,6 +191,12 @@
                                                 </div>
                                             </div>
 
+                                            {% if q.condition %}
+                                            <div class="mb-4 py-3 px-4 bg-blue-50 border border-blue-100 rounded-lg">
+                                                <p class="text-sm text-blue-800 leading-relaxed"><strong>Shart:</strong> {{ q.condition|linebreaksbr }}</p>
+                                            </div>
+                                            {% endif %}
+
                                             <!-- SAVOL TURLARI -->
 
                                             <!-- 1. FILL BLANK -->
@@ -1863,6 +1869,8 @@ document.getElementById('quizForm')?.addEventListener('submit', async (e) => {
     
     let unanswered = 0;
     document.querySelectorAll('.question-card').forEach(card => {
+        const qType = card.dataset.questionType;
+        if (qType === 'plain_text') return;
         let hasAnswer = false;
         card.querySelectorAll('.inline-blank-input, .sentence-input, .answer-input').forEach(input => {
             if (input.value && input.value.trim()) hasAnswer = true;

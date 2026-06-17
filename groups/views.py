@@ -2764,7 +2764,8 @@ def quiz_add_question(request):
                 QuizQuestion.objects.create(
                     category=category,
                     question_text=question_text,
-                    correct_answer=correct_answer
+                    correct_answer=correct_answer,
+                    condition=request.POST.get('condition', '')
                 )
                 messages.success(request, f'Savol "{category.name}" kategoriyasiga qo\'shildi!')
             except Category.DoesNotExist:
@@ -2798,6 +2799,7 @@ def quiz_edit_question(request, question_id):
                 question.correct_answer = correct_answer if question_type != 'plain_text' else ''
                 question.question_type = question_type
                 question.points = points
+                question.condition = request.POST.get('condition', '')
                 if category_id:
                     question.category = Category.objects.get(id=category_id)
                 question.save()
@@ -3585,7 +3587,8 @@ def category_question_add(request, category_id):
             else:
                 QuizQuestion.objects.create(
                     category=category, question_type='plain_text',
-                    question_text=question_text, correct_answer='', points=0
+                    question_text=question_text, correct_answer='', points=0,
+                    condition=request.POST.get('condition', '')
                 )
                 messages.success(request, f'✅ "{category.name}" kategoriyasiga oddiy matn qo\'shildi!')
                 return redirect('category_questions_list', category_id=category.id)
@@ -3593,7 +3596,8 @@ def category_question_add(request, category_id):
             messages.error(request, 'Savol matni va to\'g\'ri javob kiritilishi shart!')
         else:
             QuizQuestion.objects.create(
-                category=category, question_text=question_text, correct_answer=correct_answer
+                category=category, question_text=question_text, correct_answer=correct_answer,
+                condition=request.POST.get('condition', '')
             )
             messages.success(request, f'✅ "{category.name}" kategoriyasiga yangi savol qo\'shildi!')
             return redirect('category_questions_list', category_id=category.id)
@@ -3631,6 +3635,7 @@ def category_question_edit(request, question_id):
                 question.question_text = question_text
                 question.correct_answer = ''
                 question.points = 0
+                question.condition = request.POST.get('condition', '')
                 question.save()
                 messages.success(request, '✅ Oddiy matn tahrirlandi!')
                 return redirect('category_questions_list', category_id=question.category.id)
@@ -3640,6 +3645,7 @@ def category_question_edit(request, question_id):
             question.question_text = question_text
             question.correct_answer = correct_answer
             question.points = points
+            question.condition = request.POST.get('condition', '')
             question.save()
             messages.success(request, '✅ Savol tahrirlandi!')
             return redirect('category_questions_list', category_id=question.category.id)
@@ -4195,6 +4201,7 @@ def admin_question_add(request):
         try:
             category = Category.objects.get(id=category_id)
             points = int(points)
+            condition = request.POST.get('condition', '')
 
             # ============ 1. FILL BLANK (Word Bank) ============
             if question_type == 'fill_blank':
@@ -4206,6 +4213,7 @@ def admin_question_add(request):
                     QuizQuestion.objects.create(
                         category=category, question_type='fill_blank',
                         question_text=question_text, correct_answer=correct_answer,
+                        condition=condition,
                         points=points
                     )
                     messages.success(request, "✅ Bo'sh joy (Word Bank) savoli qo'shildi!")
@@ -4221,6 +4229,7 @@ def admin_question_add(request):
                     QuizQuestion.objects.create(
                         category=category, question_type='fill_blank_no_word',
                         question_text=question_text, correct_answer=correct_answer,
+                        condition=condition,
                         points=points
                     )
                     messages.success(request, "✅ Bo'sh joy (variantlarsiz) savoli qo'shildi!")
@@ -4236,6 +4245,7 @@ def admin_question_add(request):
                     QuizQuestion.objects.create(
                         category=category, question_type='sentence_arrangement',
                         scrambled_words=scrambled_words, correct_sentence=correct_sentence,
+                        condition=condition,
                         points=points
                     )
                     messages.success(request, "✅ So'z tartibi savoli qo'shildi!")
@@ -4283,6 +4293,7 @@ def admin_question_add(request):
                     category=category, question_type='reading_comprehension',
                     reading_text=reading_text_obj,
                     question_text=f"📖 {reading_text_obj.title}", correct_answer="",
+                    condition=condition,
                     points=points
                 )
                 messages.success(request, f"✅ Matnli savol qo'shildi! ({questions_saved} ta savol)")
@@ -4308,6 +4319,7 @@ def admin_question_add(request):
                                 question_text=f"To'g'ri/Noto'g'ri ({len(sub_questions)} ta savol)",
                                 correct_answer=json.dumps(correct_answers),
                                 blank_options=sub_questions,
+                                condition=condition,
                                 points=points
                             )
                             messages.success(request, f"✅ {len(sub_questions)} ta To'g'ri/Noto'g'ri savoli qo'shildi! (jami {points} ball)")
@@ -4327,6 +4339,7 @@ def admin_question_add(request):
                         QuizQuestion.objects.create(
                             category=category, question_type='true_false',
                             question_text=question_text, correct_answer=correct_answer,
+                            condition=condition,
                             points=points
                         )
                         messages.success(request, "✅ To'g'ri/Noto'g'ri savoli qo'shildi!")
@@ -4354,6 +4367,7 @@ def admin_question_add(request):
                                 correct_answer=json.dumps(correct_answers),
                                 blank_options=sub_questions,
                                 scrambled_words=json.dumps([sq['options'] for sq in sub_questions]),
+                                condition=condition,
                                 points=points
                             )
                             messages.success(request, f"✅ {len(sub_questions)} ta test savoli qo'shildi! (jami {points} ball)")
@@ -4387,6 +4401,7 @@ def admin_question_add(request):
                             question_text=question_text,
                             correct_answer=correct_answer,
                             scrambled_words=json.dumps(options),
+                            condition=condition,
                             points=points
                         )
                         messages.success(request, "✅ Test varianti savoli qo'shildi!")
@@ -4446,6 +4461,7 @@ def admin_question_add(request):
                         question_text=sentence_text, 
                         correct_answer=correct_answer,
                         scrambled_words=scrambled_words_json,
+                        condition=condition,
                         points=points
                     )
                     messages.success(request, "✅ To'g'ri so'zni tanlash savoli qo'shildi!")
@@ -4481,6 +4497,7 @@ def admin_question_add(request):
                         question_text=instruction,
                         correct_answer=json.dumps(matches),
                         scrambled_words=json.dumps(matching_data),
+                        condition=condition,
                         points=points
                     )
                     messages.success(request, "✅ Moslashtirish savoli qo'shildi!")
@@ -4510,6 +4527,7 @@ def admin_question_add(request):
                         correct_answer=json.dumps(correct_answers),
                         blank_options=blank_options,
                         scrambled_words=json.dumps(blank_options),
+                        condition=condition,
                         points=points
                     )
                     messages.success(request, f"✅ Ko'p bo'sh joy savoli qo'shildi! ({len(blank_options)} ta)")
@@ -4527,6 +4545,7 @@ def admin_question_add(request):
                     QuizQuestion.objects.create(
                         category=category, question_type='complete_the_words',
                         question_text=sentence_text, correct_answer=correct_answer,
+                        condition=condition,
                         points=points
                     )
                     messages.success(request, "✅ So'zlarni to'ldirish savoli qo'shildi!")
@@ -4555,6 +4574,7 @@ def admin_question_add(request):
                         question_text=mf_text,
                         correct_answer=json.dumps(mf_answers),
                         scrambled_words=json.dumps(mf_words),
+                        condition=condition,
                         points=points
                     )
                     messages.success(request, "✅ So'zlarni matnga mos qo'yish savoli qo'shildi!")
@@ -4568,6 +4588,7 @@ def admin_question_add(request):
                     QuizQuestion.objects.create(
                         category=category, question_type='writing',
                         question_text=topic, correct_answer='',
+                        condition=condition,
                         points=points
                     )
                     messages.success(request, "✅ Yozma ish (Writing) savoli qo'shildi!")
@@ -4581,6 +4602,7 @@ def admin_question_add(request):
                     QuizQuestion.objects.create(
                         category=category, question_type='speaking',
                         question_text=topic, correct_answer='',
+                        condition=condition,
                         points=points
                     )
                     messages.success(request, "✅ Og'zaki (Speaking) savoli qo'shildi!")
@@ -4594,6 +4616,7 @@ def admin_question_add(request):
                     QuizQuestion.objects.create(
                         category=category, question_type='plain_text',
                         question_text=text, correct_answer='',
+                        condition=condition,
                         points=points
                     )
                     messages.success(request, "✅ Oddiy matn qo'shildi!")
@@ -5620,6 +5643,7 @@ def admin_question_edit(request, pk):
                     messages.error(request, "Savol matni va to'g'ri javobni kiriting!")
                     return redirect('admin_question_edit', pk=question.id)
                 
+                question.condition = request.POST.get('condition', '')
                 question.save()
                 messages.success(request, "✅ Bo'sh joy (Word Bank) savoli tahrirlandi!")
                 return redirect('admin_question_list')
@@ -5633,6 +5657,7 @@ def admin_question_edit(request, pk):
                     messages.error(request, "Savol matni va to'g'ri javobni kiriting!")
                     return redirect('admin_question_edit', pk=question.id)
                 
+                question.condition = request.POST.get('condition', '')
                 question.save()
                 messages.success(request, "✅ Bo'sh joy (variantlarsiz) savoli tahrirlandi!")
                 return redirect('admin_question_list')
@@ -5646,12 +5671,16 @@ def admin_question_edit(request, pk):
                     messages.error(request, "Barcha maydonlarni to'ldiring!")
                     return redirect('admin_question_edit', pk=question.id)
                 
+                question.condition = request.POST.get('condition', '')
                 question.save()
                 messages.success(request, "✅ So'z tartibi savoli tahrirlandi!")
                 return redirect('admin_question_list')
             
             # ============ 4. READING COMPREHENSION ============
             elif question_type == 'reading_comprehension':
+                question.condition = request.POST.get('condition', '')
+                question.points = int(request.POST.get('points', question.points))
+                question.save()
                 if question.reading_text:
                     return redirect('reading_text_edit', pk=question.reading_text.id)
                 messages.error(request, "Matn topilmadi!")
@@ -5680,6 +5709,7 @@ def admin_question_edit(request, pk):
                         return redirect('admin_question_edit', pk=question.id)
                     question.blank_options = sub_questions
                     question.correct_answer = json.dumps(sub_answers)
+                    question.condition = request.POST.get('condition', '')
                     question.save()
                     messages.success(request, "✅ To'g'ri/Noto'g'ri savoli tahrirlandi!")
                     return redirect('admin_question_list')
@@ -5694,6 +5724,7 @@ def admin_question_edit(request, pk):
                     messages.error(request, "To'g'ri javobni tanlang!")
                     return redirect('admin_question_edit', pk=question.id)
                 
+                question.condition = request.POST.get('condition', '')
                 question.save()
                 messages.success(request, "✅ To'g'ri/Noto'g'ri savoli tahrirlandi!")
                 return redirect('admin_question_list')
@@ -5722,6 +5753,7 @@ def admin_question_edit(request, pk):
                 else:
                     question.correct_answer = options[correct_option_index]
                     question.scrambled_words = json.dumps(options)
+                    question.condition = request.POST.get('condition', '')
                     question.save()
                     messages.success(request, "✅ Test varianti savoli tahrirlandi!")
                     return redirect('admin_question_list')
@@ -5749,6 +5781,7 @@ def admin_question_edit(request, pk):
                     question.question_text = sentence_text
                     question.correct_answer = correct_answer
                     question.scrambled_words = json.dumps(options)
+                    question.condition = request.POST.get('condition', '')
                     question.save()
                     messages.success(request, "✅ To'g'ri so'zni tanlash savoli tahrirlandi!")
                     return redirect('admin_question_list')
@@ -5784,6 +5817,7 @@ def admin_question_edit(request, pk):
                     question.question_text = instruction
                     question.correct_answer = json.dumps(matches)
                     question.scrambled_words = json.dumps(matching_data)
+                    question.condition = request.POST.get('condition', '')
                     question.save()
                     messages.success(request, "✅ Moslashtirish savoli tahrirlandi!")
                     return redirect('admin_question_list')
@@ -5810,6 +5844,7 @@ def admin_question_edit(request, pk):
                     question.correct_answer = json.dumps(correct_answers)
                     question.blank_options = blank_options
                     question.scrambled_words = json.dumps(blank_options)
+                    question.condition = request.POST.get('condition', '')
                     question.save()
                     messages.success(request, "✅ Ko'p bo'sh joy savoli tahrirlandi!")
                     return redirect('admin_question_list')
@@ -5826,6 +5861,7 @@ def admin_question_edit(request, pk):
                 else:
                     question.question_text = sentence_text
                     question.correct_answer = correct_answer
+                    question.condition = request.POST.get('condition', '')
                     question.save()
                     messages.success(request, "✅ So'zlarni to'ldirish savoli tahrirlandi!")
                     return redirect('admin_question_list')
@@ -5837,6 +5873,7 @@ def admin_question_edit(request, pk):
                 else:
                     question.question_text = topic
                     question.correct_answer = ''
+                    question.condition = request.POST.get('condition', '')
                     question.save()
                     messages.success(request, "✅ Yozma ish (Writing) savoli tahrirlandi!")
                     return redirect('admin_question_list')
@@ -5848,6 +5885,7 @@ def admin_question_edit(request, pk):
                 else:
                     question.question_text = topic
                     question.correct_answer = ''
+                    question.condition = request.POST.get('condition', '')
                     question.save()
                     messages.success(request, "✅ Og'zaki (Speaking) savoli tahrirlandi!")
                     return redirect('admin_question_list')

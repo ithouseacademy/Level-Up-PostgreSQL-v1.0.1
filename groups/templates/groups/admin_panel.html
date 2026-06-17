@@ -3,175 +3,150 @@
 {% block title %}Admin Panel | Boshqaruv tizimi{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
-    <!-- Navbar with Dropdown Menu (3 nuqta) -->
-    <nav class="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-shield-alt text-white text-sm"></i>
-                    </div>
-                    <div>
-                        <span class="font-semibold text-gray-900 text-lg">Admin Panel</span>
-                        <span class="text-xs text-gray-500 ml-2">Boshqaruv markazi</span>
-                    </div>
+<div class="min-h-screen bg-gray-50 flex">
+    <!-- YON PANEL (SIDEBAR) - Chap tomonda doimiy ko'rinadi -->
+    <aside class="w-72 bg-white border-r border-gray-200 flex flex-col fixed h-full z-10 overflow-y-auto">
+        <!-- Logo va sarlavha -->
+        <div class="px-5 py-5 border-b border-gray-100">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 bg-gray-900 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-shield-alt text-white text-sm"></i>
                 </div>
-                
-                <!-- 3 NUQTA DROPDOWN MENU -->
-                <div class="relative">
-                    <button id="dropdownBtn" class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-100 transition duration-200 focus:outline-none">
-                        <div class="text-right">
-                            <p class="text-sm font-medium text-gray-900">{{ user.get_full_name|default:user.username }}</p>
-                            <p class="text-xs text-gray-500">Administrator</p>
-                        </div>
-                        <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                            <i class="fas fa-user text-gray-600 text-sm"></i>
-                        </div>
-                        <i class="fas fa-chevron-down text-gray-400 text-xs transition-transform duration-200" id="dropdownIcon"></i>
-                    </button>
-                    
-                    <!-- Dropdown menyu (ixcham) -->
-                    <div id="dropdownMenu" class="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-lg border border-gray-100 hidden z-20 overflow-hidden">
-                        <div class="px-4 py-3 border-b border-gray-100 bg-gray-50">
-                            <p class="text-xs text-gray-400">Akkaunt</p>
-                            <p class="text-sm font-medium text-gray-900 truncate">{{ user.email|default:user.username }}</p>
-                        </div>
-                        <div class="py-1">
-                            <!-- Guruh 1: Boshqaruv -->
-                            <div class="px-4 pt-2 pb-1">
-                                <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Boshqaruv</p>
-                            </div>
-                            <div class="grid grid-cols-2 gap-0.5 px-2">
-                                <a href="{% url 'student_list' %}" class="flex items-center gap-2 px-2 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-lg transition">
-                                    <i class="fas fa-users text-gray-400 w-4 text-center"></i>
-                                    <span>Talabalar</span>
-                                </a>
-                                <a href="{% url 'admin_list' %}" class="flex items-center gap-2 px-2 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-lg transition">
-                                    <i class="fas fa-user-shield text-gray-400 w-4 text-center"></i>
-                                    <span>Adminlar</span>
-                                </a>
-                                <a href="{% url 'teacher_list' %}" class="flex items-center gap-2 px-2 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-lg transition">
-                                    <i class="fas fa-chalkboard-teacher text-gray-400 w-4 text-center"></i>
-                                    <span>O'qituvchilar</span>
-                                </a>
-                                <a href="{% url 'category_list' %}" class="flex items-center gap-2 px-2 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-lg transition">
-                                    <i class="fas fa-tags text-gray-400 w-4 text-center"></i>
-                                    <span>Kategoriyalar</span>
-                                </a>
-                                <a href="{% url 'folder_list' %}" class="flex items-center gap-2 px-2 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-lg transition">
-                                    <i class="fas fa-folder text-gray-400 w-4 text-center"></i>
-                                    <span>Papkalar</span>
-                                </a>
-                            </div>
-
-                            <!-- Guruh: Sozlamalar -->
-                            <div class="px-4 pt-3 pb-1">
-                                <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Sozlamalar</p>
-                            </div>
-                            <div class="grid grid-cols-2 gap-0.5 px-2">
-                                <a href="{% url 'rules_edit' %}#sozlamalar" class="flex items-center gap-2 px-2 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-lg transition">
-                                    <i class="fas fa-cog text-gray-400 w-4 text-center"></i>
-                                    <span>Sozlamalar</span>
-                                </a>
-                           
-                            </div>
-
-                            <!-- Guruh 2: Savollar -->
-                            <div class="px-4 pt-3 pb-1">
-                                <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Savollar</p>
-                            </div>
-                            <div class="grid grid-cols-2 gap-0.5 px-2">
-                                <a href="{% url 'admin_question_list' %}" class="flex items-center gap-2 px-2 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-lg transition">
-                                    <i class="fas fa-list text-gray-400 w-4 text-center"></i>
-                                    <span>Barcha savollar</span>
-                                </a>
-                                <a href="{% url 'admin_question_add' %}" class="flex items-center gap-2 px-2 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-lg transition">
-                                    <i class="fas fa-plus-circle text-gray-400 w-4 text-center"></i>
-                                    <span>Yangi savol</span>
-                                </a>
-                                <a href="{% url 'category_point_stats' %}" class="flex items-center gap-2 px-2 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-lg transition">
-                                    <i class="fas fa-chart-pie text-gray-400 w-4 text-center"></i>
-                                    <span>Ball statistikasi</span>
-                                </a>
-                            </div>
-
-                            <!-- Guruh 3: Monitoring -->
-                            <div class="px-4 pt-3 pb-1">
-                                <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Monitoring</p>
-                            </div>
-                            <div class="grid grid-cols-2 gap-0.5 px-2">
-                                <a href="{% url 'device_monitor' %}" class="flex items-center gap-2 px-2 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-lg transition">
-                                    <i class="fas fa-microchip text-gray-400 w-4 text-center"></i>
-                                    <span>Faol qurilmalar</span>
-                                </a>
-                                <a href="{% url 'device_history' %}" class="flex items-center gap-2 px-2 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-lg transition">
-                                    <i class="fas fa-history text-gray-400 w-4 text-center"></i>
-                                    <span>Qurilma tarixi</span>
-                                </a>
-                            </div>
-
-                            <!-- Guruh 4: Natijalar -->
-                            <div class="px-4 pt-3 pb-1">
-                                <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Natijalar</p>
-                            </div>
-                            <div class="grid grid-cols-2 gap-0.5 px-2">
-                                <a href="{% url 'results_archive' %}" class="flex items-center gap-2 px-2 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-lg transition">
-                                    <i class="fas fa-archive text-gray-400 w-4 text-center"></i>
-                                    <span>Natijalar arxivi</span>
-                                </a>
-                                <a href="{% url 'teacher_score_logs' %}" class="flex items-center gap-2 px-2 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-lg transition">
-                                    <i class="fas fa-user-graduate text-gray-400 w-4 text-center"></i>
-                                    <span>Ball qo'shish tarixi</span>
-                                </a>
-                            </div>
-
-                            <!-- Guruh 5: Sertifikatlar -->
-                            <div class="px-4 pt-3 pb-1">
-                                <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Sertifikatlar</p>
-                            </div>
-                            <div class="grid grid-cols-2 gap-0.5 px-2">
-                                <a href="{% url 'certificate_settings' %}" class="flex items-center gap-2 px-2 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-lg transition">
-                                    <i class="fas fa-cog text-gray-400 w-4 text-center"></i>
-                                    <span>Sozlamalar</span>
-                                </a>
-                                <a href="{% url 'certificate_list' %}" class="flex items-center gap-2 px-2 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-lg transition">
-                                    <i class="fas fa-certificate text-gray-400 w-4 text-center"></i>
-                                    <span>Sertifikatlar</span>
-                                </a>
-                                <a href="{% url 'certificate_archive' %}" class="flex items-center gap-2 px-2 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-lg transition">
-                                    <i class="fas fa-archive text-gray-400 w-4 text-center"></i>
-                                    <span>Arxiv</span>
-                                </a>
-                                <a href="{% url 'answer_toggle_history_all' %}" class="flex items-center gap-2 px-2 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-lg transition">
-                                    <i class="fas fa-history text-gray-400 w-4 text-center"></i>
-                                    <span>O'zgartirish tarixi</span>
-                                </a>
-                            </div>
-
-                            <div class="border-t border-gray-100 mt-2"></div>
-
-                            <!-- Sayt haqida -->
-                            <div class="px-2 py-1">
-                                <a href="{% url 'sayt_haqida' %}" class="flex items-center gap-2 px-2 py-2 text-xs text-gray-600 hover:bg-gray-50 rounded-lg transition" target="_blank">
-                                    <i class="fas fa-info-circle text-gray-400 w-4 text-center"></i>
-                                    <span>Sayt haqida</span>
-                                </a>
-                            </div>
-
-                            <!-- Chiqish -->
-                            <div class="px-2 py-1">
-                                <a href="{% url 'logout' %}" class="flex items-center gap-2 px-2 py-2 text-xs text-red-600 hover:bg-red-50 rounded-lg transition">
-                                    <i class="fas fa-sign-out-alt text-red-400 w-4 text-center"></i>
-                                    <span>Tizimdan chiqish</span>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
+                <div>
+                    <span class="font-bold text-gray-900 text-base">Admin Panel</span>
+                    <span class="text-[10px] text-gray-400 block leading-tight">Boshqaruv markazi</span>
                 </div>
             </div>
         </div>
-    </nav>
+        
+        <!-- Akkaunt ma'lumoti -->
+        <div class="px-5 py-3 bg-gray-50 border-b border-gray-100">
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Akkaunt</p>
+            <p class="text-sm font-medium text-gray-900 truncate">{{ user.get_full_name|default:user.username }}</p>
+            <p class="text-xs text-gray-400 truncate">{{ user.email|default:'' }}</p>
+        </div>
+        
+        <!-- Navigatsiya -->
+        <nav class="flex-1 px-3 py-4 space-y-4 overflow-y-auto">
+            <!-- Guruh 1: Boshqaruv -->
+            <div>
+                <p class="px-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Boshqaruv</p>
+                <div class="space-y-0.5">
+                    <a href="{% url 'student_list' %}" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                        <i class="fas fa-users text-gray-400 w-4 text-center"></i>
+                        <span>Talabalar</span>
+                    </a>
+                    <a href="{% url 'admin_list' %}" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                        <i class="fas fa-user-shield text-gray-400 w-4 text-center"></i>
+                        <span>Adminlar</span>
+                    </a>
+                    <a href="{% url 'teacher_list' %}" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                        <i class="fas fa-chalkboard-teacher text-gray-400 w-4 text-center"></i>
+                        <span>O'qituvchilar</span>
+                    </a>
+                    <a href="{% url 'category_list' %}" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                        <i class="fas fa-tags text-gray-400 w-4 text-center"></i>
+                        <span>Kategoriyalar</span>
+                    </a>
+                    <a href="{% url 'folder_list' %}" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                        <i class="fas fa-folder text-gray-400 w-4 text-center"></i>
+                        <span>Papkalar</span>
+                    </a>
+                    <a href="{% url 'rules_edit' %}#sozlamalar" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                        <i class="fas fa-cog text-gray-400 w-4 text-center"></i>
+                        <span>Sozlamalar</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Guruh 2: Savollar -->
+            <div>
+                <p class="px-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Savollar</p>
+                <div class="space-y-0.5">
+                    <a href="{% url 'admin_question_list' %}" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                        <i class="fas fa-list text-gray-400 w-4 text-center"></i>
+                        <span>Barcha savollar</span>
+                    </a>
+                    <a href="{% url 'admin_question_add' %}" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                        <i class="fas fa-plus-circle text-gray-400 w-4 text-center"></i>
+                        <span>Yangi savol</span>
+                    </a>
+                    <a href="{% url 'category_point_stats' %}" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                        <i class="fas fa-chart-pie text-gray-400 w-4 text-center"></i>
+                        <span>Ball statistikasi</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Guruh 3: Monitoring -->
+            <div>
+                <p class="px-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Monitoring</p>
+                <div class="space-y-0.5">
+                    <a href="{% url 'device_monitor' %}" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                        <i class="fas fa-microchip text-gray-400 w-4 text-center"></i>
+                        <span>Faol qurilmalar</span>
+                    </a>
+                    <a href="{% url 'device_history' %}" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                        <i class="fas fa-history text-gray-400 w-4 text-center"></i>
+                        <span>Qurilma tarixi</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Guruh 4: Natijalar -->
+            <div>
+                <p class="px-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Natijalar</p>
+                <div class="space-y-0.5">
+                    <a href="{% url 'results_archive' %}" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                        <i class="fas fa-archive text-gray-400 w-4 text-center"></i>
+                        <span>Natijalar arxivi</span>
+                    </a>
+                    <a href="{% url 'teacher_score_logs' %}" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                        <i class="fas fa-user-graduate text-gray-400 w-4 text-center"></i>
+                        <span>Ball qo'shish tarixi</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Guruh 5: Sertifikatlar -->
+            <div>
+                <p class="px-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Sertifikatlar</p>
+                <div class="space-y-0.5">
+                    <a href="{% url 'certificate_settings' %}" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                        <i class="fas fa-cog text-gray-400 w-4 text-center"></i>
+                        <span>Sozlamalar</span>
+                    </a>
+                    <a href="{% url 'certificate_list' %}" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                        <i class="fas fa-certificate text-gray-400 w-4 text-center"></i>
+                        <span>Sertifikatlar</span>
+                    </a>
+                    <a href="{% url 'certificate_archive' %}" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                        <i class="fas fa-archive text-gray-400 w-4 text-center"></i>
+                        <span>Arxiv</span>
+                    </a>
+                    <a href="{% url 'answer_toggle_history_all' %}" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                        <i class="fas fa-history text-gray-400 w-4 text-center"></i>
+                        <span>O'zgartirish tarixi</span>
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Pastki qism: Sayt haqida va Chiqish -->
+        <div class="px-3 py-3 border-t border-gray-100 space-y-0.5">
+            <a href="{% url 'sayt_haqida' %}" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition" target="_blank">
+                <i class="fas fa-info-circle text-gray-400 w-4 text-center"></i>
+                <span>Sayt haqida</span>
+            </a>
+            <a href="{% url 'logout' %}" class="flex items-center gap-3 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition">
+                <i class="fas fa-sign-out-alt text-red-400 w-4 text-center"></i>
+                <span>Tizimdan chiqish</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- ASOSIY MAZMUN - yon panelning o'ng tomonida -->
+    <main class="flex-1 ml-72">
     
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Page Title -->
@@ -428,6 +403,7 @@
     </a>
 </div>
     </div>
+</main>
 </div>
 
 <script>
@@ -465,41 +441,7 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// Dropdown menyu uchun JavaScript
-document.addEventListener('DOMContentLoaded', function() {
-    const dropdownBtn = document.getElementById('dropdownBtn');
-    const dropdownMenu = document.getElementById('dropdownMenu');
-    const dropdownIcon = document.getElementById('dropdownIcon');
-    
-    if (dropdownBtn && dropdownMenu) {
-        dropdownBtn.addEventListener('click', function(event) {
-            event.stopPropagation();
-            const isHidden = dropdownMenu.classList.contains('hidden');
-            dropdownMenu.classList.toggle('hidden');
-            if (dropdownIcon) {
-                dropdownIcon.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
-            }
-        });
-        
-        document.addEventListener('click', function(event) {
-            if (!dropdownBtn.contains(event.target)) {
-                dropdownMenu.classList.add('hidden');
-                if (dropdownIcon) {
-                    dropdownIcon.style.transform = 'rotate(0deg)';
-                }
-            }
-        });
-        
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                dropdownMenu.classList.add('hidden');
-                if (dropdownIcon) {
-                    dropdownIcon.style.transform = 'rotate(0deg)';
-                }
-            }
-        });
-    }
-});
+// Yon panel scroll
 
 // Tugmalar uchun hover animatsiyasi
 document.querySelectorAll('.hover\\:shadow-md').forEach(el => {
@@ -513,26 +455,6 @@ document.querySelectorAll('.hover\\:shadow-md').forEach(el => {
 </script>
 
 <style>
-#dropdownMenu {
-    transition: all 0.2s ease;
-    transform-origin: top right;
-}
-
-#dropdownMenu:not(.hidden) {
-    animation: dropdownFadeIn 0.2s ease;
-}
-
-@keyframes dropdownFadeIn {
-    from {
-        opacity: 0;
-        transform: scale(0.95) translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
-}
-
 @keyframes slideInRight {
     from {
         opacity: 0;

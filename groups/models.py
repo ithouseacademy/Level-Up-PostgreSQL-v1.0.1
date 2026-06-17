@@ -219,6 +219,7 @@ class QuizQuestion(models.Model):
     reading_text = models.ForeignKey('ReadingText', on_delete=models.CASCADE, null=True, blank=True, related_name='quiz_questions', verbose_name="Matn")
     blank_options = models.JSONField(default=dict, blank=True, null=True, verbose_name="Bo'sh joy variantlari")
     blank_positions = models.JSONField(default=dict, blank=True, null=True, verbose_name="Bo'sh joy pozitsiyalari")
+    condition = models.TextField(blank=True, null=True, verbose_name="Savol sharti (userlarga ko'rinadi)")
     points = models.FloatField(default=1.0, verbose_name="Ball")
     created_at = models.DateTimeField(auto_now_add=True)
 
