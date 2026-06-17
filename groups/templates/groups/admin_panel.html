@@ -52,9 +52,28 @@
                         <i class="fas fa-folder text-gray-400 w-4 text-center"></i>
                         <span>Papkalar</span>
                     </a>
+                </div>
+            </div>
+
+            <!-- Guruh: Sozlamalar -->
+            <div>
+                <p class="px-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Sozlamalar</p>
+                <div class="space-y-0.5">
                     <a href="{% url 'rules_edit' %}#sozlamalar" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition">
                         <i class="fas fa-cog text-gray-400 w-4 text-center"></i>
-                        <span>Sozlamalar</span>
+                        <span>Sozlamalar bo'limlariga o'tish</span>
+                    </a>
+                    <a href="{% url 'rules_edit' %}#signalizatsiya" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                        <i class="fas fa-exclamation-triangle text-gray-400 w-4 text-center"></i>
+                        <span>Signalizatsiya</span>
+                    </a>
+                    <a href="{% url 'rules_edit' %}#sertifikat" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                        <i class="fas fa-certificate text-gray-400 w-4 text-center"></i>
+                        <span>Sertifikat</span>
+                    </a>
+                    <a href="{% url 'rules_edit' %}#qoidalar" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                        <i class="fas fa-file-alt text-gray-400 w-4 text-center"></i>
+                        <span>Qonun va qoidalar</span>
                     </a>
                 </div>
             </div>
@@ -112,10 +131,6 @@
             <div>
                 <p class="px-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Sertifikatlar</p>
                 <div class="space-y-0.5">
-                    <a href="{% url 'certificate_settings' %}" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition">
-                        <i class="fas fa-cog text-gray-400 w-4 text-center"></i>
-                        <span>Sozlamalar</span>
-                    </a>
                     <a href="{% url 'certificate_list' %}" class="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition">
                         <i class="fas fa-certificate text-gray-400 w-4 text-center"></i>
                         <span>Sertifikatlar</span>
