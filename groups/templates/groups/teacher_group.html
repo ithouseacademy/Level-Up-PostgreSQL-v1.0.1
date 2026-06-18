@@ -4,8 +4,8 @@
 
 {% block content %}
 <div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-3xl mx-auto px-4">
-        <div class="mb-8">
+    <div class="max-w-5xl mx-auto px-4">
+        <div class="mb-6">
             <a href="{% url 'teacher_panel' %}" class="text-gray-500 hover:text-gray-700 text-sm inline-flex items-center gap-1 mb-4">
                 <i class="fas fa-arrow-left text-xs"></i> Ortga
             </a>
@@ -13,36 +13,349 @@
             <p class="text-gray-500 text-sm mt-1 font-light">{{ students.count }} ta o'quvchi</p>
         </div>
 
-        <div class="grid gap-4">
-            <a href="{% url 'admin_writing_review' group.id %}" class="bg-white border border-gray-200 p-6 hover:border-gray-400 transition block">
+        {% if students %}
+        <div class="grid gap-4 mb-8">
+            <a href="{% url 'admin_writing_review' group.id %}" class="bg-white border border-gray-200 p-5 hover:border-gray-400 transition block">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
                             <i class="fas fa-pen text-gray-500"></i>
                         </div>
                         <div>
                             <h3 class="font-medium text-gray-900">Yozma ishlarni baholash</h3>
-                            <p class="text-sm text-gray-400">O'quvchilarning yozma ishlarini ko'rish va baholash</p>
+                            <p class="text-xs text-gray-400">O'quvchilarning yozma ishlarini ko'rish va baholash</p>
                         </div>
                     </div>
                     <i class="fas fa-chevron-right text-gray-300"></i>
                 </div>
             </a>
-            <a href="{% url 'speaking_review' group.id %}" class="bg-white border border-gray-200 p-6 hover:border-gray-400 transition block">
+            <a href="{% url 'speaking_review' group.id %}" class="bg-white border border-gray-200 p-5 hover:border-gray-400 transition block">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
                             <i class="fas fa-microphone text-gray-500"></i>
                         </div>
                         <div>
                             <h3 class="font-medium text-gray-900">Speaking baholash</h3>
-                            <p class="text-sm text-gray-400">O'quvchilarning og'zaki javoblarini ko'rish va baholash</p>
+                            <p class="text-xs text-gray-400">O'quvchilarning og'zaki javoblarini ko'rish va baholash</p>
                         </div>
                     </div>
                     <i class="fas fa-chevron-right text-gray-300"></i>
                 </div>
             </a>
         </div>
+
+        <div class="bg-white rounded-lg border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-medium text-gray-900">
+                        <i class="fas fa-users mr-2 text-gray-600"></i> O'quvchilar
+                    </h3>
+                    <span id="selectedCount" class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full hidden">0 ta tanlangan</span>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr class="text-left text-sm text-gray-500">
+                            <th class="px-6 py-3 w-10">
+                                <input type="checkbox" id="selectAll" class="rounded border-gray-300 text-gray-700 focus:ring-gray-500">
+                            </th>
+                            <th class="px-6 py-3 w-16">#</th>
+                            <th class="px-6 py-3">Ism</th>
+                            <th class="px-6 py-3">Familiya</th>
+                            <th class="px-6 py-3">Username</th>
+                            <th class="px-6 py-3 w-32">Amallar</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for student in students %}
+                        <tr class="text-sm hover:bg-gray-50 transition cursor-pointer" data-student-id="{{ student.pk }}" onclick="toggleCheckbox(this)">
+                            <td class="px-6 py-3">
+                                <input type="checkbox" name="student_ids" value="{{ student.pk }}" class="student-checkbox rounded border-gray-300 text-gray-700 focus:ring-gray-500" onclick="event.stopPropagation()">
+                            </td>
+                            <td class="px-6 py-3 text-gray-500">{{ forloop.counter }}</td>
+                            <td class="px-6 py-3 font-medium text-gray-900">{{ student.user.first_name|default:"-" }}</td>
+                            <td class="px-6 py-3 text-gray-700">{{ student.user.last_name|default:"-" }}</td>
+                            <td class="px-6 py-3 text-gray-500">{{ student.user.username }}</td>
+                            <td class="px-6 py-3">
+                                <div class="flex items-center space-x-2">
+                                    {% if student.is_archived %}
+                                    <button type="button" onclick="event.stopPropagation(); confirmSingleAction('restore', {{ student.pk }}, '{{ student.full_name }}')" class="text-green-500 hover:text-green-700 transition" title="Arxivdan chiqarish">
+                                        <i class="fas fa-undo"></i>
+                                    </button>
+                                    {% else %}
+                                    <button type="button" onclick="event.stopPropagation(); confirmSingleAction('archive', {{ student.pk }}, '{{ student.full_name }}')" class="text-amber-500 hover:text-amber-700 transition" title="Arxivga olish">
+                                        <i class="fas fa-archive"></i>
+                                    </button>
+                                    {% endif %}
+                                    <button type="button" onclick="event.stopPropagation(); confirmSingleAction('delete', {{ student.pk }}, '{{ student.full_name }}')" class="text-red-400 hover:text-red-600 transition" title="O'chirish">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Bottom bar -->
+            <div id="bottomBar" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg transform translate-y-full transition-transform duration-300 z-50">
+                <div class="max-w-5xl mx-auto px-4 py-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                                <span id="bottomBarCount" class="text-sm font-semibold text-gray-700">0</span>
+                            </div>
+                            <span class="text-sm text-gray-600">ta o'quvchi tanlandi</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button id="cancelSelection" class="px-4 py-2 text-gray-500 hover:text-gray-700 transition text-sm">
+                                <i class="fas fa-times mr-1"></i> Bekor qilish
+                            </button>
+                            <button id="confirmBulkArchive" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition text-sm">
+                                <i class="fas fa-archive mr-1"></i> Arxivlash
+                            </button>
+                            <button id="confirmBulkDelete" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition text-sm">
+                                <i class="fas fa-trash-alt mr-1"></i> O'chirish
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-16">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-users text-gray-300 text-2xl"></i>
+            </div>
+            <h2 class="text-xl font-light text-gray-400">O'quvchilar yo'q</h2>
+            <p class="text-sm text-gray-300 mt-2">Bu guruhda hali o'quvchilar mavjud emas.</p>
+        </div>
+        {% endif %}
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function toggleCheckbox(row) {
+    const checkbox = row.querySelector('.student-checkbox');
+    if (checkbox) {
+        checkbox.checked = !checkbox.checked;
+        updateSelectionCount();
+    }
+}
+
+const selectAllCheckbox = document.getElementById('selectAll');
+const studentCheckboxes = document.querySelectorAll('.student-checkbox');
+const bottomBar = document.getElementById('bottomBar');
+const bottomBarCount = document.getElementById('bottomBarCount');
+const cancelSelection = document.getElementById('cancelSelection');
+const confirmBulkDelete = document.getElementById('confirmBulkDelete');
+const confirmBulkArchive = document.getElementById('confirmBulkArchive');
+const selectedCountSpan = document.getElementById('selectedCount');
+
+function getSelectedIds() {
+    return Array.from(document.querySelectorAll('.student-checkbox:checked')).map(cb => cb.value);
+}
+
+function updateSelectionCount() {
+    const checkedBoxes = document.querySelectorAll('.student-checkbox:checked');
+    const count = checkedBoxes.length;
+
+    if (count > 0) {
+        bottomBar.classList.remove('translate-y-full');
+        bottomBar.classList.add('translate-y-0');
+        selectedCountSpan.classList.remove('hidden');
+        selectedCountSpan.textContent = count + ' ta tanlangan';
+        bottomBarCount.textContent = count;
+    } else {
+        bottomBar.classList.add('translate-y-full');
+        bottomBar.classList.remove('translate-y-0');
+        selectedCountSpan.classList.add('hidden');
+    }
+
+    if (selectAllCheckbox) {
+        const totalCheckboxes = studentCheckboxes.length;
+        const checkedCount = document.querySelectorAll('.student-checkbox:checked').length;
+
+        if (checkedCount === 0) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+        } else if (checkedCount === totalCheckboxes && totalCheckboxes > 0) {
+            selectAllCheckbox.checked = true;
+            selectAllCheckbox.indeterminate = false;
+        } else {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = true;
+        }
+    }
+}
+
+function submitBulkAction(url, actionLabel) {
+    const ids = getSelectedIds();
+    if (ids.length === 0) return;
+
+    Swal.fire({
+        title: ids.length + ' ta o\'quvchini ' + actionLabel,
+        text: actionLabel + 'ni tasdiqlaysizmi?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: actionLabel === 'arxivlash' ? '#d97706' : '#dc2626',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Ha, ' + actionLabel,
+        cancelButtonText: 'Bekor qilish',
+        background: '#fff',
+        customClass: { popup: 'rounded-xl' }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                title: actionLabel + 'moqda...',
+                text: 'Iltimos kuting',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: 'student_ids=' + ids.map(id => encodeURIComponent(id)).join('&')
+            }).then(() => {
+                window.location.reload();
+            });
+        }
+    });
+}
+
+function confirmSingleAction(action, studentId, studentName) {
+    const actionMap = {
+        'delete': {
+            title: studentName + 'ni o\'chirish',
+            text: 'Bu o\'quvchini o\'chirmoqchimisiz?',
+            note: 'Bu amalni qaytarib bo\'lmaydi!',
+            confirmColor: '#dc2626',
+            url: '{% url "teacher_student_delete" group.id 0 %}'.replace('0', studentId)
+        },
+        'archive': {
+            title: studentName + 'ni arxivlash',
+            text: 'Bu o\'quvchini arxivga olmoqchimisiz?',
+            note: 'Arxivlangan o\'quvchini keyin tiklash mumkin.',
+            confirmColor: '#d97706',
+            url: '{% url "teacher_student_archive" group.id 0 %}'.replace('0', studentId)
+        },
+        'restore': {
+            title: studentName + 'ni tiklash',
+            text: 'Bu o\'quvchini arxivdan chiqarmoqchimisiz?',
+            note: '',
+            confirmColor: '#16a34a',
+            url: '{% url "teacher_student_restore" group.id 0 %}'.replace('0', studentId)
+        }
+    };
+
+    const actionData = actionMap[action];
+    if (!actionData) return;
+
+    Swal.fire({
+        title: actionData.title,
+        html: '<p class="text-gray-600">' + actionData.text + '</p>' + (actionData.note ? '<p class="text-red-500 text-sm mt-2">⚠️ ' + actionData.note + '</p>' : ''),
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: actionData.confirmColor,
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Ha',
+        cancelButtonText: 'Bekor qilish',
+        background: '#fff',
+        customClass: { popup: 'rounded-xl' }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = actionData.url;
+            const csrf = document.createElement('input');
+            csrf.type = 'hidden';
+            csrf.name = 'csrfmiddlewaretoken';
+            csrf.value = '{{ csrf_token }}';
+            form.appendChild(csrf);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
+
+if (selectAllCheckbox) {
+    selectAllCheckbox.addEventListener('change', function() {
+        studentCheckboxes.forEach(cb => cb.checked = this.checked);
+        updateSelectionCount();
+    });
+}
+
+studentCheckboxes.forEach(cb => cb.addEventListener('change', updateSelectionCount));
+
+cancelSelection.addEventListener('click', function() {
+    studentCheckboxes.forEach(cb => cb.checked = false);
+    updateSelectionCount();
+});
+
+confirmBulkDelete.addEventListener('click', function() {
+    submitBulkAction('{% url "teacher_student_bulk_delete" group.id %}', 'o\'chirish');
+});
+
+confirmBulkArchive.addEventListener('click', function() {
+    submitBulkAction('{% url "teacher_student_bulk_archive" group.id %}', 'arxivlash');
+});
+
+document.addEventListener('DOMContentLoaded', updateSelectionCount);
+</script>
+
+<style>
+input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #374151;
+}
+#bottomBar {
+    box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+tbody tr:hover {
+    background-color: #f9fafb;
+}
+tr:has(.student-checkbox:checked) {
+    background-color: #fef3c7 !important;
+}
+.overflow-x-auto::-webkit-scrollbar {
+    height: 6px;
+}
+.overflow-x-auto::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+.overflow-x-auto::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+</style>
 {% endblock %}

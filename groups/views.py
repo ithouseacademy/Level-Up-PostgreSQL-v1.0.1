@@ -6865,6 +6865,114 @@ def teacher_delete(request, teacher_id):
     return redirect('teacher_list')
 
 
+# ============ O'QITUVCHI UCHUN STUDENT BOSHQARUVI ============
+
+def _verify_teacher_access(request, group):
+    teacher = request.user.teacher_profile
+    if not teacher.all_groups and not teacher.groups.filter(id=group.id).exists():
+        return False
+    return True
+
+
+def _teacher_only(view_func):
+    @login_required
+    def wrapper(request, *args, **kwargs):
+        if not is_teacher_user(request.user):
+            messages.error(request, 'Sizda bu sahifani ko\'rish huquqi yo\'q!')
+            return redirect('login')
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+@_teacher_only
+def teacher_student_delete(request, group_id, student_id):
+    student = get_object_or_404(Student, pk=student_id)
+    if student.group_id != int(group_id):
+        messages.error(request, 'Bu o\'quvchi bu guruhga tegishli emas!')
+        return redirect('teacher_group_view', group_id=group_id)
+    group = get_object_or_404(Group, id=group_id)
+    if not _verify_teacher_access(request, group):
+        messages.error(request, 'Siz bu guruhga biriktirilmagansiz!')
+        return redirect('teacher_panel')
+    user = student.user
+    full_name = user.get_full_name() or user.username
+    student.delete()
+    user.delete()
+    messages.success(request, f'{full_name} o\'chirildi!')
+    return redirect('teacher_group_view', group_id=group_id)
+
+
+@_teacher_only
+def teacher_student_archive(request, group_id, student_id):
+    student = get_object_or_404(Student, pk=student_id)
+    if student.group_id != int(group_id):
+        messages.error(request, 'Bu o\'quvchi bu guruhga tegishli emas!')
+        return redirect('teacher_group_view', group_id=group_id)
+    group = get_object_or_404(Group, id=group_id)
+    if not _verify_teacher_access(request, group):
+        messages.error(request, 'Siz bu guruhga biriktirilmagansiz!')
+        return redirect('teacher_panel')
+    student.is_archived = True
+    student.save()
+    messages.success(request, f'{student.full_name} arxivga olindi!')
+    return redirect('teacher_group_view', group_id=group_id)
+
+
+@_teacher_only
+def teacher_student_restore(request, group_id, student_id):
+    student = get_object_or_404(Student, pk=student_id)
+    if student.group_id != int(group_id):
+        messages.error(request, 'Bu o\'quvchi bu guruhga tegishli emas!')
+        return redirect('teacher_group_view', group_id=group_id)
+    group = get_object_or_404(Group, id=group_id)
+    if not _verify_teacher_access(request, group):
+        messages.error(request, 'Siz bu guruhga biriktirilmagansiz!')
+        return redirect('teacher_panel')
+    student.is_archived = False
+    student.save()
+    messages.success(request, f'{student.full_name} arxivdan chiqarildi!')
+    return redirect('teacher_group_view', group_id=group_id)
+
+
+@_teacher_only
+def teacher_student_bulk_delete(request, group_id):
+    group = get_object_or_404(Group, id=group_id)
+    if not _verify_teacher_access(request, group):
+        messages.error(request, 'Siz bu guruhga biriktirilmagansiz!')
+        return redirect('teacher_panel')
+    if request.method == 'POST':
+        student_ids = request.POST.getlist('student_ids')
+        if not student_ids:
+            messages.warning(request, "Hech qanday o'quvchi tanlanmagan!")
+            return redirect('teacher_group_view', group_id=group_id)
+        students = Student.objects.filter(pk__in=student_ids, group=group)
+        student_count = students.count()
+        users_to_delete = [student.user for student in students]
+        students.delete()
+        for user in users_to_delete:
+            user.delete()
+        messages.success(request, f"{student_count} ta o'quvchi muvaffaqiyatli o'chirildi!")
+    return redirect('teacher_group_view', group_id=group_id)
+
+
+@_teacher_only
+def teacher_student_bulk_archive(request, group_id):
+    group = get_object_or_404(Group, id=group_id)
+    if not _verify_teacher_access(request, group):
+        messages.error(request, 'Siz bu guruhga biriktirilmagansiz!')
+        return redirect('teacher_panel')
+    if request.method == 'POST':
+        student_ids = request.POST.getlist('student_ids')
+        if not student_ids:
+            messages.warning(request, "Hech qanday o'quvchi tanlanmagan!")
+            return redirect('teacher_group_view', group_id=group_id)
+        students = Student.objects.filter(pk__in=student_ids, group=group)
+        student_count = students.count()
+        students.update(is_archived=True)
+        messages.success(request, f"{student_count} ta o'quvchi arxivga olindi!")
+    return redirect('teacher_group_view', group_id=group_id)
+
+
 # ============ BAHOLASH (Speaking & Written) ============
 
 @login_required

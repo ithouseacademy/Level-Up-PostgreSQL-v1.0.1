@@ -99,7 +99,7 @@
                         <p class="font-medium text-gray-900">{{ student.full_name }}</p>
                         <p class="text-xs text-gray-500">{{ student.user.username }}</p>
                     </div>
-                    <div class="text-sm">
+                    <div class="text-sm student-status">
                         {% if exam_control.is_active and not exam_control.is_paused %}
                         <span class="text-green-500">🟢 Testda</span>
                         {% elif exam_control.is_paused %}
@@ -245,6 +245,106 @@ document.getElementById('resumeBtn').addEventListener('click', function() {
         btn.innerHTML = '▶ RESUME';
         btn.disabled = false;
     });
+});
+
+// ============================================================
+// LIVE STATUS POLLING — har 5 sekundda test holatini tekshirish
+// ============================================================
+function getStatusIcon(status) {
+    return status.is_active && !status.is_paused ? '🟢' : status.is_paused ? '⏸' : '⚪';
+}
+
+function getStatusText(status) {
+    if (status.is_active && !status.is_paused) return '<span class="text-green-600">✅ TEST FAOL</span>';
+    if (status.is_paused) return '<span class="text-yellow-600">⏸ PAUZADA</span>';
+    if (status.started_at === null || status.started_at === undefined) return '<span class="text-gray-500">⚪ TEST BOSHLANMAGAN</span>';
+    return '<span class="text-red-600">⛔ TEST TO\'XTATILGAN</span>';
+}
+
+function formatTime(seconds) {
+    if (seconds === null || seconds === undefined) return '';
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function updateExamStatus(status) {
+    // Status matnini yangilash
+    const statusEl = document.getElementById('examStatus');
+    if (statusEl) statusEl.innerHTML = getStatusText(status);
+
+    // Qolgan vaqtni yangilash
+    const remEl = document.getElementById('remainingTime');
+    if (remEl && status.remaining_time !== null && status.remaining_time !== undefined) {
+        const mins = Math.floor(status.remaining_time / 60);
+        remEl.innerHTML = `Qolgan vaqt: ${formatTime(status.remaining_time)} (${mins} daqiqa)`;
+    }
+
+    // Pauza info paneli
+    const pauseInfo = document.getElementById('pauseInfo');
+    if (pauseInfo) {
+        pauseInfo.classList.toggle('hidden', !status.is_paused);
+    }
+
+    // Tugmalarni ko'rsatish/yashirish
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resumeBtn = document.getElementById('resumeBtn');
+    const stopBtn = document.getElementById('stopBtn');
+
+    if (status.is_active && !status.is_paused) {
+        if (startBtn) startBtn.style.display = 'none';
+        if (pauseBtn) pauseBtn.style.display = 'inline-flex';
+        if (resumeBtn) resumeBtn.style.display = 'none';
+        if (stopBtn) stopBtn.style.display = 'inline-flex';
+    } else if (status.is_paused) {
+        if (startBtn) startBtn.style.display = 'none';
+        if (pauseBtn) pauseBtn.style.display = 'none';
+        if (resumeBtn) resumeBtn.style.display = 'inline-flex';
+        if (stopBtn) stopBtn.style.display = 'inline-flex';
+    } else {
+        if (startBtn) startBtn.style.display = 'inline-flex';
+        if (pauseBtn) pauseBtn.style.display = 'none';
+        if (resumeBtn) resumeBtn.style.display = 'none';
+        if (stopBtn) stopBtn.style.display = 'none';
+    }
+
+    // Student statuslarini yangilash
+    document.querySelectorAll('.student-status').forEach(el => {
+        if (status.is_active && !status.is_paused) {
+            el.innerHTML = '<span class="text-green-500">🟢 Testda</span>';
+        } else if (status.is_paused) {
+            el.innerHTML = '<span class="text-yellow-500">⏸ Pauzada</span>';
+        } else {
+            el.innerHTML = '<span class="text-gray-400">⚪ Kutmoqda</span>';
+        }
+    });
+}
+
+function checkExamStatus() {
+    fetch('/quiz/check-status/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+        },
+        body: JSON.stringify({ group_id: groupId })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            updateExamStatus(data);
+        }
+    })
+    .catch(() => {});
+}
+
+// Har 5 sekundda statusni tekshirish
+let statusCheckInterval = setInterval(checkExamStatus, 5000);
+
+// Sahifa yuklanganda darhol tekshirish
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(checkExamStatus, 500);
 });
 
 // STOP
