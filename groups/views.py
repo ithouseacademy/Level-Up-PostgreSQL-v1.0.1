@@ -1882,7 +1882,7 @@ def quiz_results(request, group_id):
     # Student bo'yicha guruhlash
     unique_results = {}
     for result in all_results:
-        student_key = result.student_id or result.student_name_saved
+        student_key = result.student_id or result.student_name_saved or f'unknown_{result.id}'
         student_name = result.student_name_saved or (result.student.full_name if result.student else 'Noma\'lum')
         username = result.student.user.username if result.student and result.student.user else ''
 
@@ -2394,7 +2394,9 @@ def stop_exam_api(request):
                     defaults={
                         'score': final_score,
                         'total_questions': total_possible,
-                        'answers': question_results
+                        'answers': question_results,
+                        'student_name_saved': student.full_name or student.user.get_full_name(),
+                        'group_name_saved': group.name if group else '',
                     }
                 )
                 
@@ -2512,7 +2514,9 @@ def auto_stop_exam_api(request):
                     score=score,
                     total_questions=total,
                     answers=question_results,
-                    attempt_number=attempt.attempt_number
+                    attempt_number=attempt.attempt_number,
+                    student_name_saved=attempt.student.full_name or attempt.student.user.get_full_name(),
+                    group_name_saved=group.name if group else '',
                 )
                 saved_count += 1
 
@@ -2913,7 +2917,7 @@ def quiz_result_details_api(request, result_id):
         raw_score = round((score_pct / 100) * total_possible, 1) if total_possible > 0 else 0
         return JsonResponse({
             'success': True,
-            'student_name': result.student.full_name,
+            'student_name': result.student_name_saved or (result.student.full_name if result.student else 'Noma\'lum'),
             'score': score_pct,
             'raw_score': raw_score,
             'total': total_possible,
@@ -6084,7 +6088,9 @@ def speaking_save_score_api(request):
         else:
             result, created = QuizResult.objects.get_or_create(
                 student=student, quiz_session=quiz_session, attempt_number=1,
-                defaults={'score': 0, 'total_questions': max_points, 'answers': {}}
+                defaults={'score': 0, 'total_questions': max_points, 'answers': {},
+                          'student_name_saved': student.full_name or student.user.get_full_name(),
+                          'group_name_saved': group.name if group else ''}
             )
 
         if not result.answers:
@@ -6289,8 +6295,10 @@ def quiz_statistics(request, group_id):
     colors = []
 
     for r in results:
+        if not r.student:
+            continue
         score = float(r.score)
-        name = r.student.full_name
+        name = r.student_name_saved or r.student.full_name
         student_scores.append({'name': name, 'score': score})
         labels.append(name)
         score_values.append(score)
