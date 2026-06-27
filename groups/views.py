@@ -5210,6 +5210,8 @@ def admin_writing_review(request, group_id):
     for result in results:
         if not result.answers:
             continue
+        if not result.student:
+            continue
         for qid_str, ans_data in result.answers.items():
             if isinstance(ans_data, dict) and ans_data.get('type') == 'writing':
                 try:
@@ -5222,7 +5224,7 @@ def admin_writing_review(request, group_id):
                 writing_entries.append({
                     'result_id': result.id,
                     'question_id': question.id,
-                    'student_name': result.student.full_name,
+                    'student_name': result.student_name_saved or result.student.full_name,
                     'topic': question.question_text,
                     'answer': ans_data.get('user_answer', ''),
                     'graded': ans_data.get('graded', False),
@@ -5995,6 +5997,8 @@ def speaking_review(request, group_id):
     for result in results:
         if not result.answers:
             continue
+        if not result.student:
+            continue
         for qid_str, ans_data in result.answers.items():
             if isinstance(ans_data, dict) and ans_data.get('type') == 'speaking':
                 try:
@@ -6008,7 +6012,7 @@ def speaking_review(request, group_id):
                     'result_id': result.id,
                     'question_id': question.id,
                     'student_id': result.student.id,
-                    'student_name': result.student.full_name,
+                    'student_name': result.student_name_saved or result.student.full_name,
                     'topic': question.question_text,
                     'answer': ans_data.get('user_answer', ''),
                     'graded': ans_data.get('graded', False),
